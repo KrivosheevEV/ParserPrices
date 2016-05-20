@@ -1,21 +1,23 @@
 package ru.parserprices.test1;
 
 
-import javax.ladng.model.util.Elements;
-import javax.xml.bind.Element;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
-import org.jsoup.*;
-import org.jsoup.nodes.*;
-import org.jsoup.select.*;
-import java.io.*;
+import java.io.IOException;
 
 public class ReadPricesFromSite {
 
     public static void main(String[] args) {
 
 
-        Doument doc = Jsoup.connet("htt[://dns-shop.ru").get();
-        Elemets links = doc.getElementsByTag("a");
+        Elements links = null;
+        try {
+            links = Jsoup.connect("htt[://dns-shop.ru").get().getElementsByTag("a");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         for (Element link : links) {
             System.out.println(link.text());
