@@ -14,7 +14,7 @@ public class ReadPricesFromSite {
 
         Elements links = null;
         try {
-            links = Jsoup.connect("htt[://dns-shop.ru").get().getElementsByTag("a");
+            links = Jsoup.connect("http://dns-shop.ru").get().getElementsByTag("a");
         } catch (IOException e) {
             e.printStackTrace();
         }
