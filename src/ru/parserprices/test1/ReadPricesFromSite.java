@@ -15,6 +15,7 @@ public class ReadPricesFromSite {
 
 
         Doument doc = Jsoup.connet("htt[://dns-shop.ru").get();
+        Elemets links = doc.getElementsByTag("a");
 
         for (Element link : links) {
             System.out.println(link.text());
