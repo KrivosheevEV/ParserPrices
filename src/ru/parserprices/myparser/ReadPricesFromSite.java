@@ -1,4 +1,4 @@
-package ru.parserprices.test1;
+package ru.parserprices.myparser;
 
 
 import org.jsoup.Jsoup;
@@ -20,7 +20,7 @@ public class ReadPricesFromSite {
         }
 
         for (Element link : links) {
-            System.out.println(link.text());
+            System.out.println(link.toString() + " : " +  link.text());
 
         }
 
