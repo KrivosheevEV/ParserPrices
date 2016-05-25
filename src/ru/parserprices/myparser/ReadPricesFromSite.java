@@ -20,7 +20,7 @@ public class ReadPricesFromSite {
         }
 
         for (Element link : links) {
-            System.out.println(link.toString() + " : " +  link.text());
+            System.out.println(link.text());
 
         }
 
