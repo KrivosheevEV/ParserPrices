@@ -9,7 +9,10 @@ import java.io.IOException;
 
 public class ReadPricesFromSite {
 
-    public static void main(String[] args) {
+    private static final String userAgent = "Mozilla/5.0 (jsoup)";
+    private static final int timeout = 5 * 1000;
+
+    public static void main(String[] args) throws IOException  {
 
 
         Elements links = null;
