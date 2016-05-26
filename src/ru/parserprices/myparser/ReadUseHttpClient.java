@@ -2,34 +2,74 @@ package ru.parserprices.myparser;
 
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.SearchContext;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
+import java.util.*;
+
 public class ReadUseHttpClient {
 
-    public static void main2(String[] args) {
+    WebDriver driver1, driver2;
 
-        // создаем новый экземпляр html unit driver
-        // Обратите внимание, что последующий код не закладывается на
-        // конкретную, имплементацию, а только на интерфейс WebDriver.
-        WebDriver driver = new HtmlUnitDriver();
+    public void ReadSite() throws InterruptedException {
 
-        // Открываем Google
-        driver.get("http://www.google.com");
+        driver1 = new HtmlUnitDriver();
 
-        // Находим по имени поле для ввода
-        WebElement element = driver.findElement(By.name("q"));
+        String siteAdress = "http://www.dns-shop.ru/catalog/17a892f816404e77/noutbuki/";
+        String nextPage = "http://www.dns-shop.ru/catalog/17a892f816404e77/noutbuki/#";
 
-        // Вводим ключевое слово для поиска
-        element.sendKeys("гладиолус");
+        driver1.get(siteAdress);
 
-        // Отправляем форму в которой находится элемент element.
-        // WebDriver сам найдет, в какой он форме.
-        element.submit();
 
-        // Выводим в консоль заголовок страницы
-        System.out.println("Page title is: " + driver.getTitle());
+//        driver1.get(nextPage);
+//        List<WebElement> elements1 = driver1.findElements(By.tagName("a"));
 
+//        for (WebElement element1: elements1) {
+//
+//            if (element1.getAttribute("href") == "#"){
+//                System.out.print("3 " + element1.getText() + "\n");
+//                element1.click();
+//            }
+
+            //System.out.print("1 " + element1.getText() + "\n");
+
+//            List<WebElement> elements2 = element1.findElements(By.className("btn-default"));
+
+//            for (WebElement element2: elements2) {
+//                System.out.print("2 " + element2.getTagName() + "\n");
+//
+//                if (element2.getAttribute("href") == "#"){
+//                    System.out.print("3 " + element2.getText() + "\n");
+//                    element2.click();
+//                }
+//            }
+
+//        }
+//        System.out.print(element1.getText() + "\n");
+//        element1.click();
+
+        List<WebElement> listElements1 = driver1.findElements(By.className("catalog-category-more"));
+
+        for (WebElement element1 : listElements1) {
+
+            WebElement element2 = element1.findElement(By.className("btn-default"));
+            System.out.print(element2.getText());
+            element2.click();
+        }
+
+
+        List<WebElement> listElements2 = driver1.findElements(By.className("product"));
+        System.out.print("\n" + listElements2.size());
+
+
+
+//        System.out.println("\n Page title is: " + driver.getCurrentUrl());
+
+    }
+
+    static {
+        java.util.logging.Logger.getLogger("com.gargoylesoftware.htmlunit").setLevel(java.util.logging.Level.SEVERE);
     }
 }
