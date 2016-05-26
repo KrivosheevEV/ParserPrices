@@ -1,21 +1,14 @@
 package ru.parserprices.myparser;
 
 
-import org.jsoup.Jsoup;
-import org.jsoup.examples.HtmlToPlainText;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
-import java.io.IOException;
+public class ReadUseHttpClient {
 
-public class ReadPricesFromSite {
-
-    public static void main(String[] args) throws IOException {
+    public static void main2(String[] args) {
 
         // создаем новый экземпляр html unit driver
         // Обратите внимание, что последующий код не закладывается на
@@ -37,7 +30,6 @@ public class ReadPricesFromSite {
 
         // Выводим в консоль заголовок страницы
         System.out.println("Page title is: " + driver.getTitle());
-
 
     }
 }

@@ -10,7 +10,7 @@ public class ReadPatternOfSite implements ReadPatternOfSite_Intarface{
     private String siteAdress;
     private String nameParserOfSite;
 
-    public static void main(String[] args) {
+    public static void main2(String[] args) {
 
     }
 
