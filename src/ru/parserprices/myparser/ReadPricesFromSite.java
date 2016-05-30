@@ -1,25 +1,22 @@
 package ru.parserprices.myparser;
 
 
-import org.jsoup.Jsoup;
-import org.jsoup.examples.HtmlToPlainText;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.htmlunit.HtmlUnitDriver;
-
 import java.io.IOException;
 
 public class ReadPricesFromSite {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
+        ReadWriteFile mPatternOfSite = new ReadWriteFile();
+        mPatternOfSite.setFullAddress("D:/Temp/", "Pattern_DNS1.txt");
 
-        ReadUseHttpClient Class2 = new ReadUseHttpClient();
-        Class2.ReadSite();
+        ReadSiteUseFirefoxDriver readSiteUseFirefoxDriver = new ReadSiteUseFirefoxDriver();
+        readSiteUseFirefoxDriver.ReadSite(mPatternOfSite.readFile(mPatternOfSite.getFullAddress()));
+
+        ReadWriteFile mResultOfParsing = new ReadWriteFile();
+        mResultOfParsing.setFullAddress("D:/Temp/", "Result_DNS1.txt");
+
+        readSiteUseFirefoxDriver.writeResultToFile(mResultOfParsing.getFullAddress(), readSiteUseFirefoxDriver.getResultOfParsing());
 
 
     }

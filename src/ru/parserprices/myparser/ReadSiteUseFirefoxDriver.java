@@ -8,23 +8,20 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
-import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.util.*;
 
-public class ReadUseHttpClient {
+public class ReadSiteUseFirefoxDriver {
 
+    private String resultOfPasring;
 
-
-
-    public void ReadSite() throws InterruptedException {
+    public void ReadSite(String FullAddress) throws InterruptedException {
 
 //        WebDriver driver = new HtmlUnitDriver();
 //        WebDriver driver = new FirefoxDriver();
-//        HtmlUnitDriver driver = new HtmlUnitDriver(true);
         FirefoxProfile profile = new FirefoxProfile();
         WebDriver driver = new FirefoxDriver(profile);
 
@@ -34,7 +31,8 @@ public class ReadUseHttpClient {
         driver.get(siteAdress);
 
         List<WebElement> listElements2 = driver.findElements(By.className("thumbnail"));
-        System.out.print("\n" + listElements2.size() + "\n");
+        resultOfPasring = resultOfPasring.concat("\n" + listElements2.size() + "\n");
+//        System.out.print();
 
         List<WebElement> listElements1 = driver.findElements(By.className("catalog-category-more"));
 
@@ -42,19 +40,14 @@ public class ReadUseHttpClient {
 
             WebElement element2 = element1.findElement(By.className("btn-default"));
 //            WebElement element2 = element1.findElement(By.className("glyphicon-triangle-bottom"));
-            System.out.print(element2.getText() + "\n");
+            resultOfPasring = resultOfPasring.concat(element2.getText() + "\n");
+//            System.out.print(element2.getText() + "\n");
             element2.click();
 
-//            Actions actions = new Actions(driver1);
-//            actions.moveToElement(element2, 1, 1).click();
-
-//            JavascriptExecutor executor = (JavascriptExecutor) driver1;
-//            executor.executeScript("arguments[0].click();", element2);
         }
 
-//        Thread.sleep(5000);
 
-        int maxWaitTime = 5;
+        int maxWaitTime = 10;
         String className = "products-list-continue";
         try {
             (new WebDriverWait(driver, maxWaitTime))
@@ -64,22 +57,29 @@ public class ReadUseHttpClient {
         } catch (Throwable te) {
             System.out.print("Unable to find the element by classname: '"
                     + className + "' within " + maxWaitTime + " seconds.");
-
-            //throw new TimeoutException(te);
         }
 
 
-
         listElements2 = driver.findElements(By.className("thumbnail"));
-        System.out.print("\n" + listElements2.size());
+        resultOfPasring = resultOfPasring.concat("\n" + listElements2.size());
 
-//        System.out.println("\n Page title is: " + driver.getCurrentUrl());
+        System.out.print(resultOfPasring);
+
         driver.quit();
-
-
     }
 
+    // Disable warning in console.
     static {
         java.util.logging.Logger.getLogger("com.gargoylesoftware.htmlunit").setLevel(java.util.logging.Level.SEVERE);
+    }
+    ///
+
+    public String getResultOfParsing(){
+
+        return this.resultOfPasring;
+    }
+
+    public void writeResultToFile(String fileFullAddress, String textForFile){
+
     }
 }
