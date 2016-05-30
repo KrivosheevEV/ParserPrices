@@ -16,7 +16,7 @@ import java.util.*;
 
 public class ReadSiteUseFirefoxDriver {
 
-    private String resultOfPasring;
+    private String resultOfPasring = "";
 
     public void ReadSite(String FullAddress) throws InterruptedException {
 
@@ -31,7 +31,7 @@ public class ReadSiteUseFirefoxDriver {
         driver.get(siteAdress);
 
         List<WebElement> listElements2 = driver.findElements(By.className("thumbnail"));
-        resultOfPasring = resultOfPasring.concat("\n" + listElements2.size() + "\n");
+        this.resultOfPasring = this.resultOfPasring.concat("\n" + listElements2.size() + "\n");
 //        System.out.print();
 
         List<WebElement> listElements1 = driver.findElements(By.className("catalog-category-more"));

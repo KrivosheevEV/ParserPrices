@@ -28,7 +28,7 @@ public class ReadWriteFile implements ReadSites_Interface {
 
     public String getFullAddress(){
 
-        return FileFullAddress;
+        return this.FileFullAddress;
 
     }
 
