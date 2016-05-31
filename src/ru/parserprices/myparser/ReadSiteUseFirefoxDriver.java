@@ -35,33 +35,13 @@ public class ReadSiteUseFirefoxDriver {
 
         String siteAdress = "http://www.dns-shop.ru/catalog/17a892f816404e77/noutbuki/";
 
+        String cssSelector_ExpandPage_Block = "div.catalog-category-more, div[style$='block']";
+        String cssSelector_ExpandPage_Button = "a[class='btn btn-default']";
+        String cssSelector1 = "div.thumbnail";
+
         driver.get(siteAdress);
 
-        try {
-
-            List<WebElement> listItems = driver.findElements(By.className("thumbnail"));
-//            addToResultString("Count of items: " + Integer.toString(listItems.size()));
-
-            if (listItems.size() > 0) {
-//                String cssSelector1 = "div.catalog-category-more, div[style$='block'], a[class='btn btn-default']";
-                String cssSelector_NextPage_Block = "div.catalog-category-more, div[style$='block']";
-                String cssSelector_NextPage_Button = "a[class='btn btn-default']";
-                String cssSelector1 = "div.thumbnail";
-                WebElement but_NextPageBlock = driver.findElement(By.cssSelector(cssSelector_NextPage_Block));
-                int countOfClick = 1;
-
-                OpenAllPages();
-
-
-
-                listItems = driver.findElements(By.cssSelector(cssSelector1));
-                addToResultString("Count of items: " + Integer.toString(listItems.size()));
-            }
-
-        } catch (Throwable te) {
-            addToResultString("Error parsing sites.");
-            addToResultString(te.getMessage());
-        }
+        ExpandAllPages(driver, cssSelector_ExpandPage_Block, cssSelector_ExpandPage_Button, cssSelector1);
 
         System.out.print(resultOfPasring);
         driver.close();
@@ -74,36 +54,55 @@ public class ReadSiteUseFirefoxDriver {
     }
     ///
 
-    public void OpenAllPages(){
+    public void ExpandAllPages(WebDriver driver, String cssSelector_ExpandPage_Block, String cssSelector_ExpandPage_Button, String cssSelector1) {
 
-        while (but_NextPageBlock != null) {
+        try {
 
-            listItems = driver.findElements(By.cssSelector(cssSelector1));
-            addToResultString("Count of items: " + Integer.toString(listItems.size()));
+            List<WebElement> listItems = driver.findElements(By.className("thumbnail"));
 
-            WebElement but_NextPageButton = but_NextPageBlock.findElement(By.cssSelector(cssSelector_NextPage_Button));
+            if (listItems.size() > 0) {
 
-            try {
-                while ((new WebDriverWait(driver, 30)).until(ExpectedConditions.not(
-                        ExpectedConditions.invisibilityOfElementLocated(By.cssSelector(cssSelector_NextPage_Block))))) {
+                WebElement but_NextPageBlock = driver.findElement(By.cssSelector(cssSelector_ExpandPage_Block));
+                int countOfClick = 1;
 
-                    but_NextPageButton.sendKeys(Keys.ESCAPE);
-                    but_NextPageButton.click();
+                while (but_NextPageBlock != null) {
 
-                    System.out.print(countOfClick + but_NextPageButton.getText() + "\n");
-                    addToResultString(Integer.toString(countOfClick++));
+                    listItems = driver.findElements(By.cssSelector(cssSelector1));
+                    addToResultString("Count of item goods: " + Integer.toString(listItems.size()));
+
+                    WebElement but_NextPageButton = but_NextPageBlock.findElement(By.cssSelector(cssSelector_ExpandPage_Button));
+
+                    try {
+                        while ((new WebDriverWait(driver, 30)).until(ExpectedConditions.not(
+                                ExpectedConditions.invisibilityOfElementLocated(By.cssSelector(cssSelector_ExpandPage_Block))))) {
+
+                            but_NextPageButton.sendKeys(Keys.ESCAPE);
+                            but_NextPageButton.click();
+
+                            System.out.print(countOfClick + but_NextPageButton.getText() + "\n");
+                            addToResultString(Integer.toString(countOfClick++));
+                        }
+
+                    } catch (TimeoutException te) {
+
+                        but_NextPageBlock = null;
+                        addToResultString("Timeout exception");
+                        //addToResultString(te.getMessage());
+
+                    } finally {
+                        addToResultString("Finished expand pages");
+                    }
                 }
 
-            } catch (Exception ex) {
-
-                but_NextPageBlock = null;
-                addToResultString("Ошибка парсинга");
-                addToResultString(ex.getMessage());
-
-            } finally {
-                System.out.println(countOfClick);
+                listItems = driver.findElements(By.cssSelector(cssSelector1));
+                addToResultString("Count of item goods: " + Integer.toString(listItems.size()));
             }
+
+        } catch (Throwable te) {
+            addToResultString("Error parsing sites.");
+            addToResultString(te.getMessage());
         }
+
     }
 
     public String getResultOfParsing(){
