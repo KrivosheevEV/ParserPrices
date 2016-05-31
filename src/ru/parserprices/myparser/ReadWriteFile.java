@@ -32,6 +32,10 @@ public class ReadWriteFile implements ReadSites_Interface {
 
     }
 
+    public String getCurrentPath(){
+        return new File(".").getAbsolutePath();
+    }
+
     public String readFile(String fileName) throws FileNotFoundException {
         //Этот спец. объект для построения строки
         StringBuilder sb = new StringBuilder();
@@ -81,7 +85,7 @@ public class ReadWriteFile implements ReadSites_Interface {
             }
 
             //PrintWriter обеспечит возможности записи в файл
-            PrintWriter out = new PrintWriter(file.getAbsoluteFile());
+            PrintWriter out = new PrintWriter(fileName);
 
             try {
                 //Записываем текст у файл

@@ -2,6 +2,7 @@ package ru.parserprices.myparser;
 
 
 //import org.openqa.selenium.*;
+import net.sourceforge.htmlunit.corejs.javascript.ast.WhileLoop;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -30,41 +31,42 @@ public class ReadSiteUseFirefoxDriver {
 
         driver.get(siteAdress);
 
-        List<WebElement> listElements2 = driver.findElements(By.className("thumbnail"));
-        this.resultOfPasring = this.resultOfPasring.concat("\n" + listElements2.size() + "\n");
-//        System.out.print();
-
-        List<WebElement> listElements1 = driver.findElements(By.className("catalog-category-more"));
-
-        for (WebElement element1 : listElements1) {
-
-            WebElement element2 = element1.findElement(By.className("btn-default"));
-//            WebElement element2 = element1.findElement(By.className("glyphicon-triangle-bottom"));
-            resultOfPasring = resultOfPasring.concat(element2.getText() + "\n");
-//            System.out.print(element2.getText() + "\n");
-            element2.click();
-
-        }
-
-
-        int maxWaitTime = 10;
-        String className = "products-list-continue";
         try {
-            (new WebDriverWait(driver, maxWaitTime))
-                    .until(ExpectedConditions
-                            .visibilityOfElementLocated(By.className(className)));
 
-        } catch (Throwable te) {
-            System.out.print("Unable to find the element by classname: '"
-                    + className + "' within " + maxWaitTime + " seconds.");
+            List<WebElement> listElements2 = driver.findElements(By.className("thumbnail"));
+            addToResultString(Integer.toString(listElements2.size()));
+
+            List<WebElement> listElements1 = driver.findElements(By.className("catalog-category-more"));
+
+            for (WebElement element1 : listElements1) {
+
+                WebElement element_NexpPage = element1.findElement(By.className("btn-default"));
+                //addToResultString(element_NexpPage.getText());
+                int countOfNewPages = 0;
+               // if (elementCanFind(driver, By.cssSelector("div[stile=*none]"))) {
+                    while (element_NexpPage.findElement(By.cssSelector("div[style*=none]")) != null) {
+                        addToResultString(++countOfNewPages + ". Open new part of items" + "\n");
+                        element_NexpPage.click();
+                    }
+                //}
+
+            }
+
+            listElements2 = driver.findElements(By.className("thumbnail"));
+
+            int countOfString = 0;
+            for (WebElement element2 : listElements2) {
+                WebElement element_ItemName = element2.findElement(By.className("item-name"));
+                addToResultString(++countOfString + ") " + element_ItemName.getText() + "\n");
+            }
+
+        } catch (Throwable te){
+            addToResultString("Error parsing sites.");
+            addToResultString(te.getMessage());
         }
-
-
-        listElements2 = driver.findElements(By.className("thumbnail"));
-        resultOfPasring = resultOfPasring.concat("\n" + listElements2.size());
 
         System.out.print(resultOfPasring);
-
+        driver.close();
         driver.quit();
     }
 
@@ -79,7 +81,27 @@ public class ReadSiteUseFirefoxDriver {
         return this.resultOfPasring;
     }
 
-    public void writeResultToFile(String fileFullAddress, String textForFile){
-
+    private void addToResultString(String addedString){
+        resultOfPasring = resultOfPasring.concat(resultOfPasring + addedString + "\n");
     }
+
+    private boolean elementCanFind(WebDriver givenDriver, By givenBy){
+
+        boolean resultOfMetod;
+        int maxWaitTime = 10;
+
+        try {
+            (new WebDriverWait(givenDriver, maxWaitTime))
+                    .until(ExpectedConditions
+                            .visibilityOfElementLocated(givenBy));
+            resultOfMetod = true;
+        } catch (Throwable te) {
+            addToResultString("Unable to find the element by classname: '"
+                    + givenBy.toString() + "' within " + maxWaitTime + " seconds.");
+            resultOfMetod = false;
+        }
+
+        return resultOfMetod;
+    }
+
 }
