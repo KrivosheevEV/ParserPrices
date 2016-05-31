@@ -40,79 +40,25 @@ public class ReadSiteUseFirefoxDriver {
         try {
 
             List<WebElement> listItems = driver.findElements(By.className("thumbnail"));
-            addToResultString("Count of items: " + Integer.toString(listItems.size()));
+//            addToResultString("Count of items: " + Integer.toString(listItems.size()));
 
-            if (listItems.size() > 0){
-//                String cssSelector1 = "div.catalog-category-more, div[style$='block'] > a[class='btn btn-default']";
-                String cssSelector1 = "div.catalog-category-more";
-                String cssSelector2 = "div.catalog-category-more";
-//                String cssSelectorDisabled = "div.catalog-category-more, div[style$='none']";
-                WebElement but_NextPage = driver.findElement(By.cssSelector(cssSelector1));
+            if (listItems.size() > 0) {
+//                String cssSelector1 = "div.catalog-category-more, div[style$='block'], a[class='btn btn-default']";
+                String cssSelector_NextPage_Block = "div.catalog-category-more, div[style$='block']";
+                String cssSelector_NextPage_Button = "a[class='btn btn-default']";
+                String cssSelector1 = "div.thumbnail";
+                WebElement but_NextPageBlock = driver.findElement(By.cssSelector(cssSelector_NextPage_Block));
                 int countOfClick = 1;
 
-                while (but_NextPage != null) {
+                OpenAllPages();
 
-                    listItems = driver.findElements(By.className("thumbnail"));
-                    addToResultString("Count of items: " + Integer.toString(listItems.size()));
 
-                    try {
-                        (new WebDriverWait(driver, 5))
-                                .until(ExpectedConditions.invisibilityOfElementLocated(By.cssSelector(cssSelector2)));
 
-                        but_NextPage = null;
-
-                    } catch (Exception ex) {
-
-                        but_NextPage = but_NextPage.findElement(By.className("btn-default"));
-
-                        but_NextPage.sendKeys(Keys.ESCAPE);
-                        but_NextPage.click();
-
-                        System.out.print(countOfClick + but_NextPage.getText() + "\n");
-                        addToResultString(Integer.toString(countOfClick++));
-
-                        but_NextPage = driver.findElement(By.cssSelector(cssSelector1));
-
-                    }
-                }
-
-                listItems = driver.findElements(By.className("thumbnail"));
+                listItems = driver.findElements(By.cssSelector(cssSelector1));
                 addToResultString("Count of items: " + Integer.toString(listItems.size()));
             }
 
-            //                    try {
-//                        (new WebDriverWait(driver, 10))
-//                                .until(ExpectedConditions.not(ExpectedConditions.elementToBeClickable(but_NextPage)));
-//
-//                    } catch (TimeoutException te){
-            //System.out.print(te.getMessage());
-
-
-
-//            List<WebElement> listElements1 = driver.findElements(By.className("catalog-category-more"));
-//
-//            for (WebElement element1 : listElements1) {
-//
-//                WebElement element_NexpPage = element1.findElement(By.className("btn-default"));
-//                //addToResultString(element_NexpPage.getText());
-//                int countOfNewPages = 0;
-//               // if (elementCanFind(driver, By.cssSelector("div[stile=*none]"))) {
-//                    while (element_NexpPage.findElement(By.cssSelector("div[style*=none]")) != null) {
-//                        addToResultString(++countOfNewPages + ". Open new part of items" + "\n");
-//                        element_NexpPage.click();
-//                    }
-//                //}
-//
-//            }
-
-
-
-//            int countOfString = 0;
-//            for (WebElement element2 : listItems) {
-//                WebElement element_ItemName = element2.findElement(By.className("item-name"));
-//                addToResultString(++countOfString + ") " + element_ItemName.getText() + "\n");
-
-        } catch (Throwable te){
+        } catch (Throwable te) {
             addToResultString("Error parsing sites.");
             addToResultString(te.getMessage());
         }
@@ -127,6 +73,38 @@ public class ReadSiteUseFirefoxDriver {
         java.util.logging.Logger.getLogger("com.gargoylesoftware.htmlunit").setLevel(java.util.logging.Level.SEVERE);
     }
     ///
+
+    public void OpenAllPages(){
+
+        while (but_NextPageBlock != null) {
+
+            listItems = driver.findElements(By.cssSelector(cssSelector1));
+            addToResultString("Count of items: " + Integer.toString(listItems.size()));
+
+            WebElement but_NextPageButton = but_NextPageBlock.findElement(By.cssSelector(cssSelector_NextPage_Button));
+
+            try {
+                while ((new WebDriverWait(driver, 30)).until(ExpectedConditions.not(
+                        ExpectedConditions.invisibilityOfElementLocated(By.cssSelector(cssSelector_NextPage_Block))))) {
+
+                    but_NextPageButton.sendKeys(Keys.ESCAPE);
+                    but_NextPageButton.click();
+
+                    System.out.print(countOfClick + but_NextPageButton.getText() + "\n");
+                    addToResultString(Integer.toString(countOfClick++));
+                }
+
+            } catch (Exception ex) {
+
+                but_NextPageBlock = null;
+                addToResultString("Ошибка парсинга");
+                addToResultString(ex.getMessage());
+
+            } finally {
+                System.out.println(countOfClick);
+            }
+        }
+    }
 
     public String getResultOfParsing(){
 
