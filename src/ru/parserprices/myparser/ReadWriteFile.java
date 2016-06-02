@@ -9,40 +9,48 @@ import java.io.*;
  */
 public class ReadWriteFile implements ReadSites_Interface {
 
-    private static String FileFullAddress;
+    private String fileFullAddress;
     private static File mFile;
 
+    public ReadWriteFile(String givenFileName){
+        this.fileFullAddress = getCurrentPath() + "/" + givenFileName;
+        this.mFile = new File(fileFullAddress);
 
-    public void main(String[] args){
-
-       // this.mFile = new File(FileFullAddress);
-
+        System.out.println(fileFullAddress);
     }
 
     public void setFullAddress(String FileAddress, String FileName){
 
-        this.FileFullAddress = FileAddress + FileName;
-        this.mFile = new File(FileFullAddress);
+        this.fileFullAddress = FileAddress + FileName;
 
     }
 
     public String getFullAddress(){
 
-        return this.FileFullAddress;
+        return fileFullAddress;
 
     }
 
     public String getCurrentPath(){
-        return new File(".").getAbsolutePath();
+
+//        return new File(ReadWriteFile.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
+        String pathStartingApp = ClassLoader.getSystemClassLoader().getResource(".").getPath();
+        pathStartingApp = pathStartingApp.substring(1, pathStartingApp.length() - 1);
+        return pathStartingApp;
+//        String path=System.getProperty("java.class.path");
+//        String FileSeparator=(String)System.getProperty("file.separator");
+//        return path.substring(0, path.lastIndexOf(FileSeparator)+1);
+
     }
 
-    public String readFile(String fileName) throws FileNotFoundException {
+    public String readFile() {
         //Этот спец. объект для построения строки
         StringBuilder sb = new StringBuilder();
 
-        exists(fileName);
-
         try {
+
+            exists(mFile);
+
             //Объект для чтения файла в буфер
             BufferedReader in = new BufferedReader(new FileReader(mFile.getAbsoluteFile()));
             try {
@@ -65,10 +73,9 @@ public class ReadWriteFile implements ReadSites_Interface {
 
     }
 
-    private static void exists(String fileName) throws FileNotFoundException {
-        File file = new File(fileName);
+    private static void exists(File file) throws FileNotFoundException {
         if (!file.exists()){
-            System.out.print("File not exist: " + fileName);
+            System.out.print("File not exist: " + file.getName());
             throw new FileNotFoundException(file.getName());
         }
     }

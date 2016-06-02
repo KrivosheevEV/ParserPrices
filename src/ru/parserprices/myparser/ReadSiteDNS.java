@@ -3,17 +3,15 @@ package ru.parserprices.myparser;
 
 //import org.openqa.selenium.*;
 
-import net.sourceforge.htmlunit.corejs.javascript.ast.WhileLoop;
 import org.openqa.selenium.*;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxProfile;
-import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 public class ReadSiteDNS {
 
@@ -28,28 +26,30 @@ public class ReadSiteDNS {
         startTime = System.currentTimeMillis();
         addToResultString("Start parsing");
 
-        FirefoxProfile profile = new FirefoxProfile();
-
         // Proxy setting.
-        String serverIP="91.221.233.82";
-        String port="8080";
+        ProxyServers newProxyServer = new ProxyServers();
+        String proxyAddress = null;
+        try {
+            proxyAddress = newProxyServer.getProxyServer();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+        Proxy proxy = new Proxy();
+        proxy.setHttpProxy(proxyAddress);
+        proxy.setSslProxy(proxyAddress);
 
-        profile.setPreference("network.proxy.type",1);
-        profile.setPreference("network.proxy.http",serverIP);
-//        profile.setPreference("network.proxy.ftp",serverIP);
-//        profile.setPreference("network.proxy.socks",serverIP);
-//        profile.setPreference("network.proxy.ssl",serverIP);
-        profile.setPreference("network.proxy.http_port",port);
-//        profile.setPreference("network.proxy.ftp_port",port);
-//        profile.setPreference("network.proxy.socks_port",port);
-//        profile.setPreference("network.proxy.ssl_port",port);
+        System.out.println(proxyAddress);
 
-        WebDriver driver = new FirefoxDriver(profile);
+        DesiredCapabilities capabilities = new DesiredCapabilities();
+        capabilities.setCapability(CapabilityType.PROXY, proxy);
 
-        driver.manage().window().maximize();
+//        FirefoxProfile profile = new FirefoxProfile();
+        WebDriver driver = new FirefoxDriver();
 
-        driver.navigate().to("https://2ip.ru/");
+//        driver.manage().window().maximize();
 
+//        driver.navigate().to("https://2ip.ru/");
 //        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
 
         String cssSelector_ExpandPage_Block = "div.catalog-category-more, div[style$='block']";
@@ -62,10 +62,13 @@ public class ReadSiteDNS {
         String cssSelector_GoodPrice = "meta[itemprop=price]";
 
         ArrayList<String> listLinkPages = new ArrayList<String>();
-        listLinkPages.add("http://www.dns-shop.ru/catalog/17a892f816404e77/noutbuki/");
+        //listLinkPages.add("http://www.dns-shop.ru/catalog/17a892f816404e77/noutbuki/");
         //listPages.add("http://www.dns-shop.ru/catalog/31f05737df7e4e77/ssd-25-sata-nakopiteli/");
 
-        //fillListPages(driver, cssSelector_Categories, listLinkPages);
+        //fillListPagesFromSite(driver, cssSelector_Categories, listLinkPages);
+        fillListPagesFromFile(listLinkPages);
+
+
 
         ArrayList<String> listLinkGoods = new ArrayList<String>();
 
@@ -159,7 +162,7 @@ public class ReadSiteDNS {
         }
     }
 
-    private void fillListPages(WebDriver driver, String cssSelector_Categories, ArrayList<String> listPages) {
+    private void fillListPagesFromSite(WebDriver driver, String cssSelector_Categories, ArrayList<String> listPages) {
 
         driver.navigate().to(DNG_GENERAL_URL);
 
@@ -171,13 +174,22 @@ public class ReadSiteDNS {
                     ) {
                 String linkCategory = hrefElement.getAttribute("href");
                 listPages.add(linkCategory);
-                //addToResultString(linkCategory);
+                System.out.println(linkCategory);
             }
 
         } catch (Throwable te) {
             addToResultString("Error parsing site (fill category).");
             addToResultString(te.getMessage());
         }
+    }
+
+    private void fillListPagesFromFile(ArrayList<String> listPages){
+
+        ReadWriteFile mFileWithCategories = new ReadWriteFile("Categories_DNS.txt");
+
+        String mFile = mFileWithCategories.readFile();
+        listPages = new ArrayList<String>(Arrays.asList(mFile.split("\n")));
+
     }
 
 
@@ -198,7 +210,7 @@ public class ReadSiteDNS {
                 addToResultString(te.getMessage());
             }
 
-            if (countIteration == 10) break;
+            if (countIteration == 5) break;
         }
 
     }
