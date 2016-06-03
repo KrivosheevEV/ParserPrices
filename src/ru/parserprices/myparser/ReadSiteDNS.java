@@ -5,6 +5,7 @@ package ru.parserprices.myparser;
 
 import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -19,7 +20,7 @@ public class ReadSiteDNS {
     private long startTime;
 
     private static String DNG_GENERAL_URL = "http://www.dns-shop.ru";
-    private static int WAITING_FOR_EXPAND = 10;
+    private static int WAITING_FOR_EXPAND = 7;
 
     public void ReadSite(String FullAddress) throws InterruptedException {
 
@@ -31,21 +32,38 @@ public class ReadSiteDNS {
         String proxyAddress = null;
         try {
             proxyAddress = newProxyServer.getProxyServer();
+            System.out.println(proxyAddress);
         } catch (IOException e) {
             e.printStackTrace();
             return;
         }
         Proxy proxy = new Proxy();
         proxy.setHttpProxy(proxyAddress);
-        proxy.setSslProxy(proxyAddress);
+//        proxy.setSslProxy(proxyAddress);
+
+//        proxy.setHttpProxy("80.249.185.2:3128");
+//        proxy.setSslProxy("80.249.185.2:3128");
 
         System.out.println(proxyAddress);
 
-        DesiredCapabilities capabilities = new DesiredCapabilities();
-        capabilities.setCapability(CapabilityType.PROXY, proxy);
+//        DesiredCapabilities capabilities = new DesiredCapabilities();
+//        capabilities.setCapability(CapabilityType.PROXY, proxy);
 
-//        FirefoxProfile profile = new FirefoxProfile();
-        WebDriver driver = new FirefoxDriver();
+        FirefoxProfile profile = new FirefoxProfile();
+        String serverIP="91.221.233.82";
+        int port=8080;
+
+        profile.setPreference("network.proxy.type",1);
+        profile.setPreference("network.proxy.http",serverIP);
+//        profile.setPreference("network.proxy.ftp",serverIP);
+//        profile.setPreference("network.proxy.socks",serverIP);
+        profile.setPreference("network.proxy.ssl",serverIP);
+        profile.setPreference("network.proxy.http_port",port);
+//        profile.setPreference("network.proxy.ftp_port",port);
+//        profile.setPreference("network.proxy.socks_port",port);
+        profile.setPreference("network.proxy.ssl_port",port);
+
+        WebDriver driver = new FirefoxDriver(profile);
 
 //        driver.manage().window().maximize();
 
@@ -62,26 +80,20 @@ public class ReadSiteDNS {
         String cssSelector_GoodPrice = "meta[itemprop=price]";
 
         ArrayList<String> listLinkPages = new ArrayList<String>();
+        ArrayList<String> listLinkGoods = new ArrayList<String>();
+
         //listLinkPages.add("http://www.dns-shop.ru/catalog/17a892f816404e77/noutbuki/");
         //listPages.add("http://www.dns-shop.ru/catalog/31f05737df7e4e77/ssd-25-sata-nakopiteli/");
 
-        //fillListPagesFromSite(driver, cssSelector_Categories, listLinkPages);
-        fillListPagesFromFile(listLinkPages);
-
-
-
-        ArrayList<String> listLinkGoods = new ArrayList<String>();
+//        fillListPagesFromSite(driver, cssSelector_Categories, listLinkPages);
+        listLinkPages = fillListPagesFromFile();
 
         for (int countSites = 0; countSites < listLinkPages.size(); countSites++) {
 
-//            addToResultString(Integer.toString(countSites + 1));
-
-            // Open browser.
-//            addToResultString("Open page: " + listLinkPages.get(countSites));
+            // Open page for parsing Goods.
             driver.navigate().to(listLinkPages.get(countSites));
 
-            // Expand all pages with goods.
-//            addToResultString("Start expand pages");
+            // Expand and read all pages with Goods.
             expandAndReadLinkGoods(driver, listLinkGoods, cssSelector_ExpandPage_Block, cssSelector_ExpandPage_Button, cssSelector_GoodLink);
 
         }
@@ -183,12 +195,13 @@ public class ReadSiteDNS {
         }
     }
 
-    private void fillListPagesFromFile(ArrayList<String> listPages){
+    private ArrayList<String> fillListPagesFromFile(){
 
+//        ArrayList<String> listLinkPages;
         ReadWriteFile mFileWithCategories = new ReadWriteFile("Categories_DNS.txt");
 
         String mFile = mFileWithCategories.readFile();
-        listPages = new ArrayList<String>(Arrays.asList(mFile.split("\n")));
+        return new ArrayList<String>(Arrays.asList(mFile.split("\n")));
 
     }
 
