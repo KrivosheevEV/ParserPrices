@@ -69,15 +69,22 @@ public class ProxyServers {
                 timeOut = timeOut + 1000;
             }
 
-            try {
-                InetAddress inetAddress = InetAddress.getByName(deletePortFromProxyAddress(listProxyServers_RU.get(i)));
-                if (inetAddress.isReachable(timeOut)) {
-                    actualProxyServer = listProxyServers_RU.get(i);
-                    break;
-                }
-            }catch (Exception e){
+            String newProxyServer = listProxyServers_RU.get(i);
+//            if (proxyIsAlive(getIPFromProxyAddress(newProxyServer), getPortFromProxyAddress(newProxyServer), timeOut)){
+//            if (proxyIsAlive2(newProxyServer)){
+                actualProxyServer = newProxyServer;
+                break;
+//            }
 
-            }
+//            try {
+//                InetAddress inetAddress = InetAddress.getByName(getIPFromProxyAddress(listProxyServers_RU.get(i)));
+//                if (inetAddress.isReachable(timeOut)) {
+//                    actualProxyServer = listProxyServers_RU.get(i);
+//                    break;
+//                }
+//            }catch (Exception e){
+//
+//            }
 
         }
 
@@ -87,10 +94,7 @@ public class ProxyServers {
 ////            String newProxyIP = newProxyServer.substring(0, newProxyServer.indexOf(":") - 1);
 ////            int newProxyPort = Integer.parseInt(newProxyServer.substring(newProxyServer.length() - 2));
 //
-//            if (proxyIsAlive2(newProxyServer)){
-//                actualProxyServer = newProxyServer;
-//                break;
-//            }
+
 //
 //        }
 
@@ -119,6 +123,7 @@ public class ProxyServers {
             t.close();
         } catch (IOException e) {
             //e.printStackTrace();
+            System.out.println("Error open socket: " + proxyHost_ + ":" + proxyPort_);
         }
 
         return resultChecking;
@@ -167,9 +172,14 @@ public class ProxyServers {
 
     }
 
-    private String deletePortFromProxyAddress(String fullProxyAddress){
+    public String getIPFromProxyAddress(String fullProxyAddress){
 
         return fullProxyAddress.substring(0, fullProxyAddress.indexOf(":"));
+    }
+
+    public int getPortFromProxyAddress(String fullProxyAddress){
+
+        return Integer.parseInt(fullProxyAddress.substring(fullProxyAddress.indexOf(":") + 1));
     }
 
     enum ProxyAddressWithPorts{

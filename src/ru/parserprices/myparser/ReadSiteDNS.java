@@ -37,31 +37,30 @@ public class ReadSiteDNS {
             e.printStackTrace();
             return;
         }
-        Proxy proxy = new Proxy();
-        proxy.setHttpProxy(proxyAddress);
-//        proxy.setSslProxy(proxyAddress);
 
+//        Proxy proxy = new Proxy();
+//        proxy.setHttpProxy(proxyAddress);
+//        proxy.setSslProxy(proxyAddress);
 //        proxy.setHttpProxy("80.249.185.2:3128");
 //        proxy.setSslProxy("80.249.185.2:3128");
-
-        System.out.println(proxyAddress);
-
 //        DesiredCapabilities capabilities = new DesiredCapabilities();
 //        capabilities.setCapability(CapabilityType.PROXY, proxy);
 
-        FirefoxProfile profile = new FirefoxProfile();
-        String serverIP="91.221.233.82";
-        int port=8080;
+        System.out.println(proxyAddress);
 
-        profile.setPreference("network.proxy.type",1);
-        profile.setPreference("network.proxy.http",serverIP);
+        FirefoxProfile profile = new FirefoxProfile();
+        String ProxyServerIP = newProxyServer.getIPFromProxyAddress(proxyAddress); // "91.221.233.82";
+        int ProxyServerPort = newProxyServer.getPortFromProxyAddress(proxyAddress); //8080;
+
+        profile.setPreference("network.proxy.type", 1);
+        profile.setPreference("network.proxy.http", ProxyServerIP);
 //        profile.setPreference("network.proxy.ftp",serverIP);
 //        profile.setPreference("network.proxy.socks",serverIP);
-        profile.setPreference("network.proxy.ssl",serverIP);
-        profile.setPreference("network.proxy.http_port",port);
+        profile.setPreference("network.proxy.ssl", ProxyServerIP);
+        profile.setPreference("network.proxy.http_port", ProxyServerPort);
 //        profile.setPreference("network.proxy.ftp_port",port);
 //        profile.setPreference("network.proxy.socks_port",port);
-        profile.setPreference("network.proxy.ssl_port",port);
+        profile.setPreference("network.proxy.ssl_port", ProxyServerPort);
 
         WebDriver driver = new FirefoxDriver(profile);
 
