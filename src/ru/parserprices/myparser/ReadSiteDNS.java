@@ -84,7 +84,7 @@ public class ReadSiteDNS {
         String cssSelector_GoodPrice2 = "span[data-of='price-total'";
 
         ArrayList<String> listLinkGoods = new ArrayList<String>();
-        ArrayList<String[]> listLinkGoods2 = new ArrayList<String[]>();
+        ArrayList<String[]> listDataToBase = new ArrayList<String[]>();
         ArrayList<String> listLinkPages = new ArrayList<String>();
 
         //listLinkPages.add("http://www.dns-shop.ru/catalog/17a892f816404e77/noutbuki/");
@@ -103,15 +103,18 @@ public class ReadSiteDNS {
 
             // Expand and read data in current page.
             addToResultString(listLinkPages.get(countSites));
-            expandAndReadDescription(driver, listLinkGoods2, cssSelector_ExpandPage_Block, cssSelector_ExpandPage_Button, cssSelector_GoodItems, cssSelector_GoodTitle2, cssSelector_GoodItem2, cssSelector_GoodPrice2);
+            expandAndReadDescription(driver, listDataToBase, cssSelector_ExpandPage_Block, cssSelector_ExpandPage_Button, cssSelector_GoodItems, cssSelector_GoodTitle2, cssSelector_GoodItem2, cssSelector_GoodPrice2);
 
         }
 
-        readGoodDescription(driver, listLinkGoods, cssSelector_GoodTitle, cssSelector_GoodCode, cssSelector_GoodPricePrevious, cssSelector_GoodPrice);
+        addToResultString("Goods found: " + String.valueOf(listDataToBase.size()));
+//        readGoodDescription(driver, listLinkGoods, cssSelector_GoodTitle, cssSelector_GoodCode, cssSelector_GoodPricePrevious, cssSelector_GoodPrice);
 
         // Close browser.
 //        driver.close();
         driver.quit();
+
+        writeDataIntoBase(listDataToBase);
 
 //        System.out.println(listPages.size());
         System.out.print(resultOfPasring);
@@ -222,14 +225,20 @@ public class ReadSiteDNS {
             listItems = driver.findElements(By.cssSelector(cssSelector_GoodItems));
 
             for (WebElement elementGood : listItems) {
+                ++countIteration;
                 goodTitle = elementGood.findElement(By.cssSelector(cssSelector_GoodTitle2)).getText();
                 goodItem = elementGood.findElement(By.cssSelector(cssSelector_GoodItem2)).getText();
-                goodPrice = elementGood.findElement(By.cssSelector(cssSelector_GoodPrice2)).getText();
-                addToResultString("Good: " + goodTitle + ", Item: " + goodItem + ", Price: " + goodPrice);
+                goodPrice = elementGood.findElement(By.cssSelector(cssSelector_GoodPrice2)).getText().replace(" ", "");
+//                goodPrice = goodPrice.replace(" ", "");
+                //addToResultString("Good: " + goodTitle + ", Item: " + goodItem + ", Price: " + goodPrice);
+                String[] toList = {String.valueOf(countIteration), goodTitle, goodItem, "DNS_Samara", goodPrice};
+                listLinkGoods2.add(toList);
 
-                if (++countIteration == 5) break;
+                if (countIteration == 5) break;
 
             }
+        }finally {
+//            addToResultString("Goods found: " + String.valueOf(listLinkGoods2.size()));
         }
     }
 
@@ -263,7 +272,6 @@ public class ReadSiteDNS {
         return new ArrayList<String>(Arrays.asList(mFile.split("\n")));
 
     }
-
 
     private void readGoodDescription(WebDriver driver, ArrayList<String> listLinkGoods, String cssSelector_GoodTitle, String cssSelector_GoodCode, String cssSelector_GoodPricePrevious, String cssSelector_GoodPrice) {
 
@@ -317,4 +325,20 @@ public class ReadSiteDNS {
         return resultOfMetod;
     }
 
+    private void writeDataIntoBase(ArrayList<String[]> listDataToBase){
+
+        ReadWriteBase writeDataToBase = new ReadWriteBase();
+        int countOfStrings = 0;
+        for (String[] stringToBase: listDataToBase
+             ) {
+            countOfStrings++;
+
+            writeDataToBase.setData(stringToBase);
+
+            if (countOfStrings == 2) break;
+
+        }
+
+
+    }
 }
