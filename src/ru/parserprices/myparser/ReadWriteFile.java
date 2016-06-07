@@ -57,8 +57,10 @@ public class ReadWriteFile implements ReadSites_Interface {
                 //В цикле построчно считываем файл
                 String s;
                 while ((s = in.readLine()) != null) {
-                    sb.append(s);
-                    sb.append("\n");
+                    if (!s.startsWith("//")){
+                        sb.append(s);
+                        sb.append("\n");
+                    }
                 }
             } finally {
                 //Также не забываем закрыть файл

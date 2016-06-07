@@ -17,40 +17,9 @@ public class ProxyServers {
 
     public String getProxyServer() throws IOException {
 
-        System.out.println("Start search quickly proxy");
+        //System.out.println("Start search quickly proxy");
 
         ArrayList<String> listProxyServers_RU = new ArrayList<String>();
-//        listProxyServers_RU.add("109.195.131.207:1080");
-//        listProxyServers_RU.add("110.8.253.100:80");
-//        listProxyServers_RU.add("119.70.40.100:8080");
-//        listProxyServers_RU.add("212.120.163710:80");
-//        listProxyServers_RU.add("46.101.129.227:3128");
-//        listProxyServers_RU.add("46.101.36.66:2015");
-//        listProxyServers_RU.add("85.198.103.35:8080");
-//        listProxyServers_RU.add("185.12.94.236:4444");
-//        listProxyServers_RU.add("212.120.163.170:80");
-//        listProxyServers_RU.add("46.48.133.250:3128");
-//        listProxyServers_RU.add("120.52.72.21:80");
-//        listProxyServers_RU.add("120.52.72.53:80");
-//        listProxyServers_RU.add("123.56.28.108:8888");
-//        listProxyServers_RU.add("121.22.252.248:8000");
-//        listProxyServers_RU.add("120.131.128.211:80");
-
-//        listProxyServers_RU.add("109.195.131.207");
-//        listProxyServers_RU.add("110.8.253.100");
-//        listProxyServers_RU.add("119.70.40.100");
-//        listProxyServers_RU.add("46.101.129.227");
-//        listProxyServers_RU.add("46.101.36.66");
-//        listProxyServers_RU.add("85.198.103.35");
-//        listProxyServers_RU.add("185.12.94.236");
-//        listProxyServers_RU.add("212.120.163.170");
-//        listProxyServers_RU.add("46.48.133.250");
-//        listProxyServers_RU.add("120.52.72.21");
-//        listProxyServers_RU.add("120.52.72.53");
-//        listProxyServers_RU.add("123.56.28.108");
-//        listProxyServers_RU.add("121.22.252.248");
-//        listProxyServers_RU.add("120.131.128.211");
-
         listProxyServers_RU = fillListProxyServersFromFile("ProxyServers.txt", ProxyAddressWithPorts.No);
 
         String actualProxyServer = "nbr-02:8080";
@@ -70,23 +39,30 @@ public class ProxyServers {
             }
 
             String newProxyServer = listProxyServers_RU.get(i);
-//            if (proxyIsAlive(getIPFromProxyAddress(newProxyServer), getPortFromProxyAddress(newProxyServer), timeOut)){
-//            if (proxyIsAlive2(newProxyServer)){
-                actualProxyServer = newProxyServer;
-                break;
-//            }
+
+//            if (proxyIsAlive(getIPFromProxyAddress(newProxyServer), getPortFromProxyAddress(newProxyServer), timeOut))
+////            if (proxyIsAlive2(newProxyServer))
+// {
+//                System.out.println(newProxyServer + " +");
+//                actualProxyServer = newProxyServer;
+//
+//                break;
+//            }else System.out.println(newProxyServer + " -");
 
 //            try {
 //                InetAddress inetAddress = InetAddress.getByName(getIPFromProxyAddress(listProxyServers_RU.get(i)));
 //                if (inetAddress.isReachable(timeOut)) {
 //                    actualProxyServer = listProxyServers_RU.get(i);
-//                    break;
-//                }
+//                    System.out.println(newProxyServer + " +");
+////                    break;
+//                }else System.out.println(newProxyServer + " -");
 //            }catch (Exception e){
-//
+//                System.out.println(newProxyServer + " - (timeout)");
 //            }
 
         }
+
+
 
 //        for (int i = 0; i < listProxyServers_RU.size(); i++) {
 //
@@ -99,7 +75,7 @@ public class ProxyServers {
 //        }
 
 
-        System.out.println("Finish search quickly proxy");
+        //System.out.println("Finish search quickly proxy");
 
         return actualProxyServer;
 
@@ -111,19 +87,20 @@ public class ProxyServers {
 
         Boolean resultChecking = false;
 
-        Socket t = null;
+//        Socket t = null;
 
         try {
-            t = new Socket(proxyHost_, proxyPort_);
+            Socket t = new Socket(proxyHost_, proxyPort_);
             DataInputStream dis = new DataInputStream(t.getInputStream());
             PrintStream ps = new PrintStream(t.getOutputStream());
             ps.println("Test");
             String str = dis.readUTF();
             if (str.equals("Test")) resultChecking = true;
+            resultChecking = true;
             t.close();
         } catch (IOException e) {
             //e.printStackTrace();
-            System.out.println("Error open socket: " + proxyHost_ + ":" + proxyPort_);
+            //System.out.println("Error open socket: " + proxyHost_ + ":" + proxyPort_);
         }
 
         return resultChecking;

@@ -46,7 +46,7 @@ public class ReadSiteDNS {
 //        DesiredCapabilities capabilities = new DesiredCapabilities();
 //        capabilities.setCapability(CapabilityType.PROXY, proxy);
 
-        System.out.println(proxyAddress);
+//        System.out.println(proxyAddress);
 
         FirefoxProfile profile = new FirefoxProfile();
         String ProxyServerIP = newProxyServer.getIPFromProxyAddress(proxyAddress); // "91.221.233.82";
@@ -55,11 +55,11 @@ public class ReadSiteDNS {
         profile.setPreference("network.proxy.type", 1);
         profile.setPreference("network.proxy.http", ProxyServerIP);
 //        profile.setPreference("network.proxy.ftp",serverIP);
-//        profile.setPreference("network.proxy.socks",serverIP);
+        profile.setPreference("network.proxy.socks", ProxyServerIP);
         profile.setPreference("network.proxy.ssl", ProxyServerIP);
         profile.setPreference("network.proxy.http_port", ProxyServerPort);
 //        profile.setPreference("network.proxy.ftp_port",port);
-//        profile.setPreference("network.proxy.socks_port",port);
+        profile.setPreference("network.proxy.socks_port", ProxyServerPort);
         profile.setPreference("network.proxy.ssl_port", ProxyServerPort);
 
         WebDriver driver = new FirefoxDriver(profile);
@@ -78,8 +78,14 @@ public class ReadSiteDNS {
         String cssSelector_GoodPricePrevious = "div.previous-price s.prev-price-total";
         String cssSelector_GoodPrice = "meta[itemprop=price]";
 
-        ArrayList<String> listLinkPages = new ArrayList<String>();
+        String cssSelector_GoodItems = "div.thumbnail";
+        String cssSelector_GoodItem2 = "div.item-code";
+        String cssSelector_GoodTitle2 = "div.item-name";
+        String cssSelector_GoodPrice2 = "span[data-of='price-total'";
+
         ArrayList<String> listLinkGoods = new ArrayList<String>();
+        ArrayList<String[]> listLinkGoods2 = new ArrayList<String[]>();
+        ArrayList<String> listLinkPages = new ArrayList<String>();
 
         //listLinkPages.add("http://www.dns-shop.ru/catalog/17a892f816404e77/noutbuki/");
         //listPages.add("http://www.dns-shop.ru/catalog/31f05737df7e4e77/ssd-25-sata-nakopiteli/");
@@ -93,7 +99,11 @@ public class ReadSiteDNS {
             driver.navigate().to(listLinkPages.get(countSites));
 
             // Expand and read all pages with Goods.
-            expandAndReadLinkGoods(driver, listLinkGoods, cssSelector_ExpandPage_Block, cssSelector_ExpandPage_Button, cssSelector_GoodLink);
+            //expandAndReadLinkGoods(driver, listLinkGoods, cssSelector_ExpandPage_Block, cssSelector_ExpandPage_Button, cssSelector_GoodLink);
+
+            // Expand and read data in current page.
+            addToResultString(listLinkPages.get(countSites));
+            expandAndReadDescription(driver, listLinkGoods2, cssSelector_ExpandPage_Block, cssSelector_ExpandPage_Button, cssSelector_GoodItems, cssSelector_GoodTitle2, cssSelector_GoodItem2, cssSelector_GoodPrice2);
 
         }
 
@@ -173,6 +183,56 @@ public class ReadSiteDNS {
         }
     }
 
+    public void expandAndReadDescription(WebDriver driver,
+                                         ArrayList<String[]> listLinkGoods2,
+                                         String cssSelector_ExpandPage_Block,
+                                         String cssSelector_ExpandPage_Button,
+                                         String cssSelector_GoodItems,
+                                         String cssSelector_GoodTitle2,
+                                         String cssSelector_GoodItem2,
+                                         String cssSelector_GoodPrice2) {
+
+        List<WebElement> listItems;
+        String goodTitle = "";
+        String goodItem = "";
+        String goodPrice = "";
+        int countIteration = 0;
+
+        try {
+
+            listItems = driver.findElements(By.cssSelector(cssSelector_GoodItems));
+
+            if (listItems.size() > 0) {
+
+                WebElement but_NextPageBlock = driver.findElement(By.cssSelector(cssSelector_ExpandPage_Block));
+                WebElement but_NextPageButton = but_NextPageBlock.findElement(By.cssSelector(cssSelector_ExpandPage_Button));
+
+                while ((new WebDriverWait(driver, WAITING_FOR_EXPAND)).until(ExpectedConditions.not(
+                        ExpectedConditions.invisibilityOfElementLocated(By.cssSelector(cssSelector_ExpandPage_Block))))) {
+
+                    but_NextPageButton.sendKeys(Keys.ESCAPE);
+                    but_NextPageButton.click();
+
+                }
+            }
+
+        } catch (Throwable te) {
+//            addToResultString("Error parsing site (timeout expand)");
+            //addToResultString(te.getMessage());
+            listItems = driver.findElements(By.cssSelector(cssSelector_GoodItems));
+
+            for (WebElement elementGood : listItems) {
+                goodTitle = elementGood.findElement(By.cssSelector(cssSelector_GoodTitle2)).getText();
+                goodItem = elementGood.findElement(By.cssSelector(cssSelector_GoodItem2)).getText();
+                goodPrice = elementGood.findElement(By.cssSelector(cssSelector_GoodPrice2)).getText();
+                addToResultString("Good: " + goodTitle + ", Item: " + goodItem + ", Price: " + goodPrice);
+
+                if (++countIteration == 5) break;
+
+            }
+        }
+    }
+
     private void fillListPagesFromSite(WebDriver driver, String cssSelector_Categories, ArrayList<String> listPages) {
 
         driver.navigate().to(DNG_GENERAL_URL);
@@ -222,7 +282,7 @@ public class ReadSiteDNS {
                 addToResultString(te.getMessage());
             }
 
-            if (countIteration == 5) break;
+//            if (countIteration == 5) break;
         }
 
     }
