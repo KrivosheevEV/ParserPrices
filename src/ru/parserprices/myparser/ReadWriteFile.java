@@ -33,10 +33,25 @@ public class ReadWriteFile implements ReadSites_Interface {
 
     public String getCurrentPath(){
 
+        String pathStartingApp = "";
+        byte suffixException = 1;
 //        return new File(ReadWriteFile.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
-        String pathStartingApp = ClassLoader.getSystemClassLoader().getResource(".").getPath();
-        pathStartingApp = pathStartingApp.substring(1, pathStartingApp.length() - 1);
+
+        try {
+            if (MainParsingPrices.currentOS == MainParsingPrices.OS.Windows){
+                pathStartingApp = ClassLoader.getSystemClassLoader().getResource(".").getPath();
+            }else {
+                pathStartingApp = "/" + new File(".").getAbsolutePath();
+                suffixException = 2;
+            }
+        }catch (Exception e){
+        }
+
+        pathStartingApp = pathStartingApp.substring(1, pathStartingApp.length() - suffixException);
+        System.out.println(" => " + pathStartingApp);
+
         return pathStartingApp;
+
 //        String path=System.getProperty("java.class.path");
 //        String FileSeparator=(String)System.getProperty("file.separator");
 //        return path.substring(0, path.lastIndexOf(FileSeparator)+1);
@@ -77,7 +92,7 @@ public class ReadWriteFile implements ReadSites_Interface {
 
     private static void exists(File file) throws FileNotFoundException {
         if (!file.exists()){
-            System.out.print("File not exist: " + file.getName());
+            System.out.print("File not exist: " + file.getPath() + file.getName() + "\n");
             throw new FileNotFoundException(file.getName());
         }
     }

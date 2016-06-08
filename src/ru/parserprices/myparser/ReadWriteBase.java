@@ -9,8 +9,8 @@ public class ReadWriteBase {
 
     // JDBC URL, username and password of MySQL server
     private static String url = "jdbc:mysql://107.170.234.5:3306/Goods";
-    private static final String user = "root";
-    private static final String password = "root";
+    private static final String user = "frontime";
+    private static final String password = "Ahjynfqv2015"; /*Фронтайм2015*/
 
     // JDBC variables for opening and managing connection
     private static Connection con;
@@ -56,8 +56,8 @@ public class ReadWriteBase {
     public void setData(String[] arrayData) {
 
 
-        String query = "INSERT INTO Goods.goods (num, good, item, shop, price) \n" +
-                " VALUES (" + Integer.parseInt(arrayData[0]) + ", '" + arrayData[1] + "', '" + arrayData[2] + "', '" + arrayData[3] + "', " + Integer.parseInt(arrayData[4]) + ");";
+        String query = "INSERT INTO Frontime.goods (good, item, shop, price) \n" +
+                " VALUES ('" + arrayData[1] + "', '" + arrayData[2] + "', '" + arrayData[3] + "', " + Integer.parseInt(arrayData[4]) + ");";
 
         try {
             con = DriverManager.getConnection(url, user, password);
@@ -76,11 +76,13 @@ public class ReadWriteBase {
             try {
                 stmt.close();
             } catch (SQLException se) { /*can't do anything */ }
-            try {
-                rs.close();
-            } catch (SQLException se) { /*can't do anything */ }
+//            try {
+//                rs.close();
+//            } catch (SQLException se) { /*can't do anything */ }
         }
 
     }
+
+
 
 }

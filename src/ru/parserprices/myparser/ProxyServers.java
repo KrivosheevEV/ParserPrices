@@ -20,6 +20,7 @@ public class ProxyServers {
         //System.out.println("Start search quickly proxy");
 
         ArrayList<String> listProxyServers_RU = new ArrayList<String>();
+
         listProxyServers_RU = fillListProxyServersFromFile("ProxyServers.txt", ProxyAddressWithPorts.No);
 
         String actualProxyServer = "nbr-02:8080";

@@ -27,42 +27,35 @@ public class ReadSiteDNS {
         startTime = System.currentTimeMillis();
         addToResultString("Start parsing");
 
-        // Proxy setting.
-        ProxyServers newProxyServer = new ProxyServers();
-        String proxyAddress = null;
-        try {
-            proxyAddress = newProxyServer.getProxyServer();
-            System.out.println(proxyAddress);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
+//        // Proxy setting.
+//        ProxyServers newProxyServer = new ProxyServers();
+//        String proxyAddress = null;
+//        try {
+//            proxyAddress = newProxyServer.getProxyServer();
+//            System.out.println(proxyAddress);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            return;
+//        }
 
-//        Proxy proxy = new Proxy();
-//        proxy.setHttpProxy(proxyAddress);
-//        proxy.setSslProxy(proxyAddress);
-//        proxy.setHttpProxy("80.249.185.2:3128");
-//        proxy.setSslProxy("80.249.185.2:3128");
-//        DesiredCapabilities capabilities = new DesiredCapabilities();
-//        capabilities.setCapability(CapabilityType.PROXY, proxy);
+//        FirefoxProfile profile = new FirefoxProfile();
+//        String ProxyServerIP = newProxyServer.getIPFromProxyAddress(proxyAddress); // "91.221.233.82";
+//        int ProxyServerPort = newProxyServer.getPortFromProxyAddress(proxyAddress); //8080;
 
-//        System.out.println(proxyAddress);
+//        profile.setPreference("network.proxy.type", 1);
+//        profile.setPreference("network.proxy.http", ProxyServerIP);
+////        profile.setPreference("network.proxy.ftp",serverIP);
+//        profile.setPreference("network.proxy.socks", ProxyServerIP);
+//        profile.setPreference("network.proxy.ssl", ProxyServerIP);
+//        profile.setPreference("network.proxy.http_port", ProxyServerPort);
+////        profile.setPreference("network.proxy.ftp_port",port);
+//        profile.setPreference("network.proxy.socks_port", ProxyServerPort);
+//        profile.setPreference("network.proxy.ssl_port", ProxyServerPort);
 
-        FirefoxProfile profile = new FirefoxProfile();
-        String ProxyServerIP = newProxyServer.getIPFromProxyAddress(proxyAddress); // "91.221.233.82";
-        int ProxyServerPort = newProxyServer.getPortFromProxyAddress(proxyAddress); //8080;
+//        WebDriver driver = new FirefoxDriver(profile);
+//        ///
 
-        profile.setPreference("network.proxy.type", 1);
-        profile.setPreference("network.proxy.http", ProxyServerIP);
-//        profile.setPreference("network.proxy.ftp",serverIP);
-        profile.setPreference("network.proxy.socks", ProxyServerIP);
-        profile.setPreference("network.proxy.ssl", ProxyServerIP);
-        profile.setPreference("network.proxy.http_port", ProxyServerPort);
-//        profile.setPreference("network.proxy.ftp_port",port);
-        profile.setPreference("network.proxy.socks_port", ProxyServerPort);
-        profile.setPreference("network.proxy.ssl_port", ProxyServerPort);
-
-        WebDriver driver = new FirefoxDriver(profile);
+        WebDriver driver = new FirefoxDriver();
 
 //        driver.manage().window().maximize();
 
@@ -334,6 +327,7 @@ public class ReadSiteDNS {
             countOfStrings++;
 
             writeDataToBase.setData(stringToBase);
+            System.out.println(stringToBase[2]);
 
             if (countOfStrings == 2) break;
 
