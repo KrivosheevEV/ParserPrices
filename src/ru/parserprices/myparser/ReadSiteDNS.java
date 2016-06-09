@@ -12,6 +12,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.IOException;
+import java.sql.Statement;
 import java.util.*;
 
 public class ReadSiteDNS {
@@ -263,7 +264,6 @@ public class ReadSiteDNS {
 
         String mFile = mFileWithCategories.readFile();
         return new ArrayList<String>(Arrays.asList(mFile.split("\n")));
-
     }
 
     private void readGoodDescription(WebDriver driver, ArrayList<String> listLinkGoods, String cssSelector_GoodTitle, String cssSelector_GoodCode, String cssSelector_GoodPricePrevious, String cssSelector_GoodPrice) {
@@ -321,18 +321,16 @@ public class ReadSiteDNS {
     private void writeDataIntoBase(ArrayList<String[]> listDataToBase){
 
         ReadWriteBase writeDataToBase = new ReadWriteBase();
+        Statement statement = writeDataToBase.getStatement();
         int countOfStrings = 0;
-        for (String[] stringToBase: listDataToBase
-             ) {
-            countOfStrings++;
 
-            writeDataToBase.setData(stringToBase);
+        for (String[] stringToBase: listDataToBase) {
+
+            countOfStrings++;
+            writeDataToBase.writeData(statement, stringToBase);
             System.out.println(stringToBase[2]);
 
-            if (countOfStrings == 2) break;
-
+            if (countOfStrings == 5) break;
         }
-
-
     }
 }

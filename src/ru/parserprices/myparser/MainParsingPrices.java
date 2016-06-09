@@ -5,7 +5,7 @@ import java.io.IOException;
 
 public class MainParsingPrices {
 
-    public static OS currentOS;
+    static OS currentOS;
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
@@ -14,12 +14,12 @@ public class MainParsingPrices {
             currentOS = OS.Windows;
         }else currentOS = OS.Linux;
 
-        // Load MySQL class.
-        try {
-            Class.forName("com.mysql.jdbc.Driver");
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+//        // Load MySQL class.
+//        try {
+//            Class.forName("com.mysql.jdbc.Driver");
+//        } catch (ClassNotFoundException e) {
+//            e.printStackTrace();
+//        }
 
         ReadWriteFile mPatternOfSite = new ReadWriteFile("Pattern_DNS1.xml");
 
@@ -33,7 +33,7 @@ public class MainParsingPrices {
 
     }
 
-    public enum OS{
+    enum OS{
         Windows, Linux
     }
 
