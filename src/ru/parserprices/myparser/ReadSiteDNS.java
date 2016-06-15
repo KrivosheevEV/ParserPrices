@@ -6,14 +6,17 @@ package ru.parserprices.myparser;
 import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
+import org.openqa.selenium.firefox.internal.ProfilesIni;
 import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class ReadSiteDNS {
 
@@ -22,11 +25,14 @@ public class ReadSiteDNS {
 
     private static String DNG_GENERAL_URL = "http://www.dns-shop.ru";
     private static int WAITING_FOR_EXPAND = 7;
+    private static int MAX_COUNT_EXPAND = -1;
+    private static int MAX_COUNT_TOBASE = -1;
+    private static int MAX_COUNT_ELEMENTS = -1;
 
     public void ReadSite(String FullAddress) throws InterruptedException {
 
         startTime = System.currentTimeMillis();
-        addToResultString("Start parsing");
+        addToResultString("Start parsing: " + new Date().toString(), addTo.LogFileAndConsole);
 
 //        // Proxy setting.
 //        ProxyServers newProxyServer = new ProxyServers();
@@ -56,12 +62,47 @@ public class ReadSiteDNS {
 //        WebDriver driver = new FirefoxDriver(profile);
 //        ///
 
-        WebDriver driver = new FirefoxDriver();
+        WebDriver driver;
+
+        FirefoxProfile profile = new FirefoxProfile();
+
+        profile.setPreference("browser.download.manager.alertOnEXEOpen", false);
+        profile.setPreference("browser.helperApps.neverAsk.saveToDisk","application/msword,application/csv,text/csv,image/png ,image/jpeg");
+        profile.setPreference("browser.download.manager.showWhenStarting", false);
+        profile.setPreference("browser.download.manager.focusWhenStarting", false);
+        //profile.setPreference("browser.download.useDownloadDir",true);
+        profile.setPreference("browser.helperApps.alwaysAsk.force", false);
+        profile.setPreference("browser.download.manager.alertOnEXEOpen", false);
+        profile.setPreference("browser.download.manager.closeWhenDone", false);
+        profile.setPreference("browser.download.manager.showAlertOnComplete", false);
+        profile.setPreference("browser.download.manager.useWindow", false);
+        profile.setPreference("browser.download.manager.showWhenStarting",false);
+        profile.setPreference("services.sync.prefs.sync.browser.download.manager.showWhenStarting", false);
+        profile.setPreference("pdfjs.disabled", true);
+
+        try {
+            addToResultString("Trying take new WebDriver Firefox", addTo.LogFileAndConsole);
+            driver = new FirefoxDriver(profile);
+        }catch (Exception e){
+            e.printStackTrace();
+            addToResultString(e.toString(), addTo.LogFileAndConsole);
+            return;
+        }
+
+//        try {
+//            addToResultString("Trying open empty page", addTo.Yes);
+//            driver.get("");
+//        }catch (Exception e){
+//            e.printStackTrace();
+//            addToResultString(e.toString(), addTo.Yes);
+//            return;
+//        }
 
 //        driver.manage().window().maximize();
 
 //        driver.navigate().to("https://2ip.ru/");
-//        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+
+//        driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
 
         String cssSelector_ExpandPage_Block = "div.catalog-category-more, div[style$='block']";
         String cssSelector_ExpandPage_Button = "a[class='btn btn-default']";
@@ -90,28 +131,43 @@ public class ReadSiteDNS {
         for (int countSites = 0; countSites < listLinkPages.size(); countSites++) {
 
             // Open page for parsing Goods.
-            driver.navigate().to(listLinkPages.get(countSites));
+            try {
+                addToResultString("Trying open page: " + listLinkPages.get(countSites), addTo.LogFileAndConsole);
+                driver.navigate().to(listLinkPages.get(countSites));
+//                driver.get(listLinkPages.get(countSites));
+            }catch (Exception e){
+                e.printStackTrace();
+                addToResultString(e.toString(), addTo.LogFileAndConsole);
+                return;
+            }
 
             // Expand and read all pages with Goods.
             //expandAndReadLinkGoods(driver, listLinkGoods, cssSelector_ExpandPage_Block, cssSelector_ExpandPage_Button, cssSelector_GoodLink);
 
             // Expand and read data in current page.
-            addToResultString(listLinkPages.get(countSites));
+//            addToResultString("Open page: " + listLinkPages.get(countSites), addTo.Yes);
             expandAndReadDescription(driver, listDataToBase, cssSelector_ExpandPage_Block, cssSelector_ExpandPage_Button, cssSelector_GoodItems, cssSelector_GoodTitle2, cssSelector_GoodItem2, cssSelector_GoodPrice2);
+
+            addToResultString("Writing data in base..", addTo.LogFileAndConsole);
+            writeDataIntoBase(listDataToBase);
+            addToResultString("String(" + String.valueOf(listDataToBase.size()) + ") in base writing.", addTo.LogFileAndConsole);
+
+            listDataToBase = new ArrayList<String[]>();
 
         }
 
-        addToResultString("Goods found: " + String.valueOf(listDataToBase.size()));
+//        addToResultString("Goods found: " + String.valueOf(listDataToBase.size()));
 //        readGoodDescription(driver, listLinkGoods, cssSelector_GoodTitle, cssSelector_GoodCode, cssSelector_GoodPricePrevious, cssSelector_GoodPrice);
 
         // Close browser.
 //        driver.close();
         driver.quit();
 
-        writeDataIntoBase(listDataToBase);
-
 //        System.out.println(listPages.size());
+        addToResultString("Finish parsing: " + new Date().toString(), addTo.LogFileAndConsole);
+
         System.out.print(resultOfPasring);
+
 
     }
 
@@ -151,13 +207,13 @@ public class ReadSiteDNS {
                         // Expand button is invisible.
 
                         but_NextPageBlock = null;
-                        addToResultString("Timeout exception");
+                        addToResultString("Timeout exception", addTo.LogFileAndConsole);
                         //addToResultString(te.getMessage());
 
 //                        addToResultString("Count of item goods: " + Integer.toString(listItems.size()));
 
                         listItems = driver.findElements(By.cssSelector(cssSelector1));
-                        addToResultString("Count of item goods: " + Integer.toString(listItems.size()));
+                        addToResultString("Count of item goods: " + Integer.toString(listItems.size()), addTo.LogFileAndConsole);
 
                         for (WebElement hrefElement : listItems
                                 ) {
@@ -174,7 +230,7 @@ public class ReadSiteDNS {
             }
 
         } catch (Throwable te) {
-            addToResultString("Error parsing site (timeout expand)");
+            addToResultString("Error parsing site (timeout expand)", addTo.LogFileAndConsole);
             //addToResultString(te.getMessage());
 
         }
@@ -193,11 +249,12 @@ public class ReadSiteDNS {
         String goodTitle = "";
         String goodItem = "";
         String goodPrice = "";
-        int countIteration = 0;
+
 
         try {
 
             listItems = driver.findElements(By.cssSelector(cssSelector_GoodItems));
+            int countPages = 0;
 
             if (listItems.size() > 0) {
 
@@ -210,16 +267,20 @@ public class ReadSiteDNS {
                     but_NextPageButton.sendKeys(Keys.ESCAPE);
                     but_NextPageButton.click();
 
+                    if (MAX_COUNT_EXPAND != -1 && countPages++ >= MAX_COUNT_EXPAND) break;
                 }
             }
 
         } catch (Throwable te) {
 //            addToResultString("Error parsing site (timeout expand)");
-            //addToResultString(te.getMessage());
+            addToResultString("All page is opened.", addTo.LogFileAndConsole);
             listItems = driver.findElements(By.cssSelector(cssSelector_GoodItems));
 
+            int countIteration = 0;
+
+            addToResultString("Reading data in page..", addTo.LogFileAndConsole);
             for (WebElement elementGood : listItems) {
-                ++countIteration;
+
                 goodTitle = elementGood.findElement(By.cssSelector(cssSelector_GoodTitle2)).getText();
                 goodItem = elementGood.findElement(By.cssSelector(cssSelector_GoodItem2)).getText();
                 goodPrice = elementGood.findElement(By.cssSelector(cssSelector_GoodPrice2)).getText().replace(" ", "");
@@ -228,11 +289,13 @@ public class ReadSiteDNS {
                 String[] toList = {String.valueOf(countIteration), goodTitle, goodItem, "DNS_Samara", goodPrice};
                 listLinkGoods2.add(toList);
 
-                if (countIteration == 5) break;
+                if (MAX_COUNT_ELEMENTS != -1 && countIteration >= MAX_COUNT_ELEMENTS) break;
+
+                countIteration++;
 
             }
-        }finally {
-//            addToResultString("Goods found: " + String.valueOf(listLinkGoods2.size()));
+
+            addToResultString("All item(" + countIteration + ") was reading", addTo.LogFileAndConsole);
         }
     }
 
@@ -252,12 +315,12 @@ public class ReadSiteDNS {
             }
 
         } catch (Throwable te) {
-            addToResultString("Error parsing site (fill category).");
-            addToResultString(te.getMessage());
+            addToResultString("Error parsing site (fill category).", addTo.LogFileAndConsole);
+            addToResultString(te.getMessage(), addTo.LogFileAndConsole);
         }
     }
 
-    private ArrayList<String> fillListPagesFromFile(){
+    private ArrayList<String> fillListPagesFromFile() {
 
 //        ArrayList<String> listLinkPages;
         ReadWriteFile mFileWithCategories = new ReadWriteFile("Categories_DNS.txt");
@@ -273,14 +336,15 @@ public class ReadSiteDNS {
             countIteration++;
             driver.navigate().to(linkGood);
             try {
-                addToResultString("Goods title:" + driver.findElement(By.cssSelector(cssSelector_GoodTitle)).getText());
-                addToResultString("Goods code :" + driver.findElement(By.cssSelector(cssSelector_GoodCode)).getText());
-                addToResultString("Goods price:" + driver.findElement(By.cssSelector(cssSelector_GoodPrice)).getAttribute("content"));
+                addToResultString("Goods title:" + driver.findElement(By.cssSelector(cssSelector_GoodTitle)).getText(), addTo.Console);
+                addToResultString("Goods code :" + driver.findElement(By.cssSelector(cssSelector_GoodCode)).getText(), addTo.Console);
+                addToResultString("Goods price:" + driver.findElement(By.cssSelector(cssSelector_GoodPrice)).getAttribute("content"), addTo.Console);
                 List<WebElement> listGoodPricePreviuos = driver.findElements(By.cssSelector(cssSelector_GoodPricePrevious));
-                if (listGoodPricePreviuos.size() > 0) addToResultString("Goods previous price:" + listGoodPricePreviuos.get(0).getText());
+                if (listGoodPricePreviuos.size() > 0)
+                    addToResultString("Goods previous price:" + listGoodPricePreviuos.get(0).getText(), addTo.Console);
             } catch (Throwable te) {
-                addToResultString("Error parsing site (get description)");
-                addToResultString(te.getMessage());
+                addToResultString("Error parsing site (get description)", addTo.LogFileAndConsole);
+                addToResultString(te.getMessage(), addTo.LogFileAndConsole);
             }
 
 //            if (countIteration == 5) break;
@@ -293,10 +357,19 @@ public class ReadSiteDNS {
         return this.resultOfPasring;
     }
 
-    private void addToResultString(String addedString) {
+    public void addToResultString(String addedString, addTo writeIntoLogFile) {
         //if (addedString.isEmpty()) return;
         String timeForResult = Long.toString((System.currentTimeMillis() - startTime) / 1000) + "." + Long.toString((System.currentTimeMillis() - startTime) % 1000);
-        resultOfPasring = resultOfPasring.concat(timeForResult + " -> " + addedString + "\n");
+        String stringToLog = timeForResult + " -> " + addedString + System.getProperty("line.separator");
+        resultOfPasring = resultOfPasring.concat(stringToLog);
+
+        if (writeIntoLogFile == addTo.LogFileAndConsole || writeIntoLogFile == addTo.logFile) {
+            ReadWriteFile mResultOfParsing = new ReadWriteFile(MainParsingPrices.fileResult2);
+            mResultOfParsing.writeResultToFile(mResultOfParsing.getFullAddress(), stringToLog, true);
+        }
+
+        if (writeIntoLogFile == addTo.LogFileAndConsole || writeIntoLogFile == addTo.Console)
+            System.out.println(addedString);
     }
 
     private boolean elementCanFind(WebDriver givenDriver, By givenBy) {
@@ -311,26 +384,61 @@ public class ReadSiteDNS {
             resultOfMetod = true;
         } catch (Throwable te) {
             addToResultString("Unable to find the element by classname: '"
-                    + givenBy.toString() + "' within " + maxWaitTime + " seconds.");
+                    + givenBy.toString() + "' within " + maxWaitTime + " seconds.", addTo.LogFileAndConsole);
             resultOfMetod = false;
         }
 
         return resultOfMetod;
     }
 
-    private void writeDataIntoBase(ArrayList<String[]> listDataToBase){
+    private void writeDataIntoBase(ArrayList<String[]> listDataToBase) {
 
-        ReadWriteBase writeDataToBase = new ReadWriteBase();
-        Statement statement = writeDataToBase.getStatement();
-        int countOfStrings = 0;
+        ReadWriteBase writeDataToBase;
+        Statement statement;
 
-        for (String[] stringToBase: listDataToBase) {
-
-            countOfStrings++;
-            writeDataToBase.writeData(statement, stringToBase);
-            System.out.println(stringToBase[2]);
-
-            if (countOfStrings == 5) break;
+        addToResultString("Getting statement base start..", addTo.LogFileAndConsole);
+        try {
+            writeDataToBase = new ReadWriteBase();
+            statement = writeDataToBase.getStatement();
+            addToResultString("Getting statement base finish.", addTo.LogFileAndConsole);
+        }catch (Exception e){
+            addToResultString(e.toString(), addTo.LogFileAndConsole);
+            return;
         }
+
+        int countOfRecords = 0;
+        int countOfUpdate = 0;
+
+        for (String[] stringToBase : listDataToBase) {
+
+            countOfRecords++;
+
+            if (writeDataToBase.findData(statement, "SELECT item FROM goods WHERE goods.item LIKE '" + stringToBase[2] + "';")){
+                addToResultString("Update record(" + countOfRecords + ") in base", addTo.Console);
+                writeDataToBase.updateData(statement, stringToBase);
+                countOfUpdate++;
+            }
+            else{
+                addToResultString("Write new record(" + countOfRecords + ") in base", addTo.Console);
+                writeDataToBase.writeData(statement, stringToBase);
+            }
+
+            //System.out.println(stringToBase[2]);
+
+            if (MAX_COUNT_TOBASE != -1 && countOfRecords >= MAX_COUNT_TOBASE) break;
+        }
+
+        addToResultString("Added records:   " + (countOfRecords - countOfUpdate) + " in base.", addTo.Console);
+        addToResultString("Updated records: " + (countOfUpdate) + " in base.", addTo.Console);
+
+        addToResultString("Close base connections", addTo.LogFileAndConsole);
+        writeDataToBase.closeBase();
+        try {
+            if (statement != null) statement.close();
+        } catch (SQLException se) { /*can't do anything */ }
+    }
+
+    enum addTo {
+        logFile, Console, LogFileAndConsole
     }
 }

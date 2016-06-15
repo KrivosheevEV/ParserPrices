@@ -7,16 +7,17 @@ import java.io.*;
 /**
  * Created by KrivosheevEV on 30.05.2016.
  */
-public class ReadWriteFile implements ReadSites_Interface {
+public class ReadWriteFile {
 
     private String fileFullAddress;
     private static File mFile;
 
     public ReadWriteFile(String givenFileName){
-        this.fileFullAddress = getCurrentPath() + "/" + givenFileName;
+
+        this.fileFullAddress = getCurrentPath() + givenFileName;
         this.mFile = new File(fileFullAddress);
 
-        System.out.println(fileFullAddress);
+//        System.out.println(fileFullAddress);
     }
 
     public void setFullAddress(String FileAddress, String FileName){
@@ -34,27 +35,31 @@ public class ReadWriteFile implements ReadSites_Interface {
     public String getCurrentPath(){
 
         String pathStartingApp = "";
+        byte prefixException = 0;
         byte suffixException = 1;
 //        return new File(ReadWriteFile.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
 
         try {
             if (MainParsingPrices.currentOS == MainParsingPrices.OS.Windows){
-                pathStartingApp = ClassLoader.getSystemClassLoader().getResource(".").getPath();
+//                pathStartingApp = ClassLoader.getSystemClassLoader().getResource(".").getPath();
+                pathStartingApp = new File(".").getAbsolutePath();
             }else {
                 pathStartingApp = "/" + new File(".").getAbsolutePath();
+                prefixException = 0;
                 suffixException = 2;
             }
         }catch (Exception e){
+            System.out.println("Error getting path.");
+            e.printStackTrace();
         }
 
-        pathStartingApp = pathStartingApp.substring(1, pathStartingApp.length() - suffixException);
-        System.out.println(" => " + pathStartingApp);
+        pathStartingApp = pathStartingApp.substring(prefixException, pathStartingApp.length() - suffixException);
+
+        if (MainParsingPrices.currentOS != MainParsingPrices.OS.Windows)pathStartingApp = pathStartingApp + "/";
+
+//        System.out.println(" => " + pathStartingApp);
 
         return pathStartingApp;
-
-//        String path=System.getProperty("java.class.path");
-//        String FileSeparator=(String)System.getProperty("file.separator");
-//        return path.substring(0, path.lastIndexOf(FileSeparator)+1);
 
     }
 
@@ -97,8 +102,7 @@ public class ReadWriteFile implements ReadSites_Interface {
         }
     }
 
-    @Override
-    public void writeResultToFile(String fileName, String text) {
+    public void writeResultToFile(String fileName, String text, Boolean appendFile) {
         //Определяем файл
         File file = new File(fileName);
 
@@ -109,11 +113,11 @@ public class ReadWriteFile implements ReadSites_Interface {
             }
 
             //PrintWriter обеспечит возможности записи в файл
-            PrintWriter out = new PrintWriter(fileName);
+            FileWriter out = new FileWriter(fileName, appendFile);
 
             try {
                 //Записываем текст у файл
-                out.print(text);
+                out.write(text);
             } finally {
                 //После чего мы должны закрыть файл
                 //Иначе файл не запишется

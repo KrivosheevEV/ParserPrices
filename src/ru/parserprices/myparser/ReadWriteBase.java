@@ -20,7 +20,7 @@ public class ReadWriteBase {
     public ReadWriteBase(){
 
         try {
-            Class.forName("com.mysql.jdbc.Driver");
+            //Class.forName("com.mysql.jdbc.Driver");
 
             // opening database connection to MySQL server
             con = DriverManager.getConnection(url, user, password);
@@ -30,43 +30,51 @@ public class ReadWriteBase {
 
         } catch (SQLException sqlEx){
             System.out.println("Error open base.");
-            System.out.println(sqlEx);
+            sqlEx.printStackTrace();
+            closeBase();
 //        } catch (ClassNotFoundException e) {
 //            System.out.println("Error get class.");
 //            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            System.out.println("Error load class.");
-            e.printStackTrace();
+//        } catch (ClassNotFoundException e) {
+//            System.out.println("Error load class.");
+//            e.printStackTrace();
         }
     }
 
-    public int readData(String queryText) {
+    public Boolean findData(Statement statement, String queryText) {
 
         try {
-            rs = stmt.executeQuery(queryText);
-
-            while (rs.next()) {
-                int count = rs.getInt(1);
-                return count;
-            }
+            rs = statement.executeQuery(queryText);
+            if (rs.next()) return true;
+            else return false;
         } catch (SQLException sqlEx) {
             sqlEx.printStackTrace();
-        }finally {
-            return -1;
+            return false;
         }
     }
 
     public void writeData(Statement statement, String[] arrayData) {
 
-        String query = "INSERT INTO Frontime.goods (good, item, shop, price) \n" +
-                " VALUES ('" + arrayData[1] + "', '" + arrayData[2] + "', '" + arrayData[3] + "', " + Integer.parseInt(arrayData[4]) + ");";
+        String query = "INSERT INTO Frontime.goods (good, item, shop, price)" +
+                " VALUES ('" + clearLetters(arrayData[1]) + "', '" + arrayData[2] + "', '" + arrayData[3] + "', " + Integer.parseInt(arrayData[4]) + ");";
 
         try {
             statement.executeUpdate(query);
         } catch (SQLException sqlEx) {
             sqlEx.printStackTrace();
         }
+    }
 
+    public void updateData(Statement statement, String[] arrayData) {
+
+        String query = "UPDATE goods SET good = '" + clearLetters(arrayData[1]) + "', price = '" + Integer.parseInt(arrayData[4]) +
+                "' WHERE item LIKE '" + arrayData[2] + "' LIMIT 5;";
+
+        try {
+            statement.executeUpdate(query);
+        } catch (SQLException sqlEx) {
+            sqlEx.printStackTrace();
+        }
     }
 
     public Statement getStatement(){
@@ -76,10 +84,16 @@ public class ReadWriteBase {
 
     public void closeBase(){
 
-        try {con.close();} catch (SQLException se) { /*can't do anything */ }
-        try {stmt.close();} catch (SQLException se) { /*can't do anything */ }
-        try {rs.close();} catch (SQLException se) { /*can't do anything */ }
+        try {if (con != null) con.close();} catch (SQLException se) { /*can't do anything */ }
+        try {if (stmt != null) stmt.close();} catch (SQLException se) { /*can't do anything */ }
+        try {if (rs != null) rs.close();} catch (SQLException se) { /*can't do anything */ }
 
+    }
+
+    private String clearLetters(String givenString){
+        String resultOfFunction = "";
+        resultOfFunction = givenString.replace("'", "");
+        return resultOfFunction;
     }
 
 }

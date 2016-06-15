@@ -6,6 +6,8 @@ import java.io.IOException;
 public class MainParsingPrices {
 
     static OS currentOS;
+    static String fileResult1 = "Result1_DNS1.txt";
+    static String fileResult2 = "Result2_DNS1.txt";
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
@@ -13,6 +15,8 @@ public class MainParsingPrices {
         if (System.getProperty("os.name").startsWith("Windows")) {
             currentOS = OS.Windows;
         }else currentOS = OS.Linux;
+
+//        System.out.println(currentOS);
 
 //        // Load MySQL class.
 //        try {
@@ -26,9 +30,8 @@ public class MainParsingPrices {
         ReadSiteDNS readSite_DNS = new ReadSiteDNS();
         readSite_DNS.ReadSite(mPatternOfSite.getFullAddress());
 
-        ReadWriteFile mResultOfParsing = new ReadWriteFile("Result_DNS1.txt");
-//
-        mResultOfParsing.writeResultToFile(mResultOfParsing.getFullAddress(), readSite_DNS.getResultOfParsing());
+        ReadWriteFile mResultOfParsing = new ReadWriteFile(fileResult1);
+        mResultOfParsing.writeResultToFile(mResultOfParsing.getFullAddress(), readSite_DNS.getResultOfParsing(), false);
 //        mResultOfParsing.writeResultToFile("D:/Projects/ParserPrices/out/artifacts/ParserPrices_jar/1.txt", readSite_DNS.getResultOfParsing());
 
     }
