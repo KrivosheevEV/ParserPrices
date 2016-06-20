@@ -47,7 +47,6 @@
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/websocket-common-9.2.17.v20160517.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/websocket-api-9.2.17.v20160517.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/mysql-connector-java-5.1.39.jar" path-in-jar="/" />
-      <element id="library" level="application" name="net.sourceforge.htmlunit:htmlunit:2.22" />
       <element id="library" level="application" name="org.jsoup:jsoup:1.9.2" />
       <element id="library" level="application" name="org.seleniumhq.selenium:selenium-java:Release" />
     </root>
