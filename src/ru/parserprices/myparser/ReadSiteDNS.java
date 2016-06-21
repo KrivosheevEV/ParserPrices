@@ -16,6 +16,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -272,7 +273,7 @@ public class ReadSiteDNS {
                         goodPrice = elementGood.findElement(By.cssSelector(cssSelector_GoodPrice2)).getText().replace(" ", "");
 //                goodPrice = goodPrice.replace(" ", "");
                         //addToResultString("Good: " + goodTitle + ", Item: " + goodItem + ", Price: " + goodPrice);
-                        String[] toList = {String.valueOf(countIteration), goodTitle, goodItem, "DNS_Samara", goodPrice};
+                        String[] toList = {String.valueOf(countIteration), goodTitle, goodItem, "DNS_Samara", goodPrice, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())};
                         listLinkGoods2.add(toList);
 
                         if (MAX_COUNT_ELEMENTS != -1 && countIteration >= MAX_COUNT_ELEMENTS) break;

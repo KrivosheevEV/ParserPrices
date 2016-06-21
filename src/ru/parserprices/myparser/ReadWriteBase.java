@@ -2,6 +2,7 @@ package ru.parserprices.myparser;
 
 import java.sql.*;
 import java.sql.Date;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -58,7 +59,17 @@ public class ReadWriteBase {
 
     public void writeData(Statement statement, String[] arrayData) {
 
-        Date dateOfPrice = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(arrayData[5]);
+        String sData = arrayData[5];
+
+        java.sql.Date dateOfPrice;
+        try {
+            dateOfPrice = new java.sql.Date(new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(sData).getTime());
+        }catch (Exception e){
+            dateOfPrice = new java.sql.Date(System.currentTimeMillis());
+        }
+
+//        DateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+//        Date dateOfPrice = format.parse(arrayData[5]);
 
         String query = String.format("INSERT INTO Frontime.goods (good, item, shop, price, dateofprice)" +
                 " VALUES ('" + clearLetters(arrayData[1]) + "', '" + arrayData[2] + "', '" + arrayData[3] + "', '" + Integer.parseInt(arrayData[4]) + "', '" + dateOfPrice + "';");
