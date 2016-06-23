@@ -40,7 +40,7 @@ public class ReadWriteFile {
 //        return new File(ReadWriteFile.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
 
         try {
-            if (MainParsingPrices.currentOS == MainParsingPrices.OS.Windows){
+            if (MainParsingPrices.currentOS == OS.Windows){
 //                pathStartingApp = ClassLoader.getSystemClassLoader().getResource(".").getPath();
                 pathStartingApp = new File(".").getAbsolutePath();
             }else {
@@ -55,7 +55,7 @@ public class ReadWriteFile {
 
         pathStartingApp = pathStartingApp.substring(prefixException, pathStartingApp.length() - suffixException);
 
-        if (MainParsingPrices.currentOS != MainParsingPrices.OS.Windows)pathStartingApp = pathStartingApp + "/";
+        if (MainParsingPrices.currentOS != OS.Windows)pathStartingApp = pathStartingApp + "/";
 
 //        System.out.println(" => " + pathStartingApp);
 

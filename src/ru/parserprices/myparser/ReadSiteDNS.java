@@ -66,7 +66,7 @@ public class ReadSiteDNS {
 //        WebDriver driver = new FirefoxDriver(profile);
 //        ///
 
-        MainParsingPrices.cityShop = MainParsingPrices.cityShops.chapaevsk.name();
+//        MainParsingPrices.cityShop = MainParsingPrices.cityShops.chapaevsk.name();
 
         startingWebDriver();
         setCoockie();
@@ -124,7 +124,7 @@ public class ReadSiteDNS {
 //                e.printStackTrace();
                 addToResultString("Can't open new page: ".concat(listLinkPages.get(countSites)), addTo.LogFileAndConsole);
                 addToResultString(e.toString(), addTo.LogFileAndConsole);
-                try {driver.quit();} catch (Exception e1){};
+                try {driver.quit();} catch (Exception e1){/**/};
 //                if (driver != null) driver.quit();
                 return;
             }
@@ -273,7 +273,7 @@ public class ReadSiteDNS {
                         goodPrice = elementGood.findElement(By.cssSelector(cssSelector_GoodPrice2)).getText().replace(" ", "");
 //                goodPrice = goodPrice.replace(" ", "");
                         //addToResultString("Good: " + goodTitle + ", Item: " + goodItem + ", Price: " + goodPrice);
-                        String[] toList = {String.valueOf(countIteration), goodTitle, goodItem, "DNS_Samara", goodPrice, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())};
+                        String[] toList = {String.valueOf(countIteration), goodTitle, goodItem, "DNS".concat(MainParsingPrices.shopCityCode.name()), goodPrice, new SimpleDateFormat("yyyy-MM-dd").format(new Date())};
                         listLinkGoods2.add(toList);
 
                         if (MAX_COUNT_ELEMENTS != -1 && countIteration >= MAX_COUNT_ELEMENTS) break;
@@ -404,7 +404,9 @@ public class ReadSiteDNS {
 
             countOfRecords++;
 
-            if (writeDataToBase.findData(statement, "SELECT item FROM goods WHERE goods.item LIKE '" + stringToBase[2] + "';")) {
+            String query_needUpdate = "SELECT item FROM goods WHERE goods.item LIKE '" + stringToBase[2] + "' AND goods.shop LIKE '" + stringToBase[3] +
+                    "' AND goods.price NOT LIKE '" + stringToBase[4] + "' AND goods.dateofprice NOT LIKE '" + stringToBase[5] + "';";
+            if (writeDataToBase.needUpdate(statement, query_needUpdate)) {
                 addToResultString("Update record(" + countOfRecords + ") in base", addTo.Console);
                 writeDataToBase.updateData(statement, stringToBase);
                 countOfUpdate++;
@@ -465,15 +467,13 @@ public class ReadSiteDNS {
         driver.manage().deleteCookieNamed("city_path");
         driver.manage().deleteCookieNamed("city_guid_1c");
 
-        String cityShop = MainParsingPrices.cityShop;
-
-        if (cityShop.equals(MainParsingPrices.cityShops.samara.name())){
+        if (MainParsingPrices.shopCity == shopCities.samara){
             cookieCityPath = "samara";
             cookieCityGuid1C = "55506b53-0565-11df-9cf0-00151716f9f5";
-        }else if (cityShop.equals(MainParsingPrices.cityShops.novokuybishevsk.name())){
+        }else if (MainParsingPrices.shopCity == shopCities.novokuybishevsk){
             cookieCityPath = "novokuybishevsk";
             cookieCityGuid1C = "5acb57ac-40a6-11e1-8064-001517c526f0";
-        }else if (cityShop.equals(MainParsingPrices.cityShops.chapaevsk.name())){
+        }else if (MainParsingPrices.shopCity == shopCities.chapaevsk){
             cookieCityPath = "chapaevsk";
             cookieCityGuid1C = "eaa9918b-bc8d-11e4-bd90-00155d03361b";
         }else {
@@ -481,15 +481,10 @@ public class ReadSiteDNS {
             cookieCityGuid1C = "55506b53-0565-11df-9cf0-00151716f9f5";
         }
 
-//        Cookie cookie = new Cookie("city_path", "chapaevsk");
-        // samara 55506b53-0565-11df-9cf0-00151716f9f5
-        // novokuybishevsk 5acb57ac-40a6-11e1-8064-001517c526f0
-        // chapaevsk eaa9918b-bc8d-11e4-bd90-00155d03361b
         driver.manage().addCookie(new Cookie("city_path", cookieCityPath));
         driver.manage().addCookie(new Cookie("city_guid_1c", cookieCityGuid1C));
+        driver.manage().addCookie(new Cookie("Max-Age", "50000"));
     }
 
-    enum addTo {
-        logFile, Console, LogFileAndConsole
-    }
+
 }

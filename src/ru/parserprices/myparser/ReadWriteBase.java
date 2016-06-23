@@ -45,14 +45,16 @@ public class ReadWriteBase {
         }
     }
 
-    public Boolean findData(Statement statement, String queryText) {
+    public Boolean needUpdate(Statement statement, String queryText) {
+
+//        new ReadSiteDNS().addToResultString("Query: ".concat(queryText), addTo.LogFileAndConsole);
 
         try {
             rs = statement.executeQuery(queryText);
             if (rs.next()) return true;
             else return false;
         } catch (SQLException sqlEx) {
-            sqlEx.printStackTrace();
+            new ReadSiteDNS().addToResultString("Wrong query: ".concat(queryText), addTo.LogFileAndConsole);
             return false;
         }
     }
@@ -72,25 +74,33 @@ public class ReadWriteBase {
 //        Date dateOfPrice = format.parse(arrayData[5]);
 
         String query = String.format("INSERT INTO Frontime.goods (good, item, shop, price, dateofprice)" +
-                " VALUES ('" + clearLetters(arrayData[1]) + "', '" + arrayData[2] + "', '" + arrayData[3] + "', '" + Integer.parseInt(arrayData[4]) + "', '" + dateOfPrice + "';");
-
+                " VALUES ('" + clearLetters(arrayData[1]) + "', '" + arrayData[2] + "', '" + arrayData[3] + "', '" + Integer.parseInt(arrayData[4]) + "', '" + dateOfPrice + "');");
 
         try {
             statement.executeUpdate(query);
         } catch (SQLException sqlEx) {
-            sqlEx.printStackTrace();
+            new ReadSiteDNS().addToResultString("Wrong query: ".concat(query), addTo.LogFileAndConsole);
+//            sqlEx.printStackTrace();
         }
     }
 
     public void updateData(Statement statement, String[] arrayData) {
 
-        String query = "UPDATE goods SET good = '" + clearLetters(arrayData[1]) + "', price = '" + Integer.parseInt(arrayData[4]) +
-                "' WHERE item LIKE '" + arrayData[2] + "' LIMIT 5;";
+        java.sql.Date dateOfPrice;
+        try {
+            dateOfPrice = new java.sql.Date(new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(arrayData[5]).getTime());
+        }catch (Exception e){
+            dateOfPrice = new java.sql.Date(System.currentTimeMillis());
+        }
+
+        String query = "UPDATE goods SET price = '".concat(clearLetters(arrayData[4])) + "', dateofprice = '" + dateOfPrice +
+                "' WHERE item LIKE '" + arrayData[2] + "' AND shop LIKE '" + arrayData[3] + "' LIMIT 5;";
 
         try {
             statement.executeUpdate(query);
+            //new ReadSiteDNS().addToResultString("Query: ".concat(query), addTo.Console);
         } catch (SQLException sqlEx) {
-            sqlEx.printStackTrace();
+            new ReadSiteDNS().addToResultString("Wrong query: ".concat(query), addTo.LogFileAndConsole);
         }
     }
 
