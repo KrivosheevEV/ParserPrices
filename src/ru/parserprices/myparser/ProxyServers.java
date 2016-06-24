@@ -1,6 +1,6 @@
 package ru.parserprices.myparser;
 
-import org.apache.xpath.operations.Bool;
+//import org.apache.xpath.operations.Bool;
 import org.openqa.selenium.Proxy;
 
 import java.io.*;
