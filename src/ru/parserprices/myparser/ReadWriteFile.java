@@ -28,7 +28,7 @@ public class ReadWriteFile {
 
     public String getFullAddress(){
 
-        return fileFullAddress;
+        return this.fileFullAddress;
 
     }
 

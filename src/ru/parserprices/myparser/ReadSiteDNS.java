@@ -23,8 +23,8 @@ import java.util.concurrent.TimeUnit;
 
 public class ReadSiteDNS {
 
-    private String resultOfPasring = "";
-    private long startTime;
+    private static String resultOfPasring = "";
+    private static long startTime;
 
     private static String DNG_GENERAL_URL = "http://www.dns-shop.ru";
     private static int WAITING_FOR_EXPAND = 7;
@@ -349,14 +349,14 @@ public class ReadSiteDNS {
         return this.resultOfPasring;
     }
 
-    public void addToResultString(String addedString, addTo writeIntoLogFile) {
+    public static void addToResultString(String addedString, addTo writeIntoLogFile) {
         //if (addedString.isEmpty()) return;
         String timeForResult = Long.toString((System.currentTimeMillis() - startTime) / 1000) + "." + Long.toString((System.currentTimeMillis() - startTime) % 1000);
         String stringToLog = timeForResult + " -> " + addedString + System.getProperty("line.separator");
         resultOfPasring = resultOfPasring.concat(stringToLog);
 
         if (writeIntoLogFile == addTo.LogFileAndConsole || writeIntoLogFile == addTo.logFile) {
-            ReadWriteFile mResultOfParsing = new ReadWriteFile(MainParsingPrices.fileResult2);
+            ReadWriteFile mResultOfParsing = new ReadWriteFile(MainParsingPrices.fileName_Result2);
             mResultOfParsing.writeResultToFile(mResultOfParsing.getFullAddress(), stringToLog, true);
         }
 

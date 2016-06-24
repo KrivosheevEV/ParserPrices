@@ -11,7 +11,7 @@ public class MainParsingPrices {
     static shopNames shopName;
     static shopCities shopCity;
     static shopCityCodes shopCityCode;
-    static String fileResult1, fileResult2;
+    static String fileName_Result1, fileName_Result2;
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
@@ -28,13 +28,14 @@ public class MainParsingPrices {
 
 //        fileResult1 = "log" + (currentOS == OS.Windows ? "\\" : "/") + "Result1_DNS1_" + dateToName + ".txt";
 //        fileResult2 = "log" + (currentOS == OS.Windows ? "\\" : "/") + "Result2_DNS1_" + dateToName + ".txt";
-        fileResult1 = "Result_".concat(shopName.name()).concat("_").concat(shopCity.name()).concat("_").concat(dateToName).concat("_console").concat(".txt");
-        fileResult2 = "Result_".concat(shopName.name()).concat("_").concat(shopCity.name()).concat("_").concat(dateToName).concat(".txt");
+        fileName_Result1 = "Result_".concat(shopName.name()).concat("_").concat(shopCity.name()).concat("_").concat(dateToName).concat("_console").concat(".txt");
+        fileName_Result2 = "Result_".concat(shopName.name()).concat("_").concat(shopCity.name()).concat("_").concat(dateToName).concat(".txt");
 
 
         // Export file if it set in argument package.
         if (args != null && args.length >= 3){
-            new ExportFromBase(args[2]);
+            new ExportFromBase(args);
+            return;
         }
 
         ReadWriteFile mPatternOfSite = new ReadWriteFile("Pattern_DNS1.xml");
@@ -44,7 +45,7 @@ public class MainParsingPrices {
         readSite_DNS.ReadSite(mPatternOfSite.getFullAddress());
 
         // Write logs.
-        ReadWriteFile mResultOfParsing = new ReadWriteFile(fileResult1);
+        ReadWriteFile mResultOfParsing = new ReadWriteFile(fileName_Result1);
         mResultOfParsing.writeResultToFile(mResultOfParsing.getFullAddress(), readSite_DNS.getResultOfParsing(), false);
 //        mResultOfParsing.writeResultToFile("D:/Projects/ParserPrices/out/artifacts/ParserPrices_jar/1.txt", readSite_DNS.getResultOfParsing());
 
@@ -96,8 +97,5 @@ public class MainParsingPrices {
             readSiteDNS.addToResultString("Not set argument #2 (".concat(argument).concat(")."),  addTo.LogFileAndConsole);
         }
     }
-
-
-
 
 }
