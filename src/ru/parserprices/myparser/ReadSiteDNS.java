@@ -404,15 +404,36 @@ public class ReadSiteDNS {
 
             countOfRecords++;
 
+            java.sql.Date dateOfPriceToQuery;
+            try {
+                dateOfPriceToQuery = new java.sql.Date(new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(stringToBase[5]).getTime());
+            } catch (Exception e) {
+                dateOfPriceToQuery = new java.sql.Date(System.currentTimeMillis());
+            }
+
+            String query_recordExist = "SELECT item FROM goods WHERE goods.item LIKE '" + stringToBase[2] + "' AND goods.shop LIKE '" + stringToBase[3] + "' LIMIT 5;";
+
             String query_needUpdate = "SELECT item FROM goods WHERE goods.item LIKE '" + stringToBase[2] + "' AND goods.shop LIKE '" + stringToBase[3] +
-                    "' AND goods.price NOT LIKE '" + stringToBase[4] + "' AND goods.dateofprice NOT LIKE '" + stringToBase[5] + "';";
-            if (writeDataToBase.needUpdate(statement, query_needUpdate)) {
-                addToResultString("Update record(" + countOfRecords + ") in base", addTo.Console);
-                writeDataToBase.updateData(statement, stringToBase);
-                countOfUpdate++;
+                    "' AND goods.price NOT LIKE '" + stringToBase[4] + "' LIMIT 5;";
+
+            String query_updateRecord = "UPDATE goods SET price = '".concat(writeDataToBase.clearLetters(stringToBase[4])) + "', dateofprice = '" + dateOfPriceToQuery +
+                    "' WHERE item LIKE '" + stringToBase[2] + "' AND shop LIKE '" + stringToBase[3] + "' LIMIT 5;";
+
+            String query_writeNewrecord = "INSERT INTO Frontime.goods (good, item, shop, price, dateofprice)" +
+                " VALUES ('" + writeDataToBase.clearLetters(stringToBase[1]) + "', '" + stringToBase[2] + "', '" + stringToBase[3] + "', '" + Integer.parseInt(stringToBase[4]) + "', '" + dateOfPriceToQuery + "');";
+
+            if (writeDataToBase.dataExist(statement, query_recordExist)) {
+                if (writeDataToBase.dataExist(statement, query_needUpdate)) {
+                    addToResultString("Update record(" + countOfRecords + ") in base", addTo.Console);
+//                writeDataToBase.updateData(statement, stringToBase);
+                    writeDataToBase.writeData(statement, query_updateRecord);
+                    countOfUpdate++;
+                }else {
+                    addToResultString("Not need update(" + countOfRecords + ") record", addTo.Console);
+                }
             } else {
                 addToResultString("Write new record(" + countOfRecords + ") in base", addTo.Console);
-                writeDataToBase.writeData(statement, stringToBase);
+                writeDataToBase.writeData(statement, query_writeNewrecord);
             }
 
             //System.out.println(stringToBase[2]);
@@ -483,8 +504,6 @@ public class ReadSiteDNS {
 
         driver.manage().addCookie(new Cookie("city_path", cookieCityPath));
         driver.manage().addCookie(new Cookie("city_guid_1c", cookieCityGuid1C));
-        driver.manage().addCookie(new Cookie("Max-Age", "50000"));
     }
-
 
 }

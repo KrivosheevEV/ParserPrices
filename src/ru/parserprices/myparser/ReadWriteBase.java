@@ -45,7 +45,7 @@ public class ReadWriteBase {
         }
     }
 
-    public Boolean needUpdate(Statement statement, String queryText) {
+    public Boolean dataExist(Statement statement, String queryText) {
 
 //        new ReadSiteDNS().addToResultString("Query: ".concat(queryText), addTo.LogFileAndConsole);
 
@@ -59,27 +59,27 @@ public class ReadWriteBase {
         }
     }
 
-    public void writeData(Statement statement, String[] arrayData) {
+    public void writeData(Statement statement, String queryText) {
 
-        String sData = arrayData[5];
+        //String sData = arrayData[5];
 
-        java.sql.Date dateOfPrice;
-        try {
-            dateOfPrice = new java.sql.Date(new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(sData).getTime());
-        }catch (Exception e){
-            dateOfPrice = new java.sql.Date(System.currentTimeMillis());
-        }
+//        java.sql.Date dateOfPrice;
+//        try {
+//            dateOfPrice = new java.sql.Date(new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(sData).getTime());
+//        }catch (Exception e){
+//            dateOfPrice = new java.sql.Date(System.currentTimeMillis());
+//        }
 
 //        DateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
 //        Date dateOfPrice = format.parse(arrayData[5]);
 
-        String query = String.format("INSERT INTO Frontime.goods (good, item, shop, price, dateofprice)" +
-                " VALUES ('" + clearLetters(arrayData[1]) + "', '" + arrayData[2] + "', '" + arrayData[3] + "', '" + Integer.parseInt(arrayData[4]) + "', '" + dateOfPrice + "');");
+//        String query = String.format("INSERT INTO Frontime.goods (good, item, shop, price, dateofprice)" +
+//                " VALUES ('" + clearLetters(arrayData[1]) + "', '" + arrayData[2] + "', '" + arrayData[3] + "', '" + Integer.parseInt(arrayData[4]) + "', '" + dateOfPrice + "');");
 
         try {
-            statement.executeUpdate(query);
+            statement.executeUpdate(queryText);
         } catch (SQLException sqlEx) {
-            new ReadSiteDNS().addToResultString("Wrong query: ".concat(query), addTo.LogFileAndConsole);
+            new ReadSiteDNS().addToResultString("Wrong query: ".concat(queryText), addTo.LogFileAndConsole);
 //            sqlEx.printStackTrace();
         }
     }
@@ -117,7 +117,7 @@ public class ReadWriteBase {
 
     }
 
-    private String clearLetters(String givenString){
+    public String clearLetters(String givenString){
         String resultOfFunction = "";
         resultOfFunction = givenString.replace("'", "");
         return resultOfFunction;
