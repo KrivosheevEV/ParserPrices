@@ -168,10 +168,7 @@ public class ReadSites {
         String cssSelector_Categories = "SPAN > a[class='subcategory-list-item__link']";
         String cssSelector_NextPage = "link[rel='next']";
         String cssSelector_GoodItems = "tbody[class='product_data__gtm-js']";
-        String cssSelector_GoodItem = "link[rel='next']";
-        String cssSelector_GoodTitle = "link[rel='next']";
-        String cssSelector_GoodPrice = "link[rel='next']";
-        String cssSelector_GoodLink = "link[rel='next']";
+        String cssSelector_GoodLink = "span[class*='h3'] > a[class='link_gtm-js']";
 
         addToResultString("Start getting category links", addTo.LogFileAndConsole);
         fillListPagesFromSite(driver, cssSelector_Categories, listLinkPages);
@@ -193,7 +190,7 @@ public class ReadSites {
             }
 
             // Flip pages and read data.
-            flipAndReadDescription_CITILINK(driver, listDataToBase, cssSelector_GoodItems, cssSelector_GoodItem, cssSelector_GoodTitle, cssSelector_GoodPrice, cssSelector_GoodLink);
+            flipAndReadDescription_CITILINK(driver, listDataToBase, cssSelector_GoodItems, cssSelector_GoodLink);
 
             WebElement nextPage = driver.findElement(By.cssSelector(cssSelector_NextPage));
             while (nextPage != null) {
@@ -312,7 +309,7 @@ public class ReadSites {
                     try {
                         goodTitle = elementGood.findElement(By.cssSelector(cssSelector_GoodTitle2)).getText();
                         goodItem = elementGood.findElement(By.cssSelector(cssSelector_GoodItem2)).getText();
-                        goodLink = elementGood.findElement(By.cssSelector(cssSelector_GoodLink2)).getText();
+                        goodLink = elementGood.findElement(By.cssSelector(cssSelector_GoodLink2)).getAttribute("href");
                         goodPrice = elementGood.findElement(By.cssSelector(cssSelector_GoodPrice2)).getText().replace(" ", "");
 
 //                goodPrice = goodPrice.replace(" ", "");
@@ -342,9 +339,6 @@ public class ReadSites {
     private void flipAndReadDescription_CITILINK(WebDriver driver,
                                                  ArrayList<String[]> listLinkGoods2,
                                                  String cssSelector_GoodItems,
-                                                 String cssSelector_GoodItem,
-                                                 String cssSelector_GoodTitle,
-                                                 String cssSelector_GoodPrice,
                                                  String cssSelector_GoodLink) {
 
         List<WebElement> listItems;
@@ -361,10 +355,11 @@ public class ReadSites {
 
             for (WebElement elementGood : listItems) {
                 try {
-                    goodItem = elementGood.findElement(By.cssSelector(cssSelector_GoodItem)).getText();
-                    goodTitle = elementGood.findElement(By.cssSelector(cssSelector_GoodTitle)).getText();
-                    goodLink = elementGood.findElement(By.cssSelector(cssSelector_GoodLink)).getText();
-                    goodPrice = elementGood.findElement(By.cssSelector(cssSelector_GoodPrice)).getText().replace(" ", "");
+                    String params = elementGood.getAttribute("data-params");
+                    goodItem = params.substring(params.indexOf("id")+5, params.indexOf("\"", params.indexOf("id")+5));
+                    goodTitle = params.substring(params.indexOf("shortName")+12, params.indexOf("\"", params.indexOf("shortName")+12));
+                    goodPrice = params.substring(params.indexOf("price")+7, params.indexOf(",", params.indexOf("price")+7));
+                    goodLink = elementGood.findElement(By.cssSelector(cssSelector_GoodLink)).getAttribute("href");
 
                     //                goodPrice = goodPrice.replace(" ", "");
                     //addToResultString("Good: " + goodTitle + ", Item: " + goodItem + ", Price: " + goodPrice);
