@@ -21,22 +21,20 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-public class ReadSiteDNS {
+import static ru.parserprices.myparser.MainParsingPrices.addToResultString;
+import static ru.parserprices.myparser.MainParsingPrices.shopName;
 
-    private static String resultOfPasring = "";
-    private static long startTime;
+public class ReadSites {
 
-    private static String DNG_GENERAL_URL = "http://www.dns-shop.ru";
+    private static String GENERAL_URL;
     private static int WAITING_FOR_EXPAND = 7;
     private static int MAX_COUNT_EXPAND = -1;
     private static int MAX_COUNT_TOBASE = -1;
     private static int MAX_COUNT_ELEMENTS = -1;
     private WebDriver driver;
 
-    public void ReadSite(String FullAddress) throws InterruptedException {
+    public void ReadSite(shopNames shopName) throws InterruptedException {
 
-
-        startTime = System.currentTimeMillis();
         addToResultString("Start parsing: " + new Date().toString(), addTo.LogFileAndConsole);
 
 //        // Proxy setting.
@@ -70,22 +68,42 @@ public class ReadSiteDNS {
 //        MainParsingPrices.cityShop = MainParsingPrices.cityShops.chapaevsk.name();
 
         startingWebDriver();
-        setCoockie();
+        setCoockie(shopName);
 
-//        try {
-//            addToResultString("Trying open empty page", addTo.Yes);
-//            driver.get("");
-//        }catch (Exception e){
-//            e.printStackTrace();
-//            addToResultString(e.toString(), addTo.Yes);
-//            return;
-//        }
+        // Set "GENERAL_URL".
+        switch (shopName){
+            case DNS:
+                GENERAL_URL = "http://www.dns-shop.ru";
+                readSiteDNS();
+                break;
+            case CITILINK:
+                GENERAL_URL = "http://www.citilink.ru";
+                readSiteCitilink();
+                break;
+            case DOMO:
+                GENERAL_URL = "http://www.dns-shop.ru"; break;
+            case CORPCENTRE:
+                GENERAL_URL = "http://www.dns-shop.ru"; break;
+        }
 
-//        driver.manage().window().maximize();
+//        addToResultString("Goods found: " + String.valueOf(listDataToBase.size()));
+//        readGoodDescription(driver, listLinkGoods, cssSelector_GoodTitle, cssSelector_GoodCode, cssSelector_GoodPricePrevious, cssSelector_GoodPrice);
 
-//        driver.navigate().to("https://2ip.ru/");
+        // Close browser.
+        if (driver != null) driver.quit();
 
-//        driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
+//        System.out.println(listPages.size());
+        addToResultString("Finish parsing: ".concat(new Date().toString()), addTo.LogFileAndConsole);
+
+    }
+
+    // Disable warning in console.
+    static {
+        java.util.logging.Logger.getLogger("com.gargoylesoftware.htmlunit").setLevel(java.util.logging.Level.SEVERE);
+    }
+    ///
+
+    private void readSiteDNS(){
 
         String cssSelector_ExpandPage_Block = "div.catalog-category-more, div[style$='block']";
         String cssSelector_ExpandPage_Button = "a[class='btn btn-default']";
@@ -100,13 +118,11 @@ public class ReadSiteDNS {
         String cssSelector_GoodItem2 = "div.item-code";
         String cssSelector_GoodTitle2 = "div.item-name";
         String cssSelector_GoodPrice2 = "span[data-of='price-total']";
+        String cssSelector_GoodLink2 = "div.item-name a[href]";
 
         ArrayList<String> listLinkGoods = new ArrayList<String>();
         ArrayList<String[]> listDataToBase = new ArrayList<String[]>();
         ArrayList<String> listLinkPages = new ArrayList<String>();
-
-        //listLinkPages.add("http://www.dns-shop.ru/catalog/17a892f816404e77/noutbuki/");
-        //listPages.add("http://www.dns-shop.ru/catalog/31f05737df7e4e77/ssd-25-sata-nakopiteli/");
 
         addToResultString("Start getting category links", addTo.LogFileAndConsole);
         fillListPagesFromSite(driver, cssSelector_Categories, listLinkPages);
@@ -120,13 +136,11 @@ public class ReadSiteDNS {
                 addToResultString("Trying open page: ".concat(listLinkPages.get(countSites)), addTo.LogFileAndConsole);
                 if (driver == null) startingWebDriver();
                 driver.navigate().to(listLinkPages.get(countSites));
-//                driver.get(listLinkPages.get(countSites));
             } catch (Exception e) {
 //                e.printStackTrace();
                 addToResultString("Can't open new page: ".concat(listLinkPages.get(countSites)), addTo.LogFileAndConsole);
                 addToResultString(e.toString(), addTo.LogFileAndConsole);
                 try {driver.quit();} catch (Exception e1){/**/};
-//                if (driver != null) driver.quit();
                 return;
             }
 
@@ -135,35 +149,60 @@ public class ReadSiteDNS {
 
             // Expand and read data in current page.
 //            addToResultString("Open page: " + listLinkPages.get(countSites), addTo.Yes);
-            expandAndReadDescription(driver, listDataToBase, cssSelector_ExpandPage_Block, cssSelector_ExpandPage_Button, cssSelector_GoodItems, cssSelector_GoodTitle2, cssSelector_GoodItem2, cssSelector_GoodPrice2);
+            expandAndReadDescription_DNS(driver, listDataToBase, cssSelector_ExpandPage_Block, cssSelector_ExpandPage_Button, cssSelector_GoodItems, cssSelector_GoodTitle2, cssSelector_GoodItem2, cssSelector_GoodPrice2, cssSelector_GoodLink2);
 
             addToResultString("Writing data in base..", addTo.LogFileAndConsole);
             writeDataIntoBase(listDataToBase);
             addToResultString("Records(".concat(String.valueOf(listDataToBase.size())).concat(") added/updated in base."), addTo.LogFileAndConsole);
 
             listDataToBase = new ArrayList<String[]>();
+        }
+    }
+
+    private void readSiteCitilink(){
+
+        ArrayList<String> listLinkGoods = new ArrayList<String>();
+        ArrayList<String[]> listDataToBase = new ArrayList<String[]>();
+        ArrayList<String> listLinkPages = new ArrayList<String>();
+
+        String cssSelector_Categories = "SPAN > a[class='subcategory-list-item__link']";
+        String cssSelector_NextPage = "link[rel='next']";
+        String cssSelector_GoodItems = "tbody[class='product_data__gtm-js']";
+        String cssSelector_GoodItem = "link[rel='next']";
+        String cssSelector_GoodTitle = "link[rel='next']";
+        String cssSelector_GoodPrice = "link[rel='next']";
+        String cssSelector_GoodLink = "link[rel='next']";
+
+        addToResultString("Start getting category links", addTo.LogFileAndConsole);
+        fillListPagesFromSite(driver, cssSelector_Categories, listLinkPages);
+        addToResultString("Finish getting category links", addTo.LogFileAndConsole);
+
+        for (String linkPage : listLinkPages
+                ) {
+            // Open catalog page for parsing Goods.
+            try {
+                addToResultString("Trying open page: ".concat(linkPage), addTo.LogFileAndConsole);
+                if (driver == null) startingWebDriver();
+                driver.navigate().to(linkPage);
+            } catch (Exception e) {
+//                e.printStackTrace();
+                addToResultString("Can't open new page: ".concat(linkPage), addTo.LogFileAndConsole);
+                addToResultString(e.toString(), addTo.LogFileAndConsole);
+                try {driver.quit();} catch (Exception e1){/**/};
+                return;
+            }
+
+            // Flip pages and read data.
+            flipAndReadDescription_CITILINK(driver, listDataToBase, cssSelector_GoodItems, cssSelector_GoodItem, cssSelector_GoodTitle, cssSelector_GoodPrice, cssSelector_GoodLink);
+
+            WebElement nextPage = driver.findElement(By.cssSelector(cssSelector_NextPage));
+            while (nextPage != null) {
+                String linkNextPage = nextPage.getAttribute("href");
+                if (!driver.getCurrentUrl().equals(linkNextPage)) driver.get(linkNextPage);
+            }
 
         }
-
-//        addToResultString("Goods found: " + String.valueOf(listDataToBase.size()));
-//        readGoodDescription(driver, listLinkGoods, cssSelector_GoodTitle, cssSelector_GoodCode, cssSelector_GoodPricePrevious, cssSelector_GoodPrice);
-
-        // Close browser.
-        if (driver != null) driver.quit();
-
-//        System.out.println(listPages.size());
-        addToResultString("Finish parsing: ".concat(new Date().toString()), addTo.LogFileAndConsole);
-
-        System.out.print(resultOfPasring);
-
-
     }
-
-    // Disable warning in console.
-    static {
-        java.util.logging.Logger.getLogger("com.gargoylesoftware.htmlunit").setLevel(java.util.logging.Level.SEVERE);
-    }
-    ///
 
     public void expandAndReadLinkGoods(WebDriver driver, ArrayList<String> listLinkGoods, String cssSelector_ExpandPage_Block, String cssSelector_ExpandPage_Button, String cssSelector1) {
 
@@ -224,19 +263,21 @@ public class ReadSiteDNS {
         }
     }
 
-    public void expandAndReadDescription(WebDriver driver,
-                                         ArrayList<String[]> listLinkGoods2,
-                                         String cssSelector_ExpandPage_Block,
-                                         String cssSelector_ExpandPage_Button,
-                                         String cssSelector_GoodItems,
-                                         String cssSelector_GoodTitle2,
-                                         String cssSelector_GoodItem2,
-                                         String cssSelector_GoodPrice2) {
+    private void expandAndReadDescription_DNS(WebDriver driver,
+                                              ArrayList<String[]> listLinkGoods2,
+                                              String cssSelector_ExpandPage_Block,
+                                              String cssSelector_ExpandPage_Button,
+                                              String cssSelector_GoodItems,
+                                              String cssSelector_GoodTitle2,
+                                              String cssSelector_GoodItem2,
+                                              String cssSelector_GoodPrice2,
+                                              String cssSelector_GoodLink2) {
 
         List<WebElement> listItems;
         String goodTitle = "";
         String goodItem = "";
         String goodPrice = "";
+        String goodLink = "";
 
         try {
 
@@ -271,10 +312,18 @@ public class ReadSiteDNS {
                     try {
                         goodTitle = elementGood.findElement(By.cssSelector(cssSelector_GoodTitle2)).getText();
                         goodItem = elementGood.findElement(By.cssSelector(cssSelector_GoodItem2)).getText();
+                        goodLink = elementGood.findElement(By.cssSelector(cssSelector_GoodLink2)).getText();
                         goodPrice = elementGood.findElement(By.cssSelector(cssSelector_GoodPrice2)).getText().replace(" ", "");
+
 //                goodPrice = goodPrice.replace(" ", "");
                         //addToResultString("Good: " + goodTitle + ", Item: " + goodItem + ", Price: " + goodPrice);
-                        String[] toList = {String.valueOf(countIteration), goodTitle, goodItem, "DNS".concat(MainParsingPrices.shopCityCode.name()), goodPrice, new SimpleDateFormat("yyyy-MM-dd").format(new Date())};
+                        String[] toList = {String.valueOf(countIteration),
+                                goodTitle,
+                                goodItem,
+                                shopName.name().concat(MainParsingPrices.shopCityCode.name()),
+                                goodPrice,
+                                new SimpleDateFormat("yyyy-MM-dd").format(new Date()),
+                                goodLink};
                         listLinkGoods2.add(toList);
 
                         if (MAX_COUNT_ELEMENTS != -1 && countIteration >= MAX_COUNT_ELEMENTS) break;
@@ -290,14 +339,67 @@ public class ReadSiteDNS {
         }
     }
 
+    private void flipAndReadDescription_CITILINK(WebDriver driver,
+                                                 ArrayList<String[]> listLinkGoods2,
+                                                 String cssSelector_GoodItems,
+                                                 String cssSelector_GoodItem,
+                                                 String cssSelector_GoodTitle,
+                                                 String cssSelector_GoodPrice,
+                                                 String cssSelector_GoodLink) {
+
+        List<WebElement> listItems;
+        String goodItem = "";
+        String goodTitle = "";
+        String goodPrice = "";
+        String goodLink = "";
+
+
+        try {
+            listItems = driver.findElements(By.cssSelector(cssSelector_GoodItems));
+            int countIteration = 0;
+            addToResultString("Reading data in page[".concat(String.valueOf(countIteration)).concat("].."), addTo.LogFileAndConsole);
+
+            for (WebElement elementGood : listItems) {
+                try {
+                    goodItem = elementGood.findElement(By.cssSelector(cssSelector_GoodItem)).getText();
+                    goodTitle = elementGood.findElement(By.cssSelector(cssSelector_GoodTitle)).getText();
+                    goodLink = elementGood.findElement(By.cssSelector(cssSelector_GoodLink)).getText();
+                    goodPrice = elementGood.findElement(By.cssSelector(cssSelector_GoodPrice)).getText().replace(" ", "");
+
+                    //                goodPrice = goodPrice.replace(" ", "");
+                    //addToResultString("Good: " + goodTitle + ", Item: " + goodItem + ", Price: " + goodPrice);
+                    String[] toList = {String.valueOf(countIteration),
+                            goodTitle,
+                            goodItem,
+                            shopName.name().concat(MainParsingPrices.shopCityCode.name()),
+                            goodPrice,
+                            new SimpleDateFormat("yyyy-MM-dd").format(new Date()),
+                            goodLink};
+                    listLinkGoods2.add(toList);
+
+                    if (MAX_COUNT_ELEMENTS != -1 && countIteration >= MAX_COUNT_ELEMENTS) break;
+                    countIteration++;
+                } catch (Exception e) {
+                    addToResultString("Element not found: ".concat(elementGood.getText()), addTo.LogFileAndConsole);
+                }
+            }
+            addToResultString("All item(".concat(Integer.toString(countIteration)).concat(") was reading"), addTo.LogFileAndConsole);
+        } catch (Exception e) {
+            addToResultString("Error reading expand page.", addTo.LogFileAndConsole);
+        }
+    }
+
+    // Read/write all categories.
     private void fillListPagesFromSite(WebDriver driver, String cssSelector_Categories, ArrayList<String> listPages) {
 
-        WebDriver driverUnvisible = new HtmlUnitDriver();
-        driverUnvisible.navigate().to(DNG_GENERAL_URL);
+        if (shopName == shopNames.DNS) {
+            driver = new HtmlUnitDriver();
+        }
+        driver.navigate().to(GENERAL_URL);
 
         try {
 
-            List<WebElement> listItems = driverUnvisible.findElements(By.cssSelector(cssSelector_Categories));
+            List<WebElement> listItems = driver.findElements(By.cssSelector(cssSelector_Categories));
 
             for (WebElement hrefElement : listItems
                     ) {
@@ -323,9 +425,9 @@ public class ReadSiteDNS {
 
     private void readGoodDescription(WebDriver driver, ArrayList<String> listLinkGoods, String cssSelector_GoodTitle, String cssSelector_GoodCode, String cssSelector_GoodPricePrevious, String cssSelector_GoodPrice) {
 
-        int countIteration = 0;
+//        int countIteration = 0;
         for (String linkGood : listLinkGoods) {
-            countIteration++;
+//            countIteration++;
             driver.navigate().to(linkGood);
             try {
                 addToResultString("Goods title:" + driver.findElement(By.cssSelector(cssSelector_GoodTitle)).getText(), addTo.Console);
@@ -342,26 +444,6 @@ public class ReadSiteDNS {
 //            if (countIteration == 5) break;
         }
 
-    }
-
-    public String getResultOfParsing() {
-
-        return this.resultOfPasring;
-    }
-
-    public static void addToResultString(String addedString, addTo writeIntoLogFile) {
-        //if (addedString.isEmpty()) return;
-        String timeForResult = Long.toString((System.currentTimeMillis() - startTime) / 1000) + "." + Long.toString((System.currentTimeMillis() - startTime) % 1000);
-        String stringToLog = timeForResult + " -> " + addedString + System.getProperty("line.separator");
-        resultOfPasring = resultOfPasring.concat(stringToLog);
-
-        if (writeIntoLogFile == addTo.LogFileAndConsole || writeIntoLogFile == addTo.logFile) {
-            ReadWriteFile mResultOfParsing = new ReadWriteFile(MainParsingPrices.fileName_Result2);
-            mResultOfParsing.writeResultToFile(mResultOfParsing.getFullAddress(), stringToLog, true);
-        }
-
-        if (writeIntoLogFile == addTo.LogFileAndConsole || writeIntoLogFile == addTo.Console)
-            System.out.println(addedString);
     }
 
     private boolean elementCanFind(WebDriver givenDriver, By givenBy) {
@@ -383,6 +465,7 @@ public class ReadSiteDNS {
         return resultOfMetod;
     }
 
+    // Write data into base.
     private void writeDataIntoBase(ArrayList<String[]> listDataToBase) {
 
         ReadWriteBase writeDataToBase;
@@ -420,8 +503,8 @@ public class ReadSiteDNS {
             String query_updateRecord = "UPDATE goods SET price = '".concat(writeDataToBase.clearLetters(stringToBase[4])) + "', dateofprice = '" + dateOfPriceToQuery +
                     "' WHERE item LIKE '" + stringToBase[2] + "' AND shop LIKE '" + stringToBase[3] + "' LIMIT 5;";
 
-            String query_writeNewrecord = "INSERT INTO Frontime.goods (good, item, shop, price, dateofprice)" +
-                " VALUES ('" + writeDataToBase.clearLetters(stringToBase[1]) + "', '" + stringToBase[2] + "', '" + stringToBase[3] + "', '" + Integer.parseInt(stringToBase[4]) + "', '" + dateOfPriceToQuery + "');";
+            String query_writeNewRecord = "INSERT INTO Frontime.goods (good, item, shop, price, dateofprice, link)" +
+                " VALUES ('" + writeDataToBase.clearLetters(stringToBase[1]) + "', '" + stringToBase[2] + "', '" + stringToBase[3] + "', '" + Integer.parseInt(stringToBase[4]) + "', '" + dateOfPriceToQuery + "', '" + stringToBase[6] + "');";
 
             if (writeDataToBase.dataExist(statement, query_recordExist)) {
                 if (writeDataToBase.dataExist(statement, query_needUpdate)) {
@@ -434,7 +517,7 @@ public class ReadSiteDNS {
                 }
             } else {
                 addToResultString("Write new record(" + countOfRecords + ") in base", addTo.Console);
-                writeDataToBase.writeData(statement, query_writeNewrecord);
+                writeDataToBase.writeData(statement, query_writeNewRecord);
             }
 
             //System.out.println(stringToBase[2]);
@@ -452,28 +535,41 @@ public class ReadSiteDNS {
         } catch (SQLException se) { /*can't do anything */ }
     }
 
+    // Start new WebDriver.
     private void startingWebDriver() {
 
         FirefoxProfile profile = new FirefoxProfile();
 
-        profile.setPreference("browser.download.manager.alertOnEXEOpen", false);
-        profile.setPreference("browser.helperApps.neverAsk.saveToDisk", "application/msword,application/csv,text/csv,image/png ,image/jpeg");
-        profile.setPreference("browser.download.manager.showWhenStarting", false);
-        profile.setPreference("browser.download.manager.focusWhenStarting", false);
-        //profile.setPreference("browser.download.useDownloadDir",true);
-        profile.setPreference("browser.helperApps.alwaysAsk.force", false);
-        profile.setPreference("browser.download.manager.alertOnEXEOpen", false);
-        profile.setPreference("browser.download.manager.closeWhenDone", false);
-        profile.setPreference("browser.download.manager.showAlertOnComplete", false);
-        profile.setPreference("browser.download.manager.useWindow", false);
-        profile.setPreference("browser.download.manager.showWhenStarting", false);
-        profile.setPreference("services.sync.prefs.sync.browser.download.manager.showWhenStarting", false);
-        profile.setPreference("pdfjs.disabled", true);
-
         try {
-            addToResultString("Trying start new WebDriver(Firefox)", addTo.LogFileAndConsole);
-            driver = new FirefoxDriver(profile);
-//            driver = new HtmlUnitDriver();
+            switch (shopName){
+                case DNS:
+
+                    addToResultString("Trying start new WebDriver(Firefox)", addTo.LogFileAndConsole);
+
+                    profile.setPreference("browser.download.manager.alertOnEXEOpen", false);
+                    profile.setPreference("browser.helperApps.neverAsk.saveToDisk", "application/msword,application/csv,text/csv,image/png ,image/jpeg");
+                    profile.setPreference("browser.download.manager.showWhenStarting", false);
+                    profile.setPreference("browser.download.manager.focusWhenStarting", false);
+                    //profile.setPreference("browser.download.useDownloadDir",true);
+                    profile.setPreference("browser.helperApps.alwaysAsk.force", false);
+                    profile.setPreference("browser.download.manager.alertOnEXEOpen", false);
+                    profile.setPreference("browser.download.manager.closeWhenDone", false);
+                    profile.setPreference("browser.download.manager.showAlertOnComplete", false);
+                    profile.setPreference("browser.download.manager.useWindow", false);
+                    profile.setPreference("browser.download.manager.showWhenStarting", false);
+                    profile.setPreference("services.sync.prefs.sync.browser.download.manager.showWhenStarting", false);
+                    profile.setPreference("pdfjs.disabled", true);
+
+                    driver = new FirefoxDriver(profile);
+                    break;
+
+                case CITILINK:
+                    addToResultString("Trying start new WebDriver(HtmlUnit)", addTo.LogFileAndConsole);
+                    driver = new HtmlUnitDriver();
+                    break;
+
+                default: break;
+            }
         } catch (Exception e) {
             e.printStackTrace();
             addToResultString(e.toString(), addTo.LogFileAndConsole);
@@ -481,30 +577,49 @@ public class ReadSiteDNS {
         }
     }
 
-    private void setCoockie(){
+    // Set coockie.
+    private void setCoockie(shopNames shopName){
 
-        String cookieCityPath;
-        String cookieCityGuid1C;
-        driver.get(DNG_GENERAL_URL);
-        driver.manage().deleteCookieNamed("city_path");
-        driver.manage().deleteCookieNamed("city_guid_1c");
+        switch (shopName){
+            case DNS:
 
-        if (MainParsingPrices.shopCity == shopCities.samara){
-            cookieCityPath = "samara";
-            cookieCityGuid1C = "55506b53-0565-11df-9cf0-00151716f9f5";
-        }else if (MainParsingPrices.shopCity == shopCities.novokuybishevsk){
-            cookieCityPath = "novokuybishevsk";
-            cookieCityGuid1C = "5acb57ac-40a6-11e1-8064-001517c526f0";
-        }else if (MainParsingPrices.shopCity == shopCities.chapaevsk){
-            cookieCityPath = "chapaevsk";
-            cookieCityGuid1C = "eaa9918b-bc8d-11e4-bd90-00155d03361b";
-        }else {
-            cookieCityPath = "samara";
-            cookieCityGuid1C = "55506b53-0565-11df-9cf0-00151716f9f5";
+                String cookieCityPath;
+                String cookieCityGuid1C;
+                driver.get(GENERAL_URL);
+                driver.manage().deleteCookieNamed("city_path");
+                driver.manage().deleteCookieNamed("city_guid_1c");
+
+                if (MainParsingPrices.shopCity == shopCities.samara){
+                    cookieCityPath = "samara";
+                    cookieCityGuid1C = "55506b53-0565-11df-9cf0-00151716f9f5";
+                }else if (MainParsingPrices.shopCity == shopCities.novokuybishevsk){
+                    cookieCityPath = "novokuybishevsk";
+                    cookieCityGuid1C = "5acb57ac-40a6-11e1-8064-001517c526f0";
+                }else if (MainParsingPrices.shopCity == shopCities.chapaevsk){
+                    cookieCityPath = "chapaevsk";
+                    cookieCityGuid1C = "eaa9918b-bc8d-11e4-bd90-00155d03361b";
+                }else {
+                    cookieCityPath = "samara";
+                    cookieCityGuid1C = "55506b53-0565-11df-9cf0-00151716f9f5";
+                }
+
+                driver.manage().addCookie(new Cookie("city_path", cookieCityPath));
+                driver.manage().addCookie(new Cookie("city_guid_1c", cookieCityGuid1C));
+
+                break;
+
+            case CITILINK:
+
+                break;
+            case DOMO:
+
+                break;
+            case CORPCENTRE:
+
+                break;
+            default:
+                break;
         }
-
-        driver.manage().addCookie(new Cookie("city_path", cookieCityPath));
-        driver.manage().addCookie(new Cookie("city_guid_1c", cookieCityGuid1C));
     }
 
 }

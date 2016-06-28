@@ -6,6 +6,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static ru.parserprices.myparser.MainParsingPrices.addToResultString;
+
 /**
  * Created by KrivosheevEV on 07.06.2016.
  */
@@ -50,46 +52,31 @@ public class ReadWriteBase {
             rs = statement.executeQuery(queryText);
             return rs;
         } catch (SQLException sqlEx) {
-            new ReadSiteDNS().addToResultString("Wrong query: ".concat(queryText), addTo.LogFileAndConsole);
+            addToResultString("Wrong query: ".concat(queryText), addTo.LogFileAndConsole);
             return null;
         }
     }
 
     public Boolean dataExist(Statement statement, String queryText) {
 
-//        new ReadSiteDNS().addToResultString("Query: ".concat(queryText), addTo.LogFileAndConsole);
+//        new ReadSites().addToResultString("Query: ".concat(queryText), addTo.LogFileAndConsole);
 
         try {
             rs = statement.executeQuery(queryText);
             if (rs.next()) return true;
             else return false;
         } catch (SQLException sqlEx) {
-            new ReadSiteDNS().addToResultString("Wrong query: ".concat(queryText), addTo.LogFileAndConsole);
+            addToResultString("Wrong query: ".concat(queryText), addTo.LogFileAndConsole);
             return false;
         }
     }
 
     public void writeData(Statement statement, String queryText) {
 
-        //String sData = arrayData[5];
-
-//        java.sql.Date dateOfPrice;
-//        try {
-//            dateOfPrice = new java.sql.Date(new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(sData).getTime());
-//        }catch (Exception e){
-//            dateOfPrice = new java.sql.Date(System.currentTimeMillis());
-//        }
-
-//        DateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
-//        Date dateOfPrice = format.parse(arrayData[5]);
-
-//        String query = String.format("INSERT INTO Frontime.goods (good, item, shop, price, dateofprice)" +
-//                " VALUES ('" + clearLetters(arrayData[1]) + "', '" + arrayData[2] + "', '" + arrayData[3] + "', '" + Integer.parseInt(arrayData[4]) + "', '" + dateOfPrice + "');");
-
         try {
             statement.executeUpdate(queryText);
         } catch (SQLException sqlEx) {
-            new ReadSiteDNS().addToResultString("Wrong query: ".concat(queryText), addTo.LogFileAndConsole);
+            addToResultString("Wrong query: ".concat(queryText), addTo.LogFileAndConsole);
 //            sqlEx.printStackTrace();
         }
     }

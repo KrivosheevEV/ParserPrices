@@ -1,0 +1,14 @@
+
+Frontime{
+
+    Goods{
+        id [int]
+        good [text]
+        item [text]
+        shop [text]
+        price [int]
+        dateofprice [date]
+        link [text]
+    }
+
+}

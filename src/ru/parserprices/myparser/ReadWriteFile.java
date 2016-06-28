@@ -4,6 +4,8 @@ import ru.parserprices.myparser.interfaces.ReadSites_Interface;
 
 import java.io.*;
 
+import static ru.parserprices.myparser.MainParsingPrices.addToResultString;
+
 /**
  * Created by KrivosheevEV on 30.05.2016.
  */
@@ -16,6 +18,19 @@ public class ReadWriteFile {
 
         this.fileFullAddress = getCurrentPath() + givenFileName;
         this.mFile = new File(fileFullAddress);
+
+        if(!mFile.exists()){
+            File path = new File(mFile.getParent());
+            if (!path.exists()) {
+                if (path.mkdir()) addToResultString("Directory is creating.", addTo.LogFileAndConsole);
+                else addToResultString("Error creating of directory.", addTo.LogFileAndConsole);
+            }
+            try {
+                mFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
 //        System.out.println(fileFullAddress);
     }
@@ -109,6 +124,11 @@ public class ReadWriteFile {
         try {
             //проверяем, что если файл не существует то создаем его
             if(!file.exists()){
+                File path = new File(file.getParent());
+                if (!path.exists()) {
+                    if (path.mkdir()) addToResultString("Directory is creating.", addTo.LogFileAndConsole);
+                    else addToResultString("Error creating of directory.", addTo.LogFileAndConsole);
+                }
                 file.createNewFile();
             }
 

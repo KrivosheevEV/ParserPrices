@@ -1,8 +1,5 @@
 package ru.parserprices.myparser;
 
-
-//import org.w3c.dom.Document;
-
 import org.w3c.dom.Document;
 
 import org.w3c.dom.Element;
@@ -11,43 +8,71 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.File;
+import java.io.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
-public class ExportFromBase {
+import static ru.parserprices.myparser.MainParsingPrices.addToResultString;
+import static ru.parserprices.myparser.MainParsingPrices.currentOS;
+
+class ExportFromBase {
 
     ResultSet resultSet;
-
 
     public ExportFromBase(String[] givenArguments){
 
         ReadWriteBase writeDataToBase;
         Statement statement;
 
-        ReadSiteDNS.addToResultString("Getting statement base start..", addTo.Console);
+        addToResultString("Start export: " + new Date().toString(), addTo.LogFileAndConsole);
+
+        addToResultString("Getting statement base start..", addTo.LogFileAndConsole);
         try {
             writeDataToBase = new ReadWriteBase();
             statement = writeDataToBase.getStatement();
-            ReadSiteDNS.addToResultString("Getting statement base finish.", addTo.Console);
+            addToResultString("Getting statement base finish.", addTo.LogFileAndConsole);
         } catch (Exception e) {
-            ReadSiteDNS.addToResultString(e.toString(), addTo.LogFileAndConsole);
+            addToResultString(e.toString(), addTo.LogFileAndConsole);
             return;
         }
 
-        String query_readRecords = "SELECT * FROM goods WHERE goods.shop LIKE '".concat(givenArguments[0]).concat("_").concat(givenArguments[1]).concat("' LIMIT 10;");
+        String query_readRecords = "SELECT * FROM goods WHERE goods.shop LIKE '".concat(givenArguments[0]).concat("_").concat(givenArguments[1]).concat("' LIMIT 100000;");
 
+        addToResultString("Query start..", addTo.LogFileAndConsole);
         resultSet = writeDataToBase.readData(statement, query_readRecords);
+        addToResultString("Query finish.", addTo.LogFileAndConsole);
 
         // If result is empty.
         try {
-            if (!resultSet.next()) return;
+            if (!resultSet.next()) {
+                addToResultString("Query result is empty.", addTo.LogFileAndConsole);
+                return;
+            }
         } catch (SQLException e) {
-            ReadSiteDNS.addToResultString(e.toString(), addTo.LogFileAndConsole);
+            addToResultString(e.toString(), addTo.LogFileAndConsole);
             return;
         }///
 
+        String dateToName = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+        String fileName = givenArguments[0].concat("_").concat(givenArguments[1]).concat("_").concat(dateToName);
+        String prefixDirectory = "export/";
+        String notFullPath = prefixDirectory.concat(fileName).concat(".xml");
+
+        File file = new File(new ReadWriteFile(notFullPath).getFullAddress());
+
+        if (givenArguments[2].equals("xml")) createXML(file);
+        else if (givenArguments[2].equals("xls") || givenArguments[2].equals("xlsx")) /*createXML(nameFileExport)*/;
+
+        copyToWebServer(file);
+
+        addToResultString("Finish export: ".concat(new Date().toString()), addTo.LogFileAndConsole);
+
+    }
+
+    private void createXML(File file){
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
@@ -59,12 +84,15 @@ public class ExportFromBase {
             return;
         }
 
+        addToResultString("Creating XML!", addTo.LogFileAndConsole);
+        addToResultString("Create export file start..", addTo.LogFileAndConsole);
+
         Element goods = doc.createElement("Goods");
 //        root.setAttribute("xmlns", "http://www.javacore.ru/schemas/");
 
         try {
             while (resultSet.next()){
-                //ReadSiteDNS.addToResultString(resultSet.getString("good"), addTo.Console);
+                //ReadSites.addToResultString(resultSet.getString("good"), addTo.Console);
                 Element record = doc.createElement("record");
 
                 Element good = doc.createElement("good");
@@ -75,11 +103,13 @@ public class ExportFromBase {
                 item.setTextContent(resultSet.getString("item"));
                 record.appendChild(item);
 
-//                record.setTextContent("Good").setTextContent(resultSet.getString("good"));
-//                doc.createElement("Good").setTextContent(resultSet.getString("good"));
-//                doc.createElement("Item").setTextContent(resultSet.getString("item"));
-//                doc.createElement("Shop").setTextContent(resultSet.getString("good"));
-//                doc.createElement("Price").setTextContent(String.valueOf(resultSet.getInt("price")));
+                Element shop = doc.createElement("shop");
+                shop.setTextContent(resultSet.getString("shop"));
+                record.appendChild(shop);
+
+                Element price = doc.createElement("price");
+                price.setTextContent(resultSet.getString("price"));
+                record.appendChild(price);
 
                 goods.appendChild(record);
             }
@@ -88,9 +118,6 @@ public class ExportFromBase {
         }
 
         doc.appendChild(goods);
-
-
-        File file = new File(new ReadWriteFile("myXML").getFullAddress());
 
         Transformer transformer = null;
         try {
@@ -101,9 +128,44 @@ public class ExportFromBase {
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         try {
             transformer.transform(new DOMSource(doc), new StreamResult(file));
+            addToResultString("Create export file finish.", addTo.LogFileAndConsole);
         } catch (TransformerException e) {
-            e.printStackTrace();
+            addToResultString("Error create export file.", addTo.LogFileAndConsole);
+            addToResultString(e.toString(), addTo.LogFileAndConsole);
         }
 
     }
+
+    private void copyToWebServer(File fileSource){
+
+        File fileDestination;
+
+        if (currentOS == OS.Linux) {
+            fileDestination = new File("/var/www/Parser/".concat(fileSource.getName()));
+
+        }else {
+            fileDestination = new File("C:/Temp/".concat(fileSource.getName()));
+        }
+
+        InputStream is = null;
+        OutputStream os = null;
+        try {
+            is = new FileInputStream(fileSource);
+            os = new FileOutputStream(fileDestination);
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = is.read(buffer)) > 0) {
+                os.write(buffer, 0, length);
+            }
+        }catch (Exception e){
+        } finally {
+            try {
+                is.close();
+                os.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 }

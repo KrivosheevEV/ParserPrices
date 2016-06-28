@@ -7,13 +7,20 @@ import java.util.Date;
 
 public class MainParsingPrices {
 
+    private static String resultOfPasring = "";
+    private static long startTime;
+
     static OS currentOS;
     static shopNames shopName;
     static shopCities shopCity;
     static shopCityCodes shopCityCode;
     static String fileName_Result1, fileName_Result2;
 
+    private static ReadWriteFile resultOfParsing, readPattern;
+
     public static void main(String[] args) throws IOException, InterruptedException {
+
+        startTime = System.currentTimeMillis();
 
         // Get current OS.
         if (System.getProperty("os.name").startsWith("Windows")) {
@@ -30,7 +37,9 @@ public class MainParsingPrices {
 //        fileResult2 = "log" + (currentOS == OS.Windows ? "\\" : "/") + "Result2_DNS1_" + dateToName + ".txt";
         fileName_Result1 = "Result_".concat(shopName.name()).concat("_").concat(shopCity.name()).concat("_").concat(dateToName).concat("_console").concat(".txt");
         fileName_Result2 = "Result_".concat(shopName.name()).concat("_").concat(shopCity.name()).concat("_").concat(dateToName).concat(".txt");
+        String fullPathForLogs2 = "logs".concat(currentOS == OS.Windows ? "\\" : "/").concat(fileName_Result2);
 
+        resultOfParsing = new ReadWriteFile(fullPathForLogs2);
 
         // Export file if it set in argument package.
         if (args != null && args.length >= 3){
@@ -38,42 +47,38 @@ public class MainParsingPrices {
             return;
         }
 
-        ReadWriteFile mPatternOfSite = new ReadWriteFile("Pattern_DNS1.xml");
+//        readPattern = new ReadWriteFile("Pattern_DNS1_.xml");
 
         // Read sites. DNS.
-        ReadSiteDNS readSite_DNS = new ReadSiteDNS();
-        readSite_DNS.ReadSite(mPatternOfSite.getFullAddress());
+        ReadSites readSites = new ReadSites();
+        readSites.ReadSite(shopName);
 
         // Write logs.
-        ReadWriteFile mResultOfParsing = new ReadWriteFile(fileName_Result1);
-        mResultOfParsing.writeResultToFile(mResultOfParsing.getFullAddress(), readSite_DNS.getResultOfParsing(), false);
-//        mResultOfParsing.writeResultToFile("D:/Projects/ParserPrices/out/artifacts/ParserPrices_jar/1.txt", readSite_DNS.getResultOfParsing());
+        resultOfParsing.writeResultToFile(resultOfParsing.getFullAddress(), resultOfPasring, false);
 
     }
 
     private static void setShop(String[] args){
 
-        ReadSiteDNS readSiteDNS = new ReadSiteDNS();
         String argument = args[0];
 
-        if (args != null && args.length >= 1){
+        if (args.length >= 1){
 
             try {
                 shopName = shopNames.valueOf(argument);
             }catch (Exception e) {
-                readSiteDNS.addToResultString("Wrong argument #1 (".concat(argument).concat(")."),  addTo.LogFileAndConsole);
+                addToResultString("Wrong argument #1 (".concat(argument).concat(")."),  addTo.LogFileAndConsole);
             }
         }else {
-            readSiteDNS.addToResultString("Not set argument #1 (".concat(argument).concat(")."),  addTo.LogFileAndConsole);
+            addToResultString("Not set argument #1 (".concat(argument).concat(")."),  addTo.LogFileAndConsole);
         }
     }
 
     private static void setCityShop(String[] args){
 
-        ReadSiteDNS readSiteDNS = new ReadSiteDNS();
         String argument = args[1];
 
-        if (args != null && args.length >= 2){
+        if (args.length >= 2){
 //            try {
 //                cityShop = cityShops.valueOf(argument);
 //            }catch (Exception e) {
@@ -91,11 +96,28 @@ public class MainParsingPrices {
                 shopCity = shopCities.chapaevsk;
                 shopCityCode = shopCityCodes._84639;
             }
-            else readSiteDNS.addToResultString("Wrong argument #2 (".concat(argument).concat(")."),  addTo.LogFileAndConsole);
+            else addToResultString("Wrong argument #2 (".concat(argument).concat(")."),  addTo.LogFileAndConsole);
 
         }else {
-            readSiteDNS.addToResultString("Not set argument #2 (".concat(argument).concat(")."),  addTo.LogFileAndConsole);
+            addToResultString("Not set argument #2 (".concat(argument).concat(")."),  addTo.LogFileAndConsole);
         }
     }
 
+    public String getResultOfParsing() {
+
+        return this.resultOfPasring;
+    }
+    public static void addToResultString(String addedString, addTo writeIntoLogFile) {
+        //if (addedString.isEmpty()) return;
+        String timeForResult = Long.toString((System.currentTimeMillis() - startTime) / 1000) + "." + Long.toString((System.currentTimeMillis() - startTime) % 1000);
+        String stringToLog = timeForResult + " -> " + addedString + System.getProperty("line.separator");
+        resultOfPasring = resultOfPasring.concat(stringToLog);
+
+        if (writeIntoLogFile == addTo.LogFileAndConsole || writeIntoLogFile == addTo.logFile) {
+            resultOfParsing.writeResultToFile(resultOfParsing.getFullAddress(), stringToLog, true);
+        }
+
+        if (writeIntoLogFile == addTo.LogFileAndConsole || writeIntoLogFile == addTo.Console)
+            System.out.println(addedString);
+    }
 }
