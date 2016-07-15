@@ -375,7 +375,7 @@ public class ReadSites {
                     if (MAX_COUNT_ELEMENTS != -1 && countIteration >= MAX_COUNT_ELEMENTS) break;
                     countIteration++;
                 } catch (Exception e) {
-                    addToResultString("Element not found: ".concat(elementGood.getText()), addTo.LogFileAndConsole);
+                    addToResultString("Element not found: ".concat(elementGood.getText()), addTo.logFile);
                 }
             }
             addToResultString("All item(".concat(Integer.toString(countIteration)).concat(") was reading"), addTo.LogFileAndConsole);
@@ -478,6 +478,7 @@ public class ReadSites {
 
         int countOfRecords = 0;
         int countOfUpdate = 0;
+        int countOfNewRecords = 0;
 
         for (String[] stringToBase : listDataToBase) {
 
@@ -513,6 +514,7 @@ public class ReadSites {
             } else {
                 addToResultString("Write new record(" + countOfRecords + ") in base", addTo.Console);
                 writeDataToBase.writeData(statement, query_writeNewRecord);
+                countOfNewRecords++;
             }
 
             //System.out.println(stringToBase[2]);
@@ -520,8 +522,9 @@ public class ReadSites {
             if (MAX_COUNT_TOBASE != -1 && countOfRecords >= MAX_COUNT_TOBASE) break;
         }
 
-        addToResultString("Added records:   " + (countOfRecords - countOfUpdate) + " in base.", addTo.LogFileAndConsole);
-        addToResultString("Updated records: " + (countOfUpdate) + " in base.", addTo.LogFileAndConsole);
+        addToResultString("Reading records: " + countOfRecords + " in base.", addTo.LogFileAndConsole);
+        addToResultString("Added records:   " + countOfNewRecords + " in base.", addTo.LogFileAndConsole);
+        addToResultString("Updated records: " + countOfUpdate + " in base.", addTo.LogFileAndConsole);
 
         addToResultString("Close base connections", addTo.Console);
         writeDataToBase.closeBase();
@@ -534,6 +537,19 @@ public class ReadSites {
     private void startingWebDriver() {
 
         FirefoxProfile profile = new FirefoxProfile();
+        profile.setPreference("browser.download.manager.alertOnEXEOpen", false);
+        profile.setPreference("browser.helperApps.neverAsk.saveToDisk", "application/msword,application/csv,text/csv,image/png ,image/jpeg");
+        profile.setPreference("browser.download.manager.showWhenStarting", false);
+        profile.setPreference("browser.download.manager.focusWhenStarting", false);
+        //profile.setPreference("browser.download.useDownloadDir",true);
+        profile.setPreference("browser.helperApps.alwaysAsk.force", false);
+        profile.setPreference("browser.download.manager.alertOnEXEOpen", false);
+        profile.setPreference("browser.download.manager.closeWhenDone", false);
+        profile.setPreference("browser.download.manager.showAlertOnComplete", false);
+        profile.setPreference("browser.download.manager.useWindow", false);
+        profile.setPreference("browser.download.manager.showWhenStarting", false);
+        profile.setPreference("services.sync.prefs.sync.browser.download.manager.showWhenStarting", false);
+        profile.setPreference("pdfjs.disabled", true);
 
         try {
             switch (shopName){
@@ -541,19 +557,6 @@ public class ReadSites {
 
                     addToResultString("Trying start new WebDriver(Firefox)", addTo.LogFileAndConsole);
 
-                    profile.setPreference("browser.download.manager.alertOnEXEOpen", false);
-                    profile.setPreference("browser.helperApps.neverAsk.saveToDisk", "application/msword,application/csv,text/csv,image/png ,image/jpeg");
-                    profile.setPreference("browser.download.manager.showWhenStarting", false);
-                    profile.setPreference("browser.download.manager.focusWhenStarting", false);
-                    //profile.setPreference("browser.download.useDownloadDir",true);
-                    profile.setPreference("browser.helperApps.alwaysAsk.force", false);
-                    profile.setPreference("browser.download.manager.alertOnEXEOpen", false);
-                    profile.setPreference("browser.download.manager.closeWhenDone", false);
-                    profile.setPreference("browser.download.manager.showAlertOnComplete", false);
-                    profile.setPreference("browser.download.manager.useWindow", false);
-                    profile.setPreference("browser.download.manager.showWhenStarting", false);
-                    profile.setPreference("services.sync.prefs.sync.browser.download.manager.showWhenStarting", false);
-                    profile.setPreference("pdfjs.disabled", true);
 
                     driver = new FirefoxDriver(profile);
                     break;
@@ -563,7 +566,9 @@ public class ReadSites {
                     driver = new HtmlUnitDriver();
                     break;
 
-                default: break;
+                default:
+                    driver = new FirefoxDriver(profile);
+                    break;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -577,6 +582,7 @@ public class ReadSites {
 
         switch (shopName){
             case DNS:
+                GENERAL_URL = "http://www.dns-shop.ru";
 
                 String cookieCityPath;
                 String cookieCityGuid1C;
@@ -604,7 +610,7 @@ public class ReadSites {
                 break;
 
             case CITILINK:
-
+                GENERAL_URL = "http://www.citilink.ru";
                 break;
             case DOMO:
 

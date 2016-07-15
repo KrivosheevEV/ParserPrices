@@ -20,7 +20,7 @@ import static ru.parserprices.myparser.MainParsingPrices.currentOS;
 
 class ExportFromBase {
 
-    ResultSet resultSet;
+    private ResultSet resultSet;
 
     public ExportFromBase(String[] givenArguments){
 
@@ -147,6 +147,8 @@ class ExportFromBase {
             fileDestination = new File("C:/Temp/".concat(fileSource.getName()));
         }
 
+        if (fileDestination.exists()) fileDestination.delete();
+
         InputStream is = null;
         OutputStream os = null;
         try {
@@ -155,7 +157,7 @@ class ExportFromBase {
             byte[] buffer = new byte[1024];
             int length;
             while ((length = is.read(buffer)) > 0) {
-                os.write(buffer, 0, length);
+                os.write(buffer, 1, length);
             }
         }catch (Exception e){
         } finally {

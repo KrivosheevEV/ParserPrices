@@ -16,7 +16,7 @@ public class MainParsingPrices {
     static shopCityCodes shopCityCode;
     static String fileName_Result1, fileName_Result2;
 
-    private static ReadWriteFile resultOfParsing, readPattern;
+    private static ReadWriteFile resultToLog, readPattern;
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
@@ -30,7 +30,7 @@ public class MainParsingPrices {
         setShop(args);
         setCityShop(args);
 
-        // Get string-date to file name.
+        // Get string-date for file name.
         String dateToName = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
 
 //        fileResult1 = "log" + (currentOS == OS.Windows ? "\\" : "/") + "Result1_DNS1_" + dateToName + ".txt";
@@ -39,7 +39,7 @@ public class MainParsingPrices {
         fileName_Result2 = "Result_".concat(shopName.name()).concat("_").concat(shopCity.name()).concat("_").concat(dateToName).concat(".txt");
         String fullPathForLogs2 = "logs".concat(currentOS == OS.Windows ? "\\" : "/").concat(fileName_Result2);
 
-        resultOfParsing = new ReadWriteFile(fullPathForLogs2);
+        resultToLog = new ReadWriteFile(fullPathForLogs2);
 
         // Export file if it set in argument package.
         if (args != null && args.length >= 3){
@@ -54,7 +54,7 @@ public class MainParsingPrices {
         readSites.ReadSite(shopName);
 
         // Write logs.
-        resultOfParsing.writeResultToFile(resultOfParsing.getFullAddress(), resultOfPasring, false);
+        resultToLog.writeResultToFile(resultToLog.getFullAddress(), resultOfPasring, false);
 
     }
 
@@ -109,12 +109,17 @@ public class MainParsingPrices {
     }
     public static void addToResultString(String addedString, addTo writeIntoLogFile) {
         //if (addedString.isEmpty()) return;
-        String timeForResult = Long.toString((System.currentTimeMillis() - startTime) / 1000) + "." + Long.toString((System.currentTimeMillis() - startTime) % 1000);
+        Long currentMilliseconds = System.currentTimeMillis();
+        Long elapsedTime = (currentMilliseconds - startTime) / 1000;
+        Long secondsElapse = elapsedTime % 60;
+        Long minutsElapse = elapsedTime / 60;
+        Long hoursElapse = elapsedTime / 3600;
+        String timeForResult = Long.toString(hoursElapse) + "." + Long.toString(minutsElapse) + "." + Long.toString(secondsElapse);
         String stringToLog = timeForResult + " -> " + addedString + System.getProperty("line.separator");
         resultOfPasring = resultOfPasring.concat(stringToLog);
 
         if (writeIntoLogFile == addTo.LogFileAndConsole || writeIntoLogFile == addTo.logFile) {
-            resultOfParsing.writeResultToFile(resultOfParsing.getFullAddress(), stringToLog, true);
+            resultToLog.writeResultToFile(resultToLog.getFullAddress(), stringToLog, true);
         }
 
         if (writeIntoLogFile == addTo.LogFileAndConsole || writeIntoLogFile == addTo.Console)
