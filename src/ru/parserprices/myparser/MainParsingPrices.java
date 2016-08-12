@@ -65,7 +65,7 @@ public class MainParsingPrices {
         if (args.length >= 1){
 
             try {
-                shopName = shopNames.valueOf(argument);
+                shopName = shopNames.valueOf(argument.toUpperCase());
             }catch (Exception e) {
                 addToResultString("Wrong argument #1 (".concat(argument).concat(")."),  addTo.LogFileAndConsole);
             }
@@ -112,7 +112,7 @@ public class MainParsingPrices {
         Long currentMilliseconds = System.currentTimeMillis();
         Long elapsedTime = (currentMilliseconds - startTime) / 1000;
         Long secondsElapse = elapsedTime % 60;
-        Long minutsElapse = elapsedTime / 60;
+        Long minutsElapse = elapsedTime % 60;
         Long hoursElapse = elapsedTime / 3600;
         String timeForResult = Long.toString(hoursElapse) + "." + Long.toString(minutsElapse) + "." + Long.toString(secondsElapse);
         String stringToLog = timeForResult + " -> " + addedString + System.getProperty("line.separator");

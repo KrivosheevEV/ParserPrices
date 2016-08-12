@@ -14,7 +14,8 @@ import static ru.parserprices.myparser.MainParsingPrices.addToResultString;
 public class ReadWriteBase {
 
     // JDBC URL, username and password of MySQL server
-    private static String url = "jdbc:mysql://107.170.234.5:3306/Frontime";
+//    private static String url = "jdbc:mysql://107.170.234.5:3306/Frontime";
+    private static String url = "jdbc:mysql://parserpro.ru:3306/Frontime";
     private static final String user = "frontime";
     private static final String password = "Ahjynfqv2015"; /*Фронтайм2015*/
 
@@ -36,6 +37,7 @@ public class ReadWriteBase {
 
         } catch (SQLException sqlEx){
             System.out.println("Error open base.");
+            stmt = null;
             sqlEx.printStackTrace();
             closeBase();
 //        } catch (ClassNotFoundException e) {

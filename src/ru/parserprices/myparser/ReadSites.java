@@ -3,6 +3,7 @@ package ru.parserprices.myparser;
 
 //import org.openqa.selenium.*;
 
+import com.gargoylesoftware.htmlunit.BrowserVersion;
 import org.openqa.selenium.*;
 //import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -68,7 +69,7 @@ public class ReadSites {
 //        MainParsingPrices.cityShop = MainParsingPrices.cityShops.chapaevsk.name();
 
         startingWebDriver();
-        setCoockie(shopName);
+        setCookie(shopName);
 
         // Set "GENERAL_URL".
         switch (shopName){
@@ -107,7 +108,8 @@ public class ReadSites {
 
         String cssSelector_ExpandPage_Block = "div.catalog-category-more, div[style$='block']";
         String cssSelector_ExpandPage_Button = "a[class='btn btn-default']";
-        String cssSelector_Categories = "div.menu-item-category-wrapper a[href]";
+//        String cssSelector_Categories = "div.menu-item-category-wrapper a[href]";
+        String cssSelector_Categories = "div[class='item-wrap'] a[href]";
         String cssSelector_GoodLink = "div.item-name a[href]";
         String cssSelector_GoodTitle = "h1[class='page-title price-item-title']";
         String cssSelector_GoodCode = "div.price-item-code span";
@@ -127,6 +129,7 @@ public class ReadSites {
         addToResultString("Start getting category links", addTo.LogFileAndConsole);
         fillListPagesFromSite(driver, cssSelector_Categories, listLinkPages);
 //        listLinkPages = fillListPagesFromFile();
+        if (listLinkPages.size() == 0) addToResultString("Category links not found!", addTo.LogFileAndConsole);
         addToResultString("Finish getting category links", addTo.LogFileAndConsole);
 
         for (int countSites = 0; countSites < listLinkPages.size(); countSites++) {
@@ -189,15 +192,21 @@ public class ReadSites {
                 return;
             }
 
-            // Flip pages and read data.
-            flipAndReadDescription_CITILINK(driver, listDataToBase, cssSelector_GoodItems, cssSelector_GoodLink);
+//            int countOfPage = 1;
+//            WebElement nextPage = driver.findElement(By.cssSelector(cssSelector_NextPage));
+//            while (nextPage != null) {
+//                addToResultString("Reading data in page[".concat(String.valueOf(countOfPage++).concat("]..")), addTo.LogFileAndConsole);
+                flipAndReadDescription_CITILINK(driver, listDataToBase, cssSelector_NextPage, cssSelector_GoodItems, cssSelector_GoodLink);
+//                String linkNextPage = nextPage.getAttribute("href");
+//                if (!driver.getCurrentUrl().equals(linkNextPage)) driver.get(linkNextPage);
+//                nextPage = driver.findElement(By.cssSelector(cssSelector_NextPage));
+//            }
 
-            WebElement nextPage = driver.findElement(By.cssSelector(cssSelector_NextPage));
-            while (nextPage != null) {
-                String linkNextPage = nextPage.getAttribute("href");
-                if (!driver.getCurrentUrl().equals(linkNextPage)) driver.get(linkNextPage);
-            }
+            addToResultString("Writing data in base..", addTo.LogFileAndConsole);
+            writeDataIntoBase(listDataToBase);
+            addToResultString("Records(".concat(String.valueOf(listDataToBase.size())).concat(") added/updated in base."), addTo.LogFileAndConsole);
 
+            listDataToBase = new ArrayList<String[]>();
         }
     }
 
@@ -338,6 +347,7 @@ public class ReadSites {
 
     private void flipAndReadDescription_CITILINK(WebDriver driver,
                                                  ArrayList<String[]> listLinkGoods2,
+                                                 String cssSelector_NextPage,
                                                  String cssSelector_GoodItems,
                                                  String cssSelector_GoodLink) {
 
@@ -347,40 +357,49 @@ public class ReadSites {
         String goodPrice = "";
         String goodLink = "";
 
-
         try {
-            listItems = driver.findElements(By.cssSelector(cssSelector_GoodItems));
+            int countOfPage = 1;
             int countIteration = 0;
-            addToResultString("Reading data in page[".concat(String.valueOf(countIteration)).concat("].."), addTo.LogFileAndConsole);
+            WebElement nextPage = driver.findElement(By.cssSelector(cssSelector_NextPage));
+            while (nextPage != null) {
+                addToResultString("Reading data in page[".concat(String.valueOf(countOfPage++).concat("]..")), addTo.LogFileAndConsole);
 
-            for (WebElement elementGood : listItems) {
-                try {
-                    String params = elementGood.getAttribute("data-params");
-                    goodItem = params.substring(params.indexOf("id")+5, params.indexOf("\"", params.indexOf("id")+5));
-                    goodTitle = params.substring(params.indexOf("shortName")+12, params.indexOf("\"", params.indexOf("shortName")+12));
-                    goodPrice = params.substring(params.indexOf("price")+7, params.indexOf(",", params.indexOf("price")+7));
-                    goodLink = elementGood.findElement(By.cssSelector(cssSelector_GoodLink)).getAttribute("href");
+                listItems = driver.findElements(By.cssSelector(cssSelector_GoodItems));
 
-                    //                goodPrice = goodPrice.replace(" ", "");
-                    //addToResultString("Good: " + goodTitle + ", Item: " + goodItem + ", Price: " + goodPrice);
-                    String[] toList = {String.valueOf(countIteration),
-                            goodTitle,
-                            goodItem,
-                            shopName.name().concat(MainParsingPrices.shopCityCode.name()),
-                            goodPrice,
-                            new SimpleDateFormat("yyyy-MM-dd").format(new Date()),
-                            goodLink};
-                    listLinkGoods2.add(toList);
+                for (WebElement elementGood : listItems) {
+                    try {
+                        String params = elementGood.getAttribute("data-params");
+                        goodItem = params.substring(params.indexOf("id")+5, params.indexOf("\"", params.indexOf("id")+5));
+                        goodTitle = params.substring(params.indexOf("shortName")+12, params.indexOf("\"", params.indexOf("shortName")+12));
+                        goodPrice = params.substring(params.indexOf("price")+7, params.indexOf(",", params.indexOf("price")+7));
+                        goodLink = elementGood.findElement(By.cssSelector(cssSelector_GoodLink)).getAttribute("href");
 
-                    if (MAX_COUNT_ELEMENTS != -1 && countIteration >= MAX_COUNT_ELEMENTS) break;
-                    countIteration++;
-                } catch (Exception e) {
-                    addToResultString("Element not found: ".concat(elementGood.getText()), addTo.logFile);
+                        //                goodPrice = goodPrice.replace(" ", "");
+                        //addToResultString("Good: " + goodTitle + ", Item: " + goodItem + ", Price: " + goodPrice);
+                        String[] toList = {String.valueOf(countIteration),
+                                goodTitle,
+                                goodItem,
+                                shopName.name().concat(MainParsingPrices.shopCityCode.name()),
+                                goodPrice,
+                                new SimpleDateFormat("yyyy-MM-dd").format(new Date()),
+                                goodLink};
+                        listLinkGoods2.add(toList);
+
+                        if (MAX_COUNT_ELEMENTS != -1 && countIteration >= MAX_COUNT_ELEMENTS) break;
+                        countIteration++;
+                    } catch (Exception e) {
+                        addToResultString("Element not found: ".concat(elementGood.getText()), addTo.logFile);
+                    }
                 }
+
+                String linkNextPage = nextPage.getAttribute("href");
+                if (!driver.getCurrentUrl().equals(linkNextPage)) driver.get(linkNextPage);
+                nextPage = driver.findElement(By.cssSelector(cssSelector_NextPage));
             }
+
             addToResultString("All item(".concat(Integer.toString(countIteration)).concat(") was reading"), addTo.LogFileAndConsole);
         } catch (Exception e) {
-            addToResultString("Error reading expand page.", addTo.LogFileAndConsole);
+            addToResultString("Error reading flipping page.", addTo.LogFileAndConsole);
         }
     }
 
@@ -389,8 +408,17 @@ public class ReadSites {
 
         if (shopName == shopNames.DNS) {
             driver = new HtmlUnitDriver();
+
+            //driver.setJavascriptEnabled(true);
         }
+        setCookie(shopName);
         driver.navigate().to(GENERAL_URL);
+
+//        driver2.get("http://www.ya.ru");
+
+        driver.manage()
+                .timeouts()
+                .implicitlyWait(10, TimeUnit.SECONDS);
 
         try {
 
@@ -407,6 +435,8 @@ public class ReadSites {
             addToResultString("Error parsing site (fill category).", addTo.LogFileAndConsole);
             addToResultString(te.getMessage(), addTo.LogFileAndConsole);
         }
+
+        addToResultString("Reading ".concat(Integer.toString(listPages.size()).concat(" category links")), addTo.LogFileAndConsole);
     }
 
     private ArrayList<String> fillListPagesFromFile() {
@@ -563,7 +593,8 @@ public class ReadSites {
 
                 case CITILINK:
                     addToResultString("Trying start new WebDriver(HtmlUnit)", addTo.LogFileAndConsole);
-                    driver = new HtmlUnitDriver();
+//                    driver = new HtmlUnitDriver();
+                    driver = new FirefoxDriver(profile);;
                     break;
 
                 default:
@@ -578,7 +609,7 @@ public class ReadSites {
     }
 
     // Set coockie.
-    private void setCoockie(shopNames shopName){
+    private void setCookie(shopNames shopName){
 
         switch (shopName){
             case DNS:
@@ -611,6 +642,51 @@ public class ReadSites {
 
             case CITILINK:
                 GENERAL_URL = "http://www.citilink.ru";
+
+//                String cookie_tuid;
+//                String cookie_rcuid;
+//                String cookie_rrpusid;
+//                String cookie__lxun;
+                String cookie_space;
+                driver.get(GENERAL_URL);
+//                driver.manage().deleteCookieNamed("_tuid");
+//                driver.manage().deleteCookieNamed("rcuid");
+//                driver.manage().deleteCookieNamed("rrpusid");
+//                driver.manage().deleteCookieNamed("__lxun");
+                driver.manage().deleteCookieNamed("_space");
+
+                if (MainParsingPrices.shopCity == shopCities.samara){
+//                    cookie_tuid = "1ed7ea9da2722c2989a2bab15850fe5a4a4ae477";
+//                    cookie_rcuid = "55963f001e994605b8d0779c";
+//                    cookie_rrpusid = "55963f001e994605b8d0779c";
+//                    cookie__lxun = "560050762040545";
+                    cookie_space = "smr_cl%3A";
+                }else if (MainParsingPrices.shopCity == shopCities.novokuybishevsk){
+//                    cookie_tuid = "75a4696c34b9a2c8b23dc3c9a27b731262ed7167";
+//                    cookie_rcuid = "57ac499a1e99470fc44ac12d";
+//                    cookie_rrpusid = "57ac499a1e99470fc44ac12d";
+//                    cookie__lxun = "1470908826999";
+                    cookie_space = "smr_cl%3Asmmnovok";
+                }else if (MainParsingPrices.shopCity == shopCities.chapaevsk){
+//                    cookie_tuid = "chapaevsk";
+//                    cookie_rcuid = "chapaevsk";
+//                    cookie_rrpusid = "chapaevsk";
+//                    cookie__lxun = "chapaevsk";
+                    cookie_space = "chapaevsk";
+                }else {
+//                    cookie_tuid = "1ed7ea9da2722c2989a2bab15850fe5a4a4ae477";
+//                    cookie_rcuid = "55963f001e994605b8d0779c";
+//                    cookie_rrpusid = "55963f001e994605b8d0779c";
+//                    cookie__lxun = "560050762040545";
+                    cookie_space = "560050762040545";
+                }
+
+//                driver.manage().addCookie(new Cookie("_tuid", cookie_tuid));
+//                driver.manage().addCookie(new Cookie("rcuid", cookie_rcuid));
+//                driver.manage().addCookie(new Cookie("rrpusid", cookie_rrpusid));
+//                driver.manage().addCookie(new Cookie("__lxun", cookie__lxun));
+                driver.manage().addCookie(new Cookie("_space", cookie_space));
+
                 break;
             case DOMO:
 

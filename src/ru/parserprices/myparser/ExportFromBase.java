@@ -39,6 +39,11 @@ class ExportFromBase {
             return;
         }
 
+        if (statement == null) {
+            addToResultString("Finish export: ".concat(new Date().toString()), addTo.LogFileAndConsole);
+            return;
+        }
+
         String query_readRecords = "SELECT * FROM goods WHERE goods.shop LIKE '".concat(givenArguments[0]).concat("_").concat(givenArguments[1]).concat("' LIMIT 100000;");
 
         addToResultString("Query start..", addTo.LogFileAndConsole);
@@ -63,8 +68,9 @@ class ExportFromBase {
 
         File file = new File(new ReadWriteFile(notFullPath).getFullAddress());
 
-        if (givenArguments[2].equals("xml")) createXML(file);
-        else if (givenArguments[2].equals("xls") || givenArguments[2].equals("xlsx")) /*createXML(nameFileExport)*/;
+        if (givenArguments[2].toUpperCase().equals("XML")) createXML(file);
+        else if (givenArguments[2].toUpperCase().equals("XLS") || givenArguments[2].toUpperCase().equals("XLSX")) /*createXML(nameFileExport)*/;
+        else addToResultString("Finish export: ".concat(new Date().toString()), addTo.LogFileAndConsole);
 
         copyToWebServer(file);
 
@@ -137,6 +143,11 @@ class ExportFromBase {
     }
 
     private void copyToWebServer(File fileSource){
+
+        if(!fileSource.exists()){
+            addToResultString("File-source for copy to web not exists", addTo.LogFileAndConsole);
+            return;
+        }
 
         File fileDestination;
 
