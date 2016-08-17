@@ -1,5 +1,6 @@
 package ru.parserprices.myparser;
 
+import com.google.common.io.Files;
 import org.w3c.dom.Document;
 
 import org.w3c.dom.Element;
@@ -66,7 +67,8 @@ class ExportFromBase {
         String prefixDirectory = "export/";
         String notFullPath = prefixDirectory.concat(fileName).concat(".xml");
 
-        File file = new File(new ReadWriteFile(notFullPath).getFullAddress());
+        ReadWriteFile newFile = new ReadWriteFile(notFullPath);
+        File file = new File(newFile.getFullAddress());
 
         if (givenArguments[2].toUpperCase().equals("XML")) createXML(file);
         else if (givenArguments[2].toUpperCase().equals("XLS") || givenArguments[2].toUpperCase().equals("XLSX")) /*createXML(nameFileExport)*/;
@@ -160,24 +162,30 @@ class ExportFromBase {
 
         if (fileDestination.exists()) fileDestination.delete();
 
-        InputStream is = null;
-        OutputStream os = null;
+//        InputStream is = null;
+//        OutputStream os = null;
         try {
-            is = new FileInputStream(fileSource);
-            os = new FileOutputStream(fileDestination);
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = is.read(buffer)) > 0) {
-                os.write(buffer, 1, length);
-            }
+            Files.copy(fileSource, fileDestination);
+//            is = new FileInputStream(fileSource);
+//            os = new FileOutputStream(fileDestination);
+////            byte[] buffer = 1024];
+//            byte[] buffer = new byte[is.read()+1];
+//            int readed;
+//            while ((readed = is.read(buffer)) > 0) {
+//                os.write(buffer, 0, readed);
+//            }
+            addToResultString("File-source copied to web", addTo.LogFileAndConsole);
         }catch (Exception e){
+//            e.printStackTrace();
+            addToResultString("Error copying file-source copied to web", addTo.LogFileAndConsole);
+            addToResultString(e.toString(), addTo.LogFileAndConsole);
         } finally {
-            try {
-                is.close();
-                os.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+//            try {
+//                is.close();
+//                os.close();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
         }
     }
 

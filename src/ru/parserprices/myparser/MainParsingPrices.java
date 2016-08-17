@@ -112,7 +112,7 @@ public class MainParsingPrices {
         Long currentMilliseconds = System.currentTimeMillis();
         Long elapsedTime = (currentMilliseconds - startTime) / 1000;
         Long secondsElapse = elapsedTime % 60;
-        Long minutsElapse = elapsedTime % 60;
+        Long minutsElapse = elapsedTime / 60;
         Long hoursElapse = elapsedTime / 3600;
         String timeForResult = Long.toString(hoursElapse) + "." + Long.toString(minutsElapse) + "." + Long.toString(secondsElapse);
         String stringToLog = timeForResult + " -> " + addedString + System.getProperty("line.separator");

@@ -99,6 +99,7 @@ public class ReadWriteBase {
     public String clearLetters(String givenString){
         String resultOfFunction = "";
         resultOfFunction = givenString.replace("'", "");
+        resultOfFunction = resultOfFunction.replace("\\", "/");
         return resultOfFunction;
     }
 

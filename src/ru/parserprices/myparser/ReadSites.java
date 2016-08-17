@@ -10,12 +10,14 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.firefox.internal.ProfilesIni;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
+import org.openqa.selenium.interactions.internal.Coordinates;
 import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.IOException;
+import java.security.Key;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
@@ -29,10 +31,10 @@ public class ReadSites {
 
     private static String GENERAL_URL;
     private static int WAITING_FOR_EXPAND = 7;
-    private static int MAX_COUNT_EXPAND = -1;
+    private static int MAX_COUNT_EXPAND = 5;    // -1 == never
     private static int MAX_COUNT_TOBASE = -1;
     private static int MAX_COUNT_ELEMENTS = -1;
-    private WebDriver driver;
+    private HtmlUnitDriver driver;
 
     public void ReadSite(shopNames shopName) throws InterruptedException {
 
@@ -269,7 +271,7 @@ public class ReadSites {
         }
     }
 
-    private void expandAndReadDescription_DNS(WebDriver driver,
+    private void expandAndReadDescription_DNS(HtmlUnitDriver driver,
                                               ArrayList<String[]> listLinkGoods2,
                                               String cssSelector_ExpandPage_Block,
                                               String cssSelector_ExpandPage_Button,
@@ -292,20 +294,37 @@ public class ReadSites {
 
             if (listItems.size() > 0) {
 
+                driver.setJavascriptEnabled(true);
+
                 WebElement but_NextPageBlock = driver.findElement(By.cssSelector(cssSelector_ExpandPage_Block));
                 WebElement but_NextPageButton = but_NextPageBlock.findElement(By.cssSelector(cssSelector_ExpandPage_Button));
 
                 while ((new WebDriverWait(driver, WAITING_FOR_EXPAND)).until(ExpectedConditions.not(
                         ExpectedConditions.invisibilityOfElementLocated(By.cssSelector(cssSelector_ExpandPage_Block))))) {
 
+
+                    driver.getKeyboard().pressKey(Keys.ESCAPE);
                     but_NextPageButton.sendKeys(Keys.ESCAPE);
+                    but_NextPageBlock.sendKeys(Keys.ENTER);
+//                    Coordinates coordinates;
+//                    coordinates.onPage().x = but_NextPageButton.getLocation().getX();
+//                    coordinates.onPage().y = but_NextPageButton.getLocation().getY();
+//                    JavascriptExecutor executor = (JavascriptExecutor) driver;
+//                    executor.executeScript("arguments[0].click‌​();" , but_NextPageBlock);
+//                    driver.getMouse().click(coordinates);
                     but_NextPageButton.click();
+                    but_NextPageBlock.click();
+                    driver.setJavascriptEnabled(false);
 
                     if (MAX_COUNT_EXPAND != -1 && countPages++ >= MAX_COUNT_EXPAND) break;
                 }
             }
 
         } catch (Throwable te) {
+
+            addToResultString(te.getMessage(), addTo.LogFileAndConsole);
+
+        } finally {
 
             addToResultString("All page is opened.", addTo.LogFileAndConsole);
 
@@ -352,6 +371,7 @@ public class ReadSites {
                                                  String cssSelector_GoodLink) {
 
         List<WebElement> listItems;
+        String params = "";
         String goodItem = "";
         String goodTitle = "";
         String goodPrice = "";
@@ -368,12 +388,12 @@ public class ReadSites {
 
                 for (WebElement elementGood : listItems) {
                     try {
-                        String params = elementGood.getAttribute("data-params");
-                        goodItem = params.substring(params.indexOf("id")+5, params.indexOf("\"", params.indexOf("id")+5));
-                        goodTitle = params.substring(params.indexOf("shortName")+12, params.indexOf("\"", params.indexOf("shortName")+12));
-                        goodPrice = params.substring(params.indexOf("price")+7, params.indexOf(",", params.indexOf("price")+7));
+                        params = elementGood.getAttribute("data-params");
+                        goodItem = new String(params.substring(params.indexOf("id") + 5, params.indexOf("\"", params.indexOf("id") + 5)));
+                        goodTitle = new String(params.substring(params.indexOf("shortName") + 12, params.indexOf("\"", params.indexOf("shortName") + 12)));
+                        goodPrice = new String(params.substring(params.indexOf("price") + 7, params.indexOf(",", params.indexOf("price") + 7)));
                         goodLink = elementGood.findElement(By.cssSelector(cssSelector_GoodLink)).getAttribute("href");
-
+                        params = null;
                         //                goodPrice = goodPrice.replace(" ", "");
                         //addToResultString("Good: " + goodTitle + ", Item: " + goodItem + ", Price: " + goodPrice);
                         String[] toList = {String.valueOf(countIteration),
@@ -384,6 +404,10 @@ public class ReadSites {
                                 new SimpleDateFormat("yyyy-MM-dd").format(new Date()),
                                 goodLink};
                         listLinkGoods2.add(toList);
+                        //addToResultString("Size of array: ".concat(String.valueOf(listLinkGoods2.size()).concat(".")), addTo.LogFileAndConsole);
+//                        addToResultString("Added string to array: ".concat(java.util.Arrays.toString(toList)), addTo.LogFileAndConsole);
+
+                        toList = null;  goodItem = null; goodTitle = null; goodPrice = null; goodLink = null;
 
                         if (MAX_COUNT_ELEMENTS != -1 && countIteration >= MAX_COUNT_ELEMENTS) break;
                         countIteration++;
@@ -391,6 +415,9 @@ public class ReadSites {
                         addToResultString("Element not found: ".concat(elementGood.getText()), addTo.logFile);
                     }
                 }
+
+                listItems.clear();
+                listItems = null;
 
                 String linkNextPage = nextPage.getAttribute("href");
                 if (!driver.getCurrentUrl().equals(linkNextPage)) driver.get(linkNextPage);
@@ -586,19 +613,20 @@ public class ReadSites {
                 case DNS:
 
                     addToResultString("Trying start new WebDriver(Firefox)", addTo.LogFileAndConsole);
-
-
-                    driver = new FirefoxDriver(profile);
+//                    driver = new FirefoxDriver(profile);
+                    driver = new HtmlUnitDriver();
+//                    driver.setJavascriptEnabled(true);
                     break;
 
                 case CITILINK:
+
                     addToResultString("Trying start new WebDriver(HtmlUnit)", addTo.LogFileAndConsole);
-//                    driver = new HtmlUnitDriver();
-                    driver = new FirefoxDriver(profile);;
+                    driver = new HtmlUnitDriver();
+//                    driver = new FirefoxDriver(profile);;
                     break;
 
                 default:
-                    driver = new FirefoxDriver(profile);
+                    driver = new HtmlUnitDriver();
                     break;
             }
         } catch (Exception e) {

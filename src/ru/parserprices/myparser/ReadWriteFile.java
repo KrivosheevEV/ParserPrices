@@ -112,7 +112,7 @@ public class ReadWriteFile {
 
     private static void exists(File file) throws FileNotFoundException {
         if (!file.exists()){
-            System.out.print("File not exist: " + file.getPath() + file.getName() + "\n");
+            addToResultString("File not exist: " + file.getPath() + file.getName() + "\n", addTo.LogFileAndConsole);
             throw new FileNotFoundException(file.getName());
         }
     }
@@ -144,6 +144,7 @@ public class ReadWriteFile {
                 out.close();
             }
         } catch(IOException e) {
+            addToResultString("Error creating file: " + file.getPath() + file.getName() + "\n", addTo.LogFileAndConsole);
             throw new RuntimeException(e);
         }
     }
