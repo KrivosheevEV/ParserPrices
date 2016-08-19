@@ -13,11 +13,11 @@ enum shopNames{
 }
 
 enum shopCities{
-    samara, novokuybishevsk, chapaevsk
+    samara, novokuybishevsk, chapaevsk, syzran, tolyatti
 }
 
 enum shopCityCodes{
-    _846, _84639, _84635
+    _846, _84635, _84639, _8464, _8482
 }
 
 enum extensionForExport{

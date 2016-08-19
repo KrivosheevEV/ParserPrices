@@ -3,6 +3,7 @@ package ru.parserprices.myparser;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 
 public class MainParsingPrices {
@@ -76,9 +77,10 @@ public class MainParsingPrices {
 
     private static void setCityShop(String[] args){
 
-        String argument = args[1];
-
         if (args.length >= 2){
+
+            String argument = args[1];
+
 //            try {
 //                cityShop = cityShops.valueOf(argument);
 //            }catch (Exception e) {
@@ -96,10 +98,18 @@ public class MainParsingPrices {
                 shopCity = shopCities.chapaevsk;
                 shopCityCode = shopCityCodes._84639;
             }
+            else if (argument.equals("8464")) {
+                shopCity = shopCities.syzran;
+                shopCityCode = shopCityCodes._8464;
+            }
+            else if (argument.equals("8482")) {
+                shopCity = shopCities.tolyatti;
+                shopCityCode = shopCityCodes._8482;
+            }
             else addToResultString("Wrong argument #2 (".concat(argument).concat(")."),  addTo.LogFileAndConsole);
 
         }else {
-            addToResultString("Not set argument #2 (".concat(argument).concat(")."),  addTo.LogFileAndConsole);
+            addToResultString("Not set argument #2 (".concat(Arrays.toString(args)).concat(")."),  addTo.LogFileAndConsole);
         }
     }
 
@@ -112,8 +122,8 @@ public class MainParsingPrices {
         Long currentMilliseconds = System.currentTimeMillis();
         Long elapsedTime = (currentMilliseconds - startTime) / 1000;
         Long secondsElapse = elapsedTime % 60;
-        Long minutsElapse = elapsedTime / 60;
-        Long hoursElapse = elapsedTime / 3600;
+        Long minutsElapse = elapsedTime / 60 % 60;
+        Long hoursElapse = elapsedTime / 3600 % 24;
         String timeForResult = Long.toString(hoursElapse) + "." + Long.toString(minutsElapse) + "." + Long.toString(secondsElapse);
         String stringToLog = timeForResult + " -> " + addedString + System.getProperty("line.separator");
         resultOfPasring = resultOfPasring.concat(stringToLog);
