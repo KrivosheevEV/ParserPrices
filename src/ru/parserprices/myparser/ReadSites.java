@@ -509,6 +509,7 @@ public class ReadSites {
                         goodTitle = elementGood.findElement(By.cssSelector(cssSelector_GoodTitle)).getText();
                         goodPrice = elementGood.findElement(By.cssSelector(cssSelector_GoodPrice)).getText();
                         goodLink = elementGood.findElement(By.cssSelector(cssSelector_GoodLink)).getAttribute("href");
+                        goodItem = new String(goodLink.substring(goodLink.lastIndexOf("-") + 1));
                         goodPrice = new String(goodPrice.replace(" руб.", "").replace(" ", ""));
                         //
 //                        addToResultString("Good: " + goodTitle + ", Item: " + goodItem + ", Price: " + goodPrice, addTo.LogFileAndConsole);
