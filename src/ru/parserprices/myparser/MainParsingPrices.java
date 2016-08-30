@@ -28,8 +28,8 @@ public class MainParsingPrices {
             currentOS = OS.Windows;
         } else currentOS = OS.Linux;
 
-        setShop(args);
-        setCityShop(args);
+        setShop(getArgumentValue(args, "-shop"));
+        setCityShop(getArgumentValue(args, "-city"));
 
         // Get string-date for file name.
         String dateToName = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
@@ -42,8 +42,13 @@ public class MainParsingPrices {
 
         resultToLog = new ReadWriteFile(fullPathForLogs2);
 
+        if (shopName == shopNames.empty || shopCity == shopCities.empty || shopCityCode == shopCityCodes.empty){
+            addToResultString("Error to setting arguments value.",  addTo.LogFileAndConsole);
+            return;
+        }
+
         // Export file if it set in argument package.
-        if (args != null && args.length >= 3){
+        if (args != null && !getArgumentValue(args, "-export").isEmpty()){
             new ExportFromBase(args);
             return;
         }
@@ -59,57 +64,56 @@ public class MainParsingPrices {
 
     }
 
-    private static void setShop(String[] args){
+    private static void setShop(String argumentValue){
 
-        String argument = args[0];
-
-        if (args.length >= 1){
+        if (!argumentValue.isEmpty()){
 
             try {
-                shopName = shopNames.valueOf(argument.toUpperCase());
+                shopName = shopNames.valueOf(argumentValue.toUpperCase());
             }catch (Exception e) {
-                addToResultString("Wrong argument #1 (".concat(argument).concat(")."),  addTo.LogFileAndConsole);
+                shopName = shopNames.empty;
+                addToResultString("Wrong value of argument '-shop' (".concat(argumentValue).concat(")."),  addTo.LogFileAndConsole);
             }
         }else {
-            addToResultString("Not set argument #1 (".concat(argument).concat(")."),  addTo.LogFileAndConsole);
+            shopName = shopNames.empty;
+            addToResultString("Not set argument '-shop'.",  addTo.LogFileAndConsole);
         }
     }
 
-    private static void setCityShop(String[] args){
+    private static void setCityShop(String argumentValue){
 
-        if (args.length >= 2){
+        if (!argumentValue.isEmpty()){
 
-            String argument = args[1];
-
-//            try {
-//                cityShop = cityShops.valueOf(argument);
-//            }catch (Exception e) {
-//                readSiteDNS.addToResultString("Wrong argument #2 (".concat(argument).concat(")."),  addTo.LogFileAndConsole);
-//            }
-            if (argument.equals("846")) {
+            if (argumentValue.equals("846")) {
                 shopCity = shopCities.samara;
                 shopCityCode = shopCityCodes._846;
             }
-            else if (argument.equals("84635")) {
+            else if (argumentValue.equals("84635")) {
                 shopCity = shopCities.novokuybishevsk;
                 shopCityCode = shopCityCodes._84635;
             }
-            else if (argument.equals("84639")) {
+            else if (argumentValue.equals("84639")) {
                 shopCity = shopCities.chapaevsk;
                 shopCityCode = shopCityCodes._84639;
             }
-            else if (argument.equals("8464")) {
+            else if (argumentValue.equals("8464")) {
                 shopCity = shopCities.syzran;
                 shopCityCode = shopCityCodes._8464;
             }
-            else if (argument.equals("8482")) {
+            else if (argumentValue.equals("8482")) {
                 shopCity = shopCities.tolyatti;
                 shopCityCode = shopCityCodes._8482;
             }
-            else addToResultString("Wrong argument #2 (".concat(argument).concat(")."),  addTo.LogFileAndConsole);
+            else {
+                shopCity = shopCities.empty;
+                shopCityCode = shopCityCodes.empty;
+                addToResultString("Wrong value of argument '-city' (".concat(argumentValue).concat(")."),  addTo.LogFileAndConsole);
+            }
 
         }else {
-            addToResultString("Not set argument #2 (".concat(Arrays.toString(args)).concat(")."),  addTo.LogFileAndConsole);
+            shopCity = shopCities.empty;
+            shopCityCode = shopCityCodes.empty;
+            addToResultString("Not set argument '-city'.",  addTo.LogFileAndConsole);
         }
     }
 
@@ -117,6 +121,7 @@ public class MainParsingPrices {
 
         return this.resultOfPasring;
     }
+
     public static void addToResultString(String addedString, addTo writeIntoLogFile) {
         //if (addedString.isEmpty()) return;
         Long currentMilliseconds = System.currentTimeMillis();
@@ -128,11 +133,32 @@ public class MainParsingPrices {
         String stringToLog = timeForResult + " -> " + addedString + System.getProperty("line.separator");
         resultOfPasring = resultOfPasring.concat(stringToLog);
 
-        if (writeIntoLogFile == addTo.LogFileAndConsole || writeIntoLogFile == addTo.logFile) {
+        if (resultToLog != null && writeIntoLogFile == addTo.LogFileAndConsole || writeIntoLogFile == addTo.logFile) {
             resultToLog.writeResultToFile(resultToLog.getFullAddress(), stringToLog, true);
         }
 
         if (writeIntoLogFile == addTo.LogFileAndConsole || writeIntoLogFile == addTo.Console)
             System.out.println(addedString);
     }
+
+    public static String getArgumentValue(String[] args, String argument){
+
+        String value = "";
+
+        for (int counter = 0; counter < args.length - 1; counter++) {
+            if (args[counter].equals(argument)) {
+                value = args[counter + 1];
+                break;
+            }
+        }
+
+        if (value.startsWith("-")) {
+            addToResultString("Wrong value (".concat(value).concat(") of argument '").concat(argument).concat("'."),  addTo.LogFileAndConsole);
+            value = "";
+        }
+
+        return value;
+
+    }
+
 }

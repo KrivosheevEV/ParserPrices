@@ -19,10 +19,7 @@ import java.util.Date;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
-
-import static ru.parserprices.myparser.MainParsingPrices.addToResultString;
-import static ru.parserprices.myparser.MainParsingPrices.currentOS;
-
+import static ru.parserprices.myparser.MainParsingPrices.*;
 
 
 class ExportFromBase {
@@ -30,6 +27,13 @@ class ExportFromBase {
     private ResultSet resultSet;
 
     public ExportFromBase(String[] givenArguments){
+
+        String argument_Export = getArgumentValue(givenArguments, "-export").toUpperCase();
+        if (argument_Export.isEmpty()){
+            addToResultString("Not set value of argument '-export'.",  addTo.LogFileAndConsole);
+            addToResultString("Finish export: ".concat(new Date().toString()), addTo.LogFileAndConsole);
+            return;
+        }
 
         ReadWriteBase writeDataToBase;
         Statement statement;
@@ -51,7 +55,7 @@ class ExportFromBase {
             return;
         }
 
-        String query_readRecords = "SELECT * FROM goods WHERE goods.shop LIKE '".concat(givenArguments[0]).concat("_").concat(givenArguments[1]).concat("' LIMIT 100000;");
+        String query_readRecords = "SELECT * FROM goods WHERE goods.shop LIKE '".concat(shopName.name()).concat(shopCityCode.name()).concat("' LIMIT 100000;");
 
         addToResultString("Query start..", addTo.LogFileAndConsole);
         resultSet = writeDataToBase.readData(statement, query_readRecords);
@@ -64,28 +68,33 @@ class ExportFromBase {
                 return;
             }
         } catch (SQLException e) {
+            addToResultString("Error while run query.", addTo.LogFileAndConsole);
             addToResultString(e.toString(), addTo.LogFileAndConsole);
             return;
         }///
 
         String dateToName = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-        String fileName = givenArguments[0].concat("_").concat(givenArguments[1]).concat("_").concat(dateToName);
+        String fileName = shopName.name().concat(shopCityCode.name()).concat("_").concat(dateToName);
         String prefixDirectory = "export/";
         String notFullPath;
 //        = prefixDirectory.concat(fileName); //.concat(".xml");
 
-        String argument2 = givenArguments[2].toUpperCase();
-
-        if (argument2.equals("XML")) notFullPath = prefixDirectory.concat(fileName).concat(".xml");
-        else if (argument2.equals("XLS") || argument2.equals("XLSX")) notFullPath = prefixDirectory.concat(fileName).concat(".xls");
-        else notFullPath = prefixDirectory.concat(fileName).concat(".xml");
+        if (argument_Export.equals("XML")) notFullPath = prefixDirectory.concat(fileName).concat(".xml");
+        else if (argument_Export.equals("XLS") || argument_Export.equals("XLSX")) notFullPath = prefixDirectory.concat(fileName).concat(".xls");
+        else {
+            addToResultString("Finish export: ".concat(new Date().toString()), addTo.LogFileAndConsole);
+            return;
+        }
 
         ReadWriteFile newFile = new ReadWriteFile(notFullPath);
         File file = new File(newFile.getFullAddress());
 
-        if (argument2.equals("XML")) createXML(file);
-        else if (argument2.equals("XLS") || argument2.equals("XLSX")) createXLS(file);
-        else addToResultString("Finish export: ".concat(new Date().toString()), addTo.LogFileAndConsole);
+        if (argument_Export.equals("XML")) createXML(file);
+        else if (argument_Export.equals("XLS") || argument_Export.equals("XLSX")) createXLS(file);
+        else {
+            addToResultString("Finish export: ".concat(new Date().toString()), addTo.LogFileAndConsole);
+            return;
+        }
 
         copyToWebServer(file);
 
@@ -171,16 +180,16 @@ class ExportFromBase {
         Row row = sheet.createRow(rowNum);
         row.createCell(0).setCellValue("Good");
         row.createCell(1).setCellValue("Item");
-        row.createCell(2).setCellValue("Shop");
-        row.createCell(3).setCellValue("Price");
+        row.createCell(2).setCellValue("Price");
+//        row.createCell(3).setCellValue("Shop");
 
         try {
             while (resultSet.next()){
                 row = sheet.createRow(++rowNum);
                 row.createCell(0).setCellValue(resultSet.getString("good"));
                 row.createCell(1).setCellValue(resultSet.getString("item"));
-                row.createCell(2).setCellValue(resultSet.getString("shop"));
-                row.createCell(3).setCellValue(resultSet.getString("price"));
+                row.createCell(2).setCellValue(resultSet.getString("price"));
+//                row.createCell(3).setCellValue(resultSet.getString("shop"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
