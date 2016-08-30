@@ -1,6 +1,7 @@
 package ru.parserprices.myparser;
 
 import com.google.common.io.Files;
+import org.apache.poi.ss.usermodel.Row;
 import org.w3c.dom.Document;
 
 import org.w3c.dom.Element;
@@ -15,9 +16,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+
 
 import static ru.parserprices.myparser.MainParsingPrices.addToResultString;
 import static ru.parserprices.myparser.MainParsingPrices.currentOS;
+
+
 
 class ExportFromBase {
 
@@ -65,13 +71,20 @@ class ExportFromBase {
         String dateToName = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
         String fileName = givenArguments[0].concat("_").concat(givenArguments[1]).concat("_").concat(dateToName);
         String prefixDirectory = "export/";
-        String notFullPath = prefixDirectory.concat(fileName).concat(".xml");
+        String notFullPath;
+//        = prefixDirectory.concat(fileName); //.concat(".xml");
+
+        String argument2 = givenArguments[2].toUpperCase();
+
+        if (argument2.equals("XML")) notFullPath = prefixDirectory.concat(fileName).concat(".xml");
+        else if (argument2.equals("XLS") || argument2.equals("XLSX")) notFullPath = prefixDirectory.concat(fileName).concat(".xls");
+        else notFullPath = prefixDirectory.concat(fileName).concat(".xml");
 
         ReadWriteFile newFile = new ReadWriteFile(notFullPath);
         File file = new File(newFile.getFullAddress());
 
-        if (givenArguments[2].toUpperCase().equals("XML")) createXML(file);
-        else if (givenArguments[2].toUpperCase().equals("XLS") || givenArguments[2].toUpperCase().equals("XLSX")) /*createXML(nameFileExport)*/;
+        if (argument2.equals("XML")) createXML(file);
+        else if (argument2.equals("XLS") || argument2.equals("XLSX")) createXLS(file);
         else addToResultString("Finish export: ".concat(new Date().toString()), addTo.LogFileAndConsole);
 
         copyToWebServer(file);
@@ -144,6 +157,44 @@ class ExportFromBase {
 
     }
 
+    private void createXLS(File file){
+
+        HSSFWorkbook workbook = new HSSFWorkbook();
+        HSSFSheet sheet = workbook.createSheet("Просто лист");
+
+        addToResultString("Creating XLS!", addTo.LogFileAndConsole);
+        addToResultString("Create export file start..", addTo.LogFileAndConsole);
+
+        int rowNum = 0;
+
+        // Header of table.
+        Row row = sheet.createRow(rowNum);
+        row.createCell(0).setCellValue("Good");
+        row.createCell(1).setCellValue("Item");
+        row.createCell(2).setCellValue("Shop");
+        row.createCell(3).setCellValue("Price");
+
+        try {
+            while (resultSet.next()){
+                row = sheet.createRow(++rowNum);
+                row.createCell(0).setCellValue(resultSet.getString("good"));
+                row.createCell(1).setCellValue(resultSet.getString("item"));
+                row.createCell(2).setCellValue(resultSet.getString("shop"));
+                row.createCell(3).setCellValue(resultSet.getString("price"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            workbook.write(new FileOutputStream(file));
+            addToResultString("Create export file finish.", addTo.LogFileAndConsole);
+        } catch (IOException e) {
+            addToResultString("Error create export file.", addTo.LogFileAndConsole);
+            addToResultString(e.toString(), addTo.LogFileAndConsole);
+        }
+    }
+
     private void copyToWebServer(File fileSource){
 
         if(!fileSource.exists()){
@@ -154,7 +205,7 @@ class ExportFromBase {
         File fileDestination;
 
         if (currentOS == OS.Linux) {
-            fileDestination = new File("/var/www/Parser/".concat(fileSource.getName()));
+            fileDestination = new File("/var/www/parserpro.ru/public_html/Parser/".concat(fileSource.getName()));
 
         }else {
             fileDestination = new File("C:/Temp/".concat(fileSource.getName()));
