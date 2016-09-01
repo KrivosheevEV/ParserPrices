@@ -43,7 +43,7 @@ public class MainParsingPrices {
         resultToLog = new ReadWriteFile(fullPathForLogs2);
 
         if (shopName == shopNames.empty || shopCity == shopCities.empty || shopCityCode == shopCityCodes.empty){
-            addToResultString("Error to setting arguments value.",  addTo.LogFileAndConsole);
+            addToResultString("Error to reading arguments value.",  addTo.LogFileAndConsole);
             return;
         }
 

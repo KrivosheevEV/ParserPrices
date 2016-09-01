@@ -79,19 +79,16 @@ public class ReadSites {
         // Start reading.
         switch (shopName){
             case DNS:
-//                GENERAL_URL = "http://www.dns-shop.ru";
                 readSiteDNS();
                 break;
             case CITILINK:
-//                GENERAL_URL = "http://www.citilink.ru";
                 readSiteCitilink();
                 break;
             case DOMO:
-//                GENERAL_URL = "http://www.domo.ru";
                 readSiteDomo();
                 break;
             case CORPCENTRE:
-//                GENERAL_URL = "http://www.dns-shop.ru";
+                readSiteCorpCentre();
                 break;
         }
 
@@ -226,6 +223,50 @@ public class ReadSites {
         ArrayList<String> listLinkPages = new ArrayList<String>();
 
         String cssSelector_Categories = "li:not(.mainl) > a";
+        String cssSelector_NextPage = "a.right_arrow";
+        String cssSelector_NextPageDivider = "div.paging_controls > div.divider";
+        String cssSelector_GoodItems = "div.product";
+
+        String cssSelector_GoodTitle = "div.product_name > a";
+        String cssSelector_GoodPrice = "span.price";
+        String cssSelector_GoodLink = "div.product_name > a[href]";
+
+        addToResultString("Start getting category links", addTo.LogFileAndConsole);
+        fillListPagesFromSite(driver_GUI, driver_noGUI, cssSelector_Categories, listLinkPages);
+        addToResultString("Finish getting category links", addTo.LogFileAndConsole);
+
+        for (String linkPage : listLinkPages
+                ) {
+            // Open catalog page for parsing Goods.
+            try {
+                addToResultString("Trying open page: ".concat(linkPage), addTo.LogFileAndConsole);
+                if (driver_noGUI == null) startingWebDriver();
+                driver_noGUI.navigate().to(linkPage);
+            } catch (Exception e) {
+//                e.printStackTrace();
+                addToResultString("Can't open new page: ".concat(linkPage), addTo.LogFileAndConsole);
+                addToResultString(e.toString(), addTo.LogFileAndConsole);
+                try {driver_noGUI.quit();} catch (Exception e1){/**/};
+                return;
+            }
+
+            flipAndReadDescription_DOMO(driver_noGUI, listDataToBase, cssSelector_NextPage, cssSelector_NextPageDivider, cssSelector_GoodItems, cssSelector_GoodTitle, cssSelector_GoodPrice, cssSelector_GoodLink);
+
+            addToResultString("Writing data in base..", addTo.LogFileAndConsole);
+            writeDataIntoBase(listDataToBase);
+            addToResultString("Records(".concat(String.valueOf(listDataToBase.size())).concat(") added/updated in base."), addTo.LogFileAndConsole);
+
+            listDataToBase = new ArrayList<String[]>();
+        }
+    }
+
+    private void readSiteCorpCentre(){
+
+        ArrayList<String> listLinkGoods = new ArrayList<String>();
+        ArrayList<String[]> listDataToBase = new ArrayList<String[]>();
+        ArrayList<String> listLinkPages = new ArrayList<String>();
+
+        String cssSelector_Categories = "ul.catalog div.column li > a";
         String cssSelector_NextPage = "a.right_arrow";
         String cssSelector_NextPageDivider = "div.paging_controls > div.divider";
         String cssSelector_GoodItems = "div.product";
@@ -561,7 +602,7 @@ public class ReadSites {
         }
         setCookie(shopName);
 
-        if (shopName == shopNames.DOMO){
+        if (shopName == shopNames.DOMO || shopName == shopNames.CORPCENTRE){
             drivernoGUI.navigate().to(GENERAL_URL + "/catalog");
         }else drivernoGUI.navigate().to(GENERAL_URL);
 
@@ -726,7 +767,7 @@ public class ReadSites {
             case DOMO:
                 GENERAL_URL = "http://www.domo.ru"; break;
             case CORPCENTRE:
-                GENERAL_URL = "http://www.dns-shop.ru"; break;
+                GENERAL_URL = "http://www.corpcentre.ru"; break;
             default:
                 GENERAL_URL = "http://www.dns-shop.ru";
         }
@@ -793,8 +834,6 @@ public class ReadSites {
         switch (shopName){
             case DNS:
 
-//                GENERAL_URL = "http://www.dns-shop.ru";
-
                 String cookieCityPath;
                 String cookieCityGuid1C;
                 driver_GUI.get(GENERAL_URL);
@@ -821,7 +860,6 @@ public class ReadSites {
                 break;
 
             case CITILINK:
-//                GENERAL_URL = "http://www.citilink.ru";
 
                 String cookie_space;
                 driver_noGUI.get(GENERAL_URL);
@@ -842,8 +880,6 @@ public class ReadSites {
                 break;
             case DOMO:
 
-//                GENERAL_URL = "http://www.domo.ru";
-
                 String cookie_CUSTOMER_ESITE;
                 driver_noGUI.get(GENERAL_URL);
                 driver_noGUI.manage().deleteCookieNamed("CUSTOMER_ESITE");
@@ -863,6 +899,22 @@ public class ReadSites {
 
                 break;
             case CORPCENTRE:
+
+                String cookie_store_city;
+                driver_noGUI.get(GENERAL_URL);
+                driver_noGUI.manage().deleteCookieNamed("store[city]");
+
+                if (MainParsingPrices.shopCity == shopCities.samara){
+                    cookie_store_city = "%D0%A1%D0%B0%D0%BC%D0%B0%D1%80%D0%B0";
+                }else if (MainParsingPrices.shopCity == shopCities.tolyatti){
+                    cookie_store_city = "%D0%A2%D0%BE%D0%BB%D1%8C%D1%8F%D1%82%D1%82%D0%B8";
+                }else if (MainParsingPrices.shopCity == shopCities.novokuybishevsk){
+                    cookie_store_city = "%D0%9D%D0%BE%D0%B2%D0%BE%D0%BA%D1%83%D0%B9%D0%B1%D1%8B%D1%88%D0%B5%D0%B2%D1%81%D0%BA";
+                }else {
+                    cookie_store_city = "%D0%A1%D0%B0%D0%BC%D0%B0%D1%80%D0%B0";
+                }
+
+                driver_noGUI.manage().addCookie(new Cookie("store[city]", cookie_store_city));
 
                 break;
             default:
