@@ -267,13 +267,14 @@ public class ReadSites {
         ArrayList<String> listLinkPages = new ArrayList<String>();
 
         String cssSelector_Categories = "ul.catalog div.column li > a";
-        String cssSelector_NextPage = "a.right_arrow";
-        String cssSelector_NextPageDivider = "div.paging_controls > div.divider";
-        String cssSelector_GoodItems = "div.product";
+        String cssSelector_NextPage = "a.next";
+        String cssSelector_NavPanel = "div.catalog-pagenav.clearfix";
 
-        String cssSelector_GoodTitle = "div.product_name > a";
-        String cssSelector_GoodPrice = "span.price";
-        String cssSelector_GoodLink = "div.product_name > a[href]";
+        String cssSelector_GoodItems = "div.catalog-item";
+        String cssSelector_GoodItem = "div.name > a";
+        String cssSelector_GoodTitle = "div.name > a";
+        String cssSelector_GoodPrice = "div.price div > strong > span";
+        String cssSelector_GoodLink = "div.name > a[href]";
 
         addToResultString("Start getting category links", addTo.LogFileAndConsole);
         fillListPagesFromSite(driver_GUI, driver_noGUI, cssSelector_Categories, listLinkPages);
@@ -294,7 +295,7 @@ public class ReadSites {
                 return;
             }
 
-            flipAndReadDescription_DOMO(driver_noGUI, listDataToBase, cssSelector_NextPage, cssSelector_NextPageDivider, cssSelector_GoodItems, cssSelector_GoodTitle, cssSelector_GoodPrice, cssSelector_GoodLink);
+            flipAndReadDescription_CORPCENTRE(driver_noGUI, listDataToBase, cssSelector_NavPanel, cssSelector_NextPage, cssSelector_GoodItems, cssSelector_GoodItem, cssSelector_GoodTitle, cssSelector_GoodPrice, cssSelector_GoodLink);
 
             addToResultString("Writing data in base..", addTo.LogFileAndConsole);
             writeDataIntoBase(listDataToBase);
@@ -592,6 +593,92 @@ public class ReadSites {
         }
     }
 
+
+    private void flipAndReadDescription_CORPCENTRE(WebDriver driver,
+                                                   ArrayList<String[]> listLinkGoods2,
+                                                   String cssSelector_NavPanel,
+                                                   String cssSelector_NextPage,
+                                                   String cssSelector_GoodItems,
+                                                   String cssSelector_GoodItem,
+                                                   String cssSelector_GoodTitle,
+                                                   String cssSelector_GoodPrice,
+                                                   String cssSelector_GoodLink) {
+
+        List<WebElement> listItems;
+        String params = "";
+        String goodItem = "0";
+        String goodTitle = "";
+        String goodPrice = "";
+        String goodLink = "";
+        int countIteration = 0;
+
+        try {
+            int countOfPage = 1;
+            boolean readPage = true;
+            boolean haveNextPage;
+
+            //int countOfDivider = driver.findElements(By.cssSelector(cssSelector_NextPageDivider)).size();
+            // if (countOfDivider > 2) haveNextPage = true;
+
+
+            while (readPage) {
+                addToResultString("Reading data in page[".concat(String.valueOf(countOfPage++).concat("]..")), addTo.LogFileAndConsole);
+
+                haveNextPage = driver.findElements(By.cssSelector(cssSelector_NavPanel)).size() != 0;
+
+                listItems = driver.findElements(By.cssSelector(cssSelector_GoodItems));
+
+                for (WebElement elementGood : listItems) {
+                    try {
+                        countIteration++;
+                        goodItem = elementGood.findElement(By.cssSelector(cssSelector_GoodItem)).getAttribute("onclick");
+                        goodItem = new String (goodItem.substring(goodItem.indexOf("'") + 1, goodItem.indexOf(",") - 1));
+                        goodTitle = elementGood.findElement(By.cssSelector(cssSelector_GoodTitle)).getText();
+                        goodPrice = elementGood.findElement(By.cssSelector(cssSelector_GoodPrice)).getText();
+                        goodPrice = new String(goodPrice.replace(" ", ""));
+                        goodLink = elementGood.findElement(By.cssSelector(cssSelector_GoodLink)).getAttribute("href");
+                        //
+//                        addToResultString("Good: " + goodTitle + ", Item: " + goodItem + ", Price: " + goodPrice, addTo.LogFileAndConsole);
+                        String[] toList = {String.valueOf(countIteration),
+                                goodTitle,
+                                goodItem,
+                                shopName.name().concat(MainParsingPrices.shopCityCode.name()),
+                                goodPrice,
+                                new SimpleDateFormat("yyyy-MM-dd").format(new Date()),
+                                goodLink};
+                        listLinkGoods2.add(toList);
+                        //addToResultString("Size of array: ".concat(String.valueOf(listLinkGoods2.size()).concat(".")), addTo.LogFileAndConsole);
+//                        addToResultString("Added string to array: ".concat(java.util.Arrays.toString(toList)), addTo.LogFileAndConsole);
+
+                        toList = null;  goodItem = null; goodTitle = null; goodPrice = null; goodLink = null;
+
+                        if (MAX_COUNT_ELEMENTS != -1 && countIteration >= MAX_COUNT_ELEMENTS) break;
+                    } catch (Exception e) {
+                        addToResultString("Element not found: ".concat(elementGood.getText()), addTo.logFile);
+                    }
+                }
+
+                listItems.clear();
+                listItems = null;
+
+                if (haveNextPage){
+                    WebElement nextPage = driver.findElement(By.cssSelector(cssSelector_NextPage));
+                    String linkNextPage = nextPage.getAttribute("href");
+                    if (!driver.getCurrentUrl().equals(linkNextPage)) driver.get(linkNextPage);
+                    //countOfDivider = driver.findElements(By.cssSelector(cssSelector_NextPageDivider)).size();
+                    //if (countOfDivider < 4) haveNextPage = false;
+                }else readPage = false;
+            }
+
+            addToResultString("All item(".concat(Integer.toString(countIteration)).concat(") was reading"), addTo.LogFileAndConsole);
+        } catch (Exception e) {
+            addToResultString("Was read (".concat(Integer.toString(countIteration)).concat(") items."), addTo.LogFileAndConsole);
+            addToResultString("Error reading flipping page.", addTo.LogFileAndConsole);
+        }
+    }
+
+
+
     // Read/write all categories.
     private void fillListPagesFromSite(WebDriver driverGUI, HtmlUnitDriver drivernoGUI, String cssSelector_Categories, ArrayList<String> listPages) {
 
@@ -686,6 +773,11 @@ public class ReadSites {
 
     // Write data into base.
     private void writeDataIntoBase(ArrayList<String[]> listDataToBase) {
+
+        if (listDataToBase == null || listDataToBase.isEmpty()) {
+            addToResultString("Not have data to write into base.", addTo.LogFileAndConsole);
+            return;
+        }
 
         ReadWriteBase writeDataToBase;
         Statement statement;
