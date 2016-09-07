@@ -280,11 +280,14 @@ public class ReadSites {
         fillListPagesFromSite(driver_GUI, driver_noGUI, cssSelector_Categories, listLinkPages);
         addToResultString("Finish getting category links", addTo.LogFileAndConsole);
 
+        int countOfCategories = 0;
+        String listLinkPagesSize = String.valueOf(listLinkPages.size());
+
         for (String linkPage : listLinkPages
                 ) {
             // Open catalog page for parsing Goods.
             try {
-                addToResultString("Trying open page: ".concat(linkPage), addTo.LogFileAndConsole);
+                addToResultString("Trying open page[".concat(String.valueOf(++countOfCategories)).concat("/").concat(listLinkPagesSize).concat("]: ").concat(linkPage), addTo.LogFileAndConsole);
                 if (driver_noGUI == null) startingWebDriver();
                 driver_noGUI.navigate().to(linkPage);
             } catch (Exception e) {
@@ -469,7 +472,7 @@ public class ReadSites {
             int countIteration = 0;
             WebElement nextPage = driver.findElement(By.cssSelector(cssSelector_NextPage));
             while (nextPage != null) {
-                addToResultString("Reading data in page[".concat(String.valueOf(countOfPage++).concat("]..")), addTo.LogFileAndConsole);
+                //addToResultString("Reading data in page[".concat(String.valueOf(countOfPage++).concat("]..")), addTo.LogFileAndConsole);
 
                 listItems = driver.findElements(By.cssSelector(cssSelector_GoodItems));
 
@@ -542,7 +545,7 @@ public class ReadSites {
             if (countOfDivider > 2) haveNextPage = true;
 
             while (readPage) {
-                addToResultString("Reading data in page[".concat(String.valueOf(countOfPage++).concat("]..")), addTo.LogFileAndConsole);
+                //addToResultString("Reading data in page[".concat(String.valueOf(countOfPage++).concat("]..")), addTo.LogFileAndConsole);
 
                 listItems = driver.findElements(By.cssSelector(cssSelector_GoodItems));
 
@@ -622,7 +625,7 @@ public class ReadSites {
 
 
             while (readPage) {
-                addToResultString("Reading data in page[".concat(String.valueOf(countOfPage++).concat("]..")), addTo.LogFileAndConsole);
+                //addToResultString("Reading data in page[".concat(String.valueOf(countOfPage++).concat("]..")), addTo.LogFileAndConsole);
 
                 haveNextPage = driver.findElements(By.cssSelector(cssSelector_NavPanel)).size() != 0;
 
