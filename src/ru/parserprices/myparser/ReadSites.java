@@ -90,6 +90,9 @@ public class ReadSites {
             case CORPCENTRE:
                 readSiteCorpCentre();
                 break;
+            case FENIXCOMP:
+                readSiteFenixComp();
+                break;
         }
 
 //        addToResultString("Goods found: " + String.valueOf(listDataToBase.size()));
@@ -287,7 +290,7 @@ public class ReadSites {
                 ) {
             // Open catalog page for parsing Goods.
             try {
-                addToResultString("Trying open page[".concat(String.valueOf(++countOfCategories)).concat("/").concat(listLinkPagesSize).concat("]: ").concat(linkPage), addTo.LogFileAndConsole);
+                addToResultString("Trying open page[".concat(String.valueOf(++countOfCategories)).concat("/").concat(listLinkPagesSize).concat("]1: ").concat(linkPage), addTo.LogFileAndConsole);
                 if (driver_noGUI == null) startingWebDriver();
                 driver_noGUI.navigate().to(linkPage);
             } catch (Exception e) {
@@ -299,6 +302,54 @@ public class ReadSites {
             }
 
             flipAndReadDescription_CORPCENTRE(driver_noGUI, listDataToBase, cssSelector_NavPanel, cssSelector_NextPage, cssSelector_GoodItems, cssSelector_GoodItem, cssSelector_GoodTitle, cssSelector_GoodPrice, cssSelector_GoodLink);
+
+            addToResultString("Writing data in base..", addTo.LogFileAndConsole);
+            writeDataIntoBase(listDataToBase);
+            addToResultString("Records(".concat(String.valueOf(listDataToBase.size())).concat(") added/updated in base."), addTo.LogFileAndConsole);
+
+            listDataToBase = new ArrayList<String[]>();
+        }
+    }
+
+    private void readSiteFenixComp(){
+
+        ArrayList<String> listLinkGoods = new ArrayList<String>();
+        ArrayList<String[]> listDataToBase = new ArrayList<String[]>();
+        ArrayList<String> listLinkPages = new ArrayList<String>();
+
+        String cssSelector_Categories = "li > :not(span) a";
+        String cssSelector_ReadPage = "td.pages_nums";
+        String cssSelector_HaveNextPage = "td.pages_nums > a";
+
+        String cssSelector_GoodItems = "table.catalogListItem";
+        String cssSelector_GoodItem = "td.cliArt";
+        String cssSelector_GoodTitle = "td.cliName > a";
+        String cssSelector_GoodPrice = "span.priceNum";
+        String cssSelector_GoodLink = "td.cliName > a[href]";
+
+        addToResultString("Start getting category links", addTo.LogFileAndConsole);
+        fillListPagesFromSite(driver_GUI, driver_noGUI, cssSelector_Categories, listLinkPages);
+        addToResultString("Finish getting category links", addTo.LogFileAndConsole);
+
+        int countOfCategories = 0;
+        String listLinkPagesSize = String.valueOf(listLinkPages.size());
+
+        for (String linkPage : listLinkPages
+                ) {
+            // Open catalog page for parsing Goods.
+            try {
+                addToResultString("Trying open page[".concat(String.valueOf(++countOfCategories)).concat("/").concat(listLinkPagesSize).concat("]: ").concat(linkPage), addTo.LogFileAndConsole);
+                if (driver_noGUI == null) startingWebDriver();
+                driver_noGUI.navigate().to(linkPage);
+            } catch (Exception e) {
+//                e.printStackTrace();
+                addToResultString("Can't open new page: ".concat(linkPage), addTo.LogFileAndConsole);
+                addToResultString(e.toString(), addTo.LogFileAndConsole);
+                try {driver_noGUI.quit();} catch (Exception e1){/**/};
+                return;
+            }
+
+            flipAndReadDescription_FENIXCOMP(driver_noGUI, listDataToBase, cssSelector_ReadPage, cssSelector_HaveNextPage, cssSelector_GoodItems, cssSelector_GoodItem, cssSelector_GoodTitle, cssSelector_GoodPrice, cssSelector_GoodLink);
 
             addToResultString("Writing data in base..", addTo.LogFileAndConsole);
             writeDataIntoBase(listDataToBase);
@@ -596,7 +647,6 @@ public class ReadSites {
         }
     }
 
-
     private void flipAndReadDescription_CORPCENTRE(WebDriver driver,
                                                    ArrayList<String[]> listLinkGoods2,
                                                    String cssSelector_NavPanel,
@@ -681,6 +731,88 @@ public class ReadSites {
     }
 
 
+    private void flipAndReadDescription_FENIXCOMP(WebDriver driver,
+                                                   ArrayList<String[]> listLinkGoods2,
+                                                   String cssSelector_ReadPage,
+                                                   String cssSelector_HaveNextPage,
+                                                   String cssSelector_GoodItems,
+                                                   String cssSelector_GoodItem,
+                                                   String cssSelector_GoodTitle,
+                                                   String cssSelector_GoodPrice,
+                                                   String cssSelector_GoodLink) {
+
+        List<WebElement> listItems;
+        String params = "";
+        String goodItem = "0";
+        String goodTitle = "";
+        String goodPrice = "";
+        String goodLink = "";
+        int countIteration = 0;
+
+        try {
+            int countOfPage = 0;
+            boolean readPage;
+            boolean haveNextPage;
+
+            readPage = driver.findElements(By.cssSelector(cssSelector_ReadPage)).size() >= 2;
+
+            while (readPage) {
+                //addToResultString("Reading data in page[".concat(String.valueOf(countOfPage++).concat("]..")), addTo.LogFileAndConsole);
+
+                int countOfPages = (driver.findElements(By.cssSelector(cssSelector_HaveNextPage)).size() / 2) + 1;
+                countOfPage++;
+                haveNextPage = countOfPage < countOfPages;
+
+                listItems = driver.findElements(By.cssSelector(cssSelector_GoodItems));
+
+                for (WebElement elementGood : listItems) {
+                    try {
+                        countIteration++;
+                        goodItem = elementGood.findElement(By.cssSelector(cssSelector_GoodItem)).getText();
+                        goodItem = new String(goodItem.replace("Артикул: ", ""));
+                        goodTitle = elementGood.findElement(By.cssSelector(cssSelector_GoodTitle)).getText();
+                        goodPrice = elementGood.findElement(By.cssSelector(cssSelector_GoodPrice)).getText();
+                        goodPrice = new String(goodPrice.replace(" ", ""));
+                        goodPrice = new String(goodPrice.replace(".", ""));
+                        goodPrice = new String(goodPrice.replace("-", ""));
+                        goodLink = elementGood.findElement(By.cssSelector(cssSelector_GoodLink)).getAttribute("href");
+                        //
+//                        addToResultString("Good: " + goodTitle + ", Item: " + goodItem + ", Price: " + goodPrice, addTo.LogFileAndConsole);
+                        String[] toList = {String.valueOf(countIteration),
+                                goodTitle,
+                                goodItem,
+                                shopName.name().concat(MainParsingPrices.shopCityCode.name()),
+                                goodPrice,
+                                new SimpleDateFormat("yyyy-MM-dd").format(new Date()),
+                                goodLink};
+                        listLinkGoods2.add(toList);
+                        //addToResultString("Size of array: ".concat(String.valueOf(listLinkGoods2.size()).concat(".")), addTo.LogFileAndConsole);
+//                        addToResultString("Added string to array: ".concat(java.util.Arrays.toString(toList)), addTo.LogFileAndConsole);
+
+                        toList = null;  goodItem = null; goodTitle = null; goodPrice = null; goodLink = null;
+
+                        if (MAX_COUNT_ELEMENTS != -1 && countIteration >= MAX_COUNT_ELEMENTS) break;
+                    } catch (Exception e) {
+                        addToResultString("Element not found: ".concat(elementGood.getText()), addTo.logFile);
+                    }
+                }
+
+                listItems.clear();
+                listItems = null;
+
+                if (haveNextPage){
+                    String linkNextPage = driver.getCurrentUrl().concat("&scroll_page=").concat(String.valueOf(countOfPage + 1));
+                    if (!driver.getCurrentUrl().equals(linkNextPage)) driver.get(linkNextPage);
+                }else readPage = false;
+            }
+
+            addToResultString("All item(".concat(Integer.toString(countIteration)).concat(") was reading"), addTo.LogFileAndConsole);
+        } catch (Exception e) {
+            addToResultString("Was read (".concat(Integer.toString(countIteration)).concat(") items."), addTo.LogFileAndConsole);
+            addToResultString("Error reading flipping page.", addTo.LogFileAndConsole);
+        }
+    }
+
 
     // Read/write all categories.
     private void fillListPagesFromSite(WebDriver driverGUI, HtmlUnitDriver drivernoGUI, String cssSelector_Categories, ArrayList<String> listPages) {
@@ -708,8 +840,8 @@ public class ReadSites {
             List<WebElement> listItems = drivernoGUI.findElements(By.cssSelector(cssSelector_Categories));
             drivernoGUI.setJavascriptEnabled(false);
 
-            for (WebElement hrefElement : listItems
-                    ) {
+            for (WebElement hrefElement : listItems)
+            {
                 String linkCategory = hrefElement.getAttribute("href");
                 listPages.add(linkCategory);
 //                System.out.println(linkCategory);
@@ -823,15 +955,15 @@ public class ReadSites {
 
             if (writeDataToBase.dataExist(statement, query_recordExist)) {
                 if (writeDataToBase.dataExist(statement, query_needUpdate)) {
-                    addToResultString("Update record(" + countOfRecords + ") in base", addTo.Console);
+                    //addToResultString("Update record(" + countOfRecords + ") in base", addTo.Console);
 //                writeDataToBase.updateData(statement, stringToBase);
                     writeDataToBase.writeData(statement, query_updateRecord);
                     countOfUpdate++;
                 }else {
-                    addToResultString("Not need update(" + countOfRecords + ") record", addTo.Console);
+                    //addToResultString("Not need update(" + countOfRecords + ") record", addTo.Console);
                 }
             } else {
-                addToResultString("Write new record(" + countOfRecords + ") in base", addTo.Console);
+                //addToResultString("Write new record(" + countOfRecords + ") in base", addTo.Console);
                 writeDataToBase.writeData(statement, query_writeNewRecord);
                 countOfNewRecords++;
             }
@@ -863,6 +995,8 @@ public class ReadSites {
                 GENERAL_URL = "http://www.domo.ru"; break;
             case CORPCENTRE:
                 GENERAL_URL = "http://www.corpcentre.ru"; break;
+            case FENIXCOMP:
+                GENERAL_URL = "http://www.fenixcomp.ru"; break;
             default:
                 GENERAL_URL = "http://www.dns-shop.ru";
         }
@@ -893,15 +1027,12 @@ public class ReadSites {
 
                     addToResultString("Trying start new WebDriver(Firefox)", addTo.LogFileAndConsole);
                     driver_GUI = new FirefoxDriver(profile);
-//                    driver = new HtmlUnitDriver();
-//                    driver.setJavascriptEnabled(true);
                     break;
 
                 case CITILINK:
 
                     addToResultString("Trying start new WebDriver(HtmlUnit)", addTo.LogFileAndConsole);
                     driver_noGUI = new HtmlUnitDriver();
-//                    driver = new FirefoxDriver(profile);;
                     break;
 
                 case DOMO:
@@ -909,7 +1040,13 @@ public class ReadSites {
                     addToResultString("Trying start new WebDriver(HtmlUnit)", addTo.LogFileAndConsole);
                     driver_noGUI = new HtmlUnitDriver(BrowserVersion.CHROME);
                     driver_noGUI.getBrowserVersion().setUserAgent(userAgent);
-//                    driver = new FirefoxDriver(profile);;
+                    break;
+
+                case FENIXCOMP:
+
+                    addToResultString("Trying start new WebDriver(HtmlUnit)", addTo.LogFileAndConsole);
+                    driver_noGUI = new HtmlUnitDriver(BrowserVersion.CHROME);
+                    driver_noGUI.getBrowserVersion().setUserAgent(userAgent);
                     break;
 
                 default:
@@ -927,6 +1064,7 @@ public class ReadSites {
     private void setCookie(shopNames shopName){
 
         switch (shopName){
+
             case DNS:
 
                 String cookieCityPath;
@@ -973,6 +1111,7 @@ public class ReadSites {
                 driver_noGUI.manage().addCookie(new Cookie("_space", cookie_space));
 
                 break;
+
             case DOMO:
 
                 String cookie_CUSTOMER_ESITE;
@@ -993,6 +1132,7 @@ public class ReadSites {
 
 
                 break;
+
             case CORPCENTRE:
 
                 String cookie_store_city;
@@ -1012,6 +1152,25 @@ public class ReadSites {
                 driver_noGUI.manage().addCookie(new Cookie("store[city]", cookie_store_city));
 
                 break;
+
+            case FENIXCOMP:
+
+                String cookie_city;
+                driver_noGUI.get(GENERAL_URL);
+                driver_noGUI.manage().deleteCookieNamed("city");
+
+                if (MainParsingPrices.shopCity == shopCities.samara){
+                    cookie_city = "101";
+                }else if (MainParsingPrices.shopCity == shopCities.chapaevsk){
+                    cookie_city = "141";
+                }else {
+                    cookie_city = "101";
+                }
+
+                driver_noGUI.manage().addCookie(new Cookie("city", cookie_city));
+
+                break;
+
             default:
                 break;
         }
