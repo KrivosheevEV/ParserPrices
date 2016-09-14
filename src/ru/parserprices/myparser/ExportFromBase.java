@@ -55,7 +55,8 @@ class ExportFromBase {
             return;
         }
 
-        String query_readRecords = "SELECT * FROM goods WHERE goods.shop LIKE '".concat(shopName.name()).concat(shopCityCode.name()).concat("' LIMIT 100000;");
+//        String query_readRecords = "SELECT * FROM goods WHERE goods.shop LIKE '".concat(shopName.name()).concat(shopCityCode.name()).concat("' LIMIT 100000;");
+        String query_readRecords = "SELECT * FROM ".concat(shopName.name()).concat(" t WHERE t.shop LIKE '").concat(shopName.name()).concat(shopCityCode.name()).concat("' LIMIT 100000;");
 
         addToResultString("Query start..", addTo.LogFileAndConsole);
         resultSet = writeDataToBase.readData(statement, query_readRecords);
