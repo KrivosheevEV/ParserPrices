@@ -21,7 +21,6 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
 import static ru.parserprices.myparser.MainParsingPrices.*;
 
-
 class ExportFromBase {
 
     private ResultSet resultSet;
@@ -56,7 +55,7 @@ class ExportFromBase {
         }
 
 //        String query_readRecords = "SELECT * FROM goods WHERE goods.shop LIKE '".concat(shopName.name()).concat(shopCityCode.name()).concat("' LIMIT 100000;");
-        String query_readRecords = "SELECT * FROM ".concat(shopName.name()).concat(" t WHERE t.shop LIKE '").concat(shopName.name()).concat(shopCityCode.name()).concat("' LIMIT 100000;");
+        String query_readRecords = "SELECT * FROM ".concat(shopName.name()).concat(" t WHERE t.shop LIKE '").concat(shopName.name()).concat(shopCityCode.name()).concat("' ORDER BY t.category, t.good, t.shop LIMIT 200000;");
 
         addToResultString("Query start..", addTo.LogFileAndConsole);
         resultSet = writeDataToBase.readData(statement, query_readRecords);
@@ -142,6 +141,10 @@ class ExportFromBase {
                 price.setTextContent(resultSet.getString("price"));
                 record.appendChild(price);
 
+                Element category = doc.createElement("category");
+                price.setTextContent(resultSet.getString("category"));
+                record.appendChild(category);
+
                 goods.appendChild(record);
             }
         } catch (SQLException e) {
@@ -179,18 +182,18 @@ class ExportFromBase {
 
         // Header of table.
         Row row = sheet.createRow(rowNum);
-        row.createCell(0).setCellValue("Good");
-        row.createCell(1).setCellValue("Item");
-        row.createCell(2).setCellValue("Price");
-//        row.createCell(3).setCellValue("Shop");
+        row.createCell(0).setCellValue("Category");
+        row.createCell(1).setCellValue("Good");
+        row.createCell(2).setCellValue("Item");
+        row.createCell(3).setCellValue("Price");
 
         try {
             while (resultSet.next()){
                 row = sheet.createRow(++rowNum);
-                row.createCell(0).setCellValue(resultSet.getString("good"));
-                row.createCell(1).setCellValue(resultSet.getString("item"));
-                row.createCell(2).setCellValue(resultSet.getString("price"));
-//                row.createCell(3).setCellValue(resultSet.getString("shop"));
+                row.createCell(0).setCellValue(resultSet.getString("category"));
+                row.createCell(1).setCellValue(resultSet.getString("good"));
+                row.createCell(2).setCellValue(resultSet.getString("item"));
+                row.createCell(3).setCellValue(resultSet.getString("price"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
