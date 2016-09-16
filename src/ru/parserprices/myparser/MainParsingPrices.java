@@ -146,7 +146,7 @@ public class MainParsingPrices {
         String value = "";
 
         for (int counter = 0; counter < args.length - 1; counter++) {
-            if (args[counter].equals(argument)) {
+            if (args[counter].toUpperCase().equals(argument.toUpperCase())) {
                 value = args[counter + 1];
                 break;
             }
@@ -161,4 +161,18 @@ public class MainParsingPrices {
 
     }
 
+    public static Boolean argumentExist(String[] args, String argument){
+
+        Boolean findArgument = false;
+
+        for (int counter = 0; counter < args.length - 1; counter++) {
+            if (args[counter].toUpperCase().equals(argument.toUpperCase())) {
+                findArgument = true;
+                break;
+            }
+        }
+
+        return findArgument;
+
+    }
 }

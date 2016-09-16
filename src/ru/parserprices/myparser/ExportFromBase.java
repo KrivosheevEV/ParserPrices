@@ -2,6 +2,7 @@ package ru.parserprices.myparser;
 
 import com.google.common.io.Files;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.xpath.operations.Bool;
 import org.w3c.dom.Document;
 
 import org.w3c.dom.Element;
@@ -16,6 +17,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
@@ -94,6 +98,13 @@ class ExportFromBase {
         else {
             addToResultString("Finish export: ".concat(new Date().toString()), addTo.LogFileAndConsole);
             return;
+        }
+
+        // Export file to archive.
+        Boolean needZip = !argumentExist(givenArguments, "-zip");
+        if (needZip){
+            String newFullAdress = new String(file.getAbsolutePath().replace(file.getAbsolutePath().substring(file.getAbsolutePath().lastIndexOf(".")), ".zip"));
+            file = zipFile(file, newFullAdress);
         }
 
         copyToWebServer(file);
@@ -251,6 +262,43 @@ class ExportFromBase {
 //                e.printStackTrace();
 //            }
         }
+    }
+
+    private File zipFile(File inputFile, String outputFile){
+
+        try {
+
+            FileOutputStream fileOutputStream = new FileOutputStream(outputFile);
+            ZipOutputStream zipOutputStream = new ZipOutputStream(fileOutputStream);
+
+            ZipEntry zipEntry = new ZipEntry(inputFile.getName());
+            zipOutputStream.putNextEntry(zipEntry);
+
+            FileInputStream fileInputStream = new FileInputStream(inputFile);
+            byte[] buf = new byte[1024];
+            int bytesRead;
+
+            while ((bytesRead = fileInputStream.read(buf)) > 0) {
+                zipOutputStream.write(buf, 0, bytesRead);
+            }
+
+            zipOutputStream.closeEntry();
+
+            zipOutputStream.close();
+            fileOutputStream.close();
+            addToResultString("Archive is creating.", addTo.LogFileAndConsole);
+
+            if (inputFile.delete()) {
+                addToResultString("File-export(not archive) is deleted.", addTo.LogFileAndConsole);
+            }
+
+            //System.out.println("Regular file :" + inputFile.getCanonicalPath()+" is zipped to archive :"+zipFilePath);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return new File(outputFile);
     }
 
 }
