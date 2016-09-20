@@ -1,6 +1,9 @@
 package ru.parserprices.myparser;
 
 
+import com.googlecode.fannj.Fann;
+
+import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -23,10 +26,31 @@ public class MainParsingPrices {
 
         startTime = System.currentTimeMillis();
 
+        String path = "D:/Temp/FANN-2.2.0-Source/bin";
+        System.setProperty("jna.library.path", path);
+
+        System.out.println(path); //maybe the path is malformed
+        File file = new File(path + "/fannfloat.dll");
+        System.out.println("Is the dll file there:" + file.exists());
+        System.load(file.getAbsolutePath());
+
+        Fann fann = new Fann("D:\\Temp\\avito_phonenumber.png" );
+        float[] inputs = new float[]{0.686470295f, 0.749375936f, 0.555167249f, 0.816774838f, 0.767848228f, 0.60908637f};
+        float[] outputs = fann.run( inputs );
+        fann.close();
+
+        for (float f : outputs) {
+            System.out.print(f + ",");
+        }
+
+
         // Get current OS.
         if (System.getProperty("os.name").startsWith("Windows")) {
             currentOS = OS.Windows;
         } else currentOS = OS.Linux;
+
+
+
 
         setShop(getArgumentValue(args, "-shop"));
         setCityShop(getArgumentValue(args, "-city"));
@@ -62,6 +86,9 @@ public class MainParsingPrices {
         // Write logs.
         resultToLog.writeResultToFile(resultToLog.getFullAddress(), resultOfPasring, false);
 
+        /*try(InputStream in = new URL("http://example.com/image.jpg").openStream()){
+            Files.copy(in, Paths.get("C:/File/To/Save/To/image.jpg"));
+        }*/
     }
 
     private static void setShop(String argumentValue){
