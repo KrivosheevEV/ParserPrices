@@ -1,13 +1,17 @@
 package ru.parserprices.myparser;
 
 
+import com.googlecode.fannj.ActivationFunction;
 import com.googlecode.fannj.Fann;
+import com.googlecode.fannj.Layer;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 public class MainParsingPrices {
 
@@ -26,7 +30,7 @@ public class MainParsingPrices {
 
         startTime = System.currentTimeMillis();
 
-        String path = "D:/Temp/FANN-2.2.0-Source/bin";
+        /*String path = "D:/Temp/FANN-2.2.0-Source/bin";
         System.setProperty("jna.library.path", path);
 
         System.out.println(path); //maybe the path is malformed
@@ -34,15 +38,23 @@ public class MainParsingPrices {
         System.out.println("Is the dll file there:" + file.exists());
         System.load(file.getAbsolutePath());
 
-        Fann fann = new Fann("D:\\Temp\\avito_phonenumber.png" );
-        float[] inputs = new float[]{0.686470295f, 0.749375936f, 0.555167249f, 0.816774838f, 0.767848228f, 0.60908637f};
+        Fann fann = new Fann("D:/Temp/avito_phonenumber.png" );
+        float[] inputs = new float[]{};
+
+//        List<Layer> layers = new ArrayList<Layer>();
+//        layers.add(Layer.create(2));
+//        layers.add(Layer.create(3, ActivationFunction.FANN_SIGMOID_SYMMETRIC));
+//        layers.add(Layer.create(2, ActivationFunction.FANN_SIGMOID_SYMMETRIC));
+//        layers.add(Layer.create(1, ActivationFunction.FANN_SIGMOID_SYMMETRIC));
+
+
         float[] outputs = fann.run( inputs );
         fann.close();
 
         for (float f : outputs) {
             System.out.print(f + ",");
         }
-
+*/
 
         // Get current OS.
         if (System.getProperty("os.name").startsWith("Windows")) {
