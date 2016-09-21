@@ -61,9 +61,6 @@ public class MainParsingPrices {
             currentOS = OS.Windows;
         } else currentOS = OS.Linux;
 
-
-
-
         setShop(getArgumentValue(args, "-shop"));
         setCityShop(getArgumentValue(args, "-city"));
 
@@ -172,8 +169,12 @@ public class MainParsingPrices {
         String stringToLog = timeForResult + " -> " + addedString + System.getProperty("line.separator");
         resultOfPasring = resultOfPasring.concat(stringToLog);
 
-        if (resultToLog != null && writeIntoLogFile == addTo.LogFileAndConsole || writeIntoLogFile == addTo.logFile) {
-            resultToLog.writeResultToFile(resultToLog.getFullAddress(), stringToLog, true);
+        try {
+            if (resultToLog != null && writeIntoLogFile == addTo.LogFileAndConsole || writeIntoLogFile == addTo.logFile) {
+                resultToLog.writeResultToFile(resultToLog.getFullAddress(), stringToLog, true);
+            }
+        }catch (Exception e){
+            System.out.println(e.toString());
         }
 
         if (writeIntoLogFile == addTo.LogFileAndConsole || writeIntoLogFile == addTo.Console)

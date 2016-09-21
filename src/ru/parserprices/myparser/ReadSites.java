@@ -142,11 +142,14 @@ public class ReadSites {
         if (listLinkPages.size() == 0) addToResultString("Category links not found!", addTo.LogFileAndConsole);
         addToResultString("Finish getting category links", addTo.LogFileAndConsole);
 
+        int countOfCategories = 0;
+        String listLinkPagesSize = String.valueOf(listLinkPages.size());
+
         for (String listLinkPage : listLinkPages) {
 
             // Open page for parsing Goods.
             try {
-                addToResultString("Trying open page: ".concat(listLinkPage), addTo.LogFileAndConsole);
+                addToResultString("Trying open page[".concat(String.valueOf(++countOfCategories)).concat("/").concat(listLinkPagesSize).concat("]: ").concat(listLinkPage), addTo.LogFileAndConsole);
                 if (driver_GUI == null) startingWebDriver();
                 driver_GUI.navigate().to(listLinkPage);
             } catch (Exception e) {
@@ -199,11 +202,14 @@ public class ReadSites {
         fillListPagesFromSite(driver_GUI, driver_noGUI, cssSelector_CategoriesLink, listLinkPages);
         addToResultString("Finish getting category links", addTo.LogFileAndConsole);
 
+        int countOfCategories = 0;
+        String listLinkPagesSize = String.valueOf(listLinkPages.size());
+
         for (String linkPage : listLinkPages
                 ) {
             // Open catalog page for parsing Goods.
             try {
-                addToResultString("Trying open page: ".concat(linkPage), addTo.LogFileAndConsole);
+                addToResultString("Trying open page[".concat(String.valueOf(++countOfCategories)).concat("/").concat(listLinkPagesSize).concat("]: ").concat(linkPage), addTo.LogFileAndConsole);
                 if (driver_noGUI == null) startingWebDriver();
                 driver_noGUI.navigate().to(linkPage);
             } catch (Exception e) {
@@ -248,11 +254,14 @@ public class ReadSites {
         fillListPagesFromSite(driver_GUI, driver_noGUI, cssSelector_CategoriesLink, listLinkPages);
         addToResultString("Finish getting category links", addTo.LogFileAndConsole);
 
+        int countOfCategories = 0;
+        String listLinkPagesSize = String.valueOf(listLinkPages.size());
+
         for (String linkPage : listLinkPages
                 ) {
             // Open catalog page for parsing Goods.
             try {
-                addToResultString("Trying open page: ".concat(linkPage), addTo.LogFileAndConsole);
+                addToResultString("Trying open page[".concat(String.valueOf(++countOfCategories)).concat("/").concat(listLinkPagesSize).concat("]: ").concat(linkPage), addTo.LogFileAndConsole);
                 if (driver_noGUI == null) startingWebDriver();
                 driver_noGUI.navigate().to(linkPage);
             } catch (Exception e) {
@@ -309,7 +318,7 @@ public class ReadSites {
                 ) {
             // Open catalog page for parsing Goods.
             try {
-                addToResultString("Trying open page[".concat(String.valueOf(++countOfCategories)).concat("/").concat(listLinkPagesSize).concat("]1: ").concat(linkPage), addTo.LogFileAndConsole);
+                addToResultString("Trying open page[".concat(String.valueOf(++countOfCategories)).concat("/").concat(listLinkPagesSize).concat("]: ").concat(linkPage), addTo.LogFileAndConsole);
                 if (driver_noGUI == null) startingWebDriver();
                 driver_noGUI.navigate().to(linkPage);
             } catch (Exception e) {

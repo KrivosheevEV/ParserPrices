@@ -23,7 +23,7 @@ public class ReadWriteFile {
             File path = new File(mFile.getParent());
             if (!path.exists()) {
                 if (path.mkdir()) addToResultString("Directory is creating.", addTo.LogFileAndConsole);
-                else addToResultString("Error creating of directory.", addTo.LogFileAndConsole);
+                else addToResultString("Error creating of directory: ".concat(path.toString()), addTo.LogFileAndConsole);
             }
             try {
                 mFile.createNewFile();
@@ -127,7 +127,7 @@ public class ReadWriteFile {
                 File path = new File(file.getParent());
                 if (!path.exists()) {
                     if (path.mkdir()) addToResultString("Directory is creating.", addTo.LogFileAndConsole);
-                    else addToResultString("Error creating of directory.", addTo.LogFileAndConsole);
+                    else addToResultString("Error creating of directory: ".concat(path.toString()), addTo.LogFileAndConsole);
                 }
                 file.createNewFile();
             }
@@ -145,7 +145,7 @@ public class ReadWriteFile {
             }
         } catch(IOException e) {
             addToResultString("Error creating file: " + file.getPath() + file.getName() + "\n", addTo.LogFileAndConsole);
-            throw new RuntimeException(e);
+            //throw new RuntimeException(e);
         }
     }
 
