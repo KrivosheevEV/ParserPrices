@@ -120,7 +120,35 @@ public class MainParsingPrices {
 
         if (!argumentValue.isEmpty()){
 
-            if (argumentValue.equals("846")) {
+            if (argumentValue.equals("85592")) {
+                shopCity = shopCities.aznakaevo;
+                shopCityCode = shopCityCodes._85595;
+            }
+            else if (argumentValue.equals("85594")) {
+                shopCity = shopCities.bugulma;
+                shopCityCode = shopCityCodes._85594;
+            }
+            else if (argumentValue.equals("35342")) {
+                shopCity = shopCities.buzuluk;
+                shopCityCode = shopCityCodes._35342;
+            }
+            else if (argumentValue.equals("84593")) {
+                shopCity = shopCities.volsk;
+                shopCityCode = shopCityCodes._84593;
+            }
+            else if (argumentValue.equals("84235")) {
+                shopCity = shopCities.dimitrovgrad;
+                shopCityCode = shopCityCodes._84235;
+            }
+            else if (argumentValue.equals("85558")) {
+                shopCity = shopCities.zainsk;
+                shopCityCode = shopCityCodes._85558;
+            }
+            else if (argumentValue.equals("85595")) {
+                shopCity = shopCities.leninogorsk;
+                shopCityCode = shopCityCodes._85595;
+            }
+            else if (argumentValue.equals("846")) {
                 shopCity = shopCities.samara;
                 shopCityCode = shopCityCodes._846;
             }
@@ -128,13 +156,17 @@ public class MainParsingPrices {
                 shopCity = shopCities.novokuybishevsk;
                 shopCityCode = shopCityCodes._84635;
             }
+            else if (argumentValue.equals("8464")) {
+                shopCity = shopCities.syzran;
+                shopCityCode = shopCityCodes._8464;
+            }
             else if (argumentValue.equals("84639")) {
                 shopCity = shopCities.chapaevsk;
                 shopCityCode = shopCityCodes._84639;
             }
-            else if (argumentValue.equals("8464")) {
-                shopCity = shopCities.syzran;
-                shopCityCode = shopCityCodes._8464;
+            else if (argumentValue.equals("84342")) {
+                shopCity = shopCities.chistopol;
+                shopCityCode = shopCityCodes._84342;
             }
             else if (argumentValue.equals("8482")) {
                 shopCity = shopCities.tolyatti;

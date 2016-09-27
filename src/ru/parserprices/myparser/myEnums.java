@@ -1,6 +1,5 @@
 package ru.parserprices.myparser;
 
-
 enum addTo {
     logFile, Console, LogFileAndConsole
 }
@@ -13,11 +12,37 @@ enum shopNames{
 }
 
 enum shopCities{
-    empty, samara, novokuybishevsk, chapaevsk, syzran, tolyatti
+    empty,
+    aznakaevo,
+    bugulma,
+    buzuluk,
+    volsk,
+    dimitrovgrad,
+    zainsk,
+    leninogorsk,
+    novokuybishevsk,
+    samara,
+    syzran,
+    chapaevsk,
+    chistopol,
+    tolyatti
 }
 
 enum shopCityCodes{
-    empty, _846, _84635, _84639, _8464, _8482
+    empty,
+    _855592,
+    _85594,
+    _35342,
+    _84593,
+    _84235,
+    _85558,
+    _85595,
+    _84635,
+    _846,
+    _8464,
+    _84639,
+    _84342,
+    _8482
 }
 
 enum extensionForExport{

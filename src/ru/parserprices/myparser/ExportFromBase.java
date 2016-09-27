@@ -2,7 +2,7 @@ package ru.parserprices.myparser;
 
 import com.google.common.io.Files;
 import org.apache.poi.ss.usermodel.Row;
-import org.apache.xpath.operations.Bool;
+//import org.apache.xpath.operations.String;
 import org.w3c.dom.Document;
 
 import org.w3c.dom.Element;
@@ -16,13 +16,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
+import static java.lang.Integer.parseInt;
 import static ru.parserprices.myparser.MainParsingPrices.*;
 
 class ExportFromBase {
@@ -101,10 +104,26 @@ class ExportFromBase {
         }
 
         // Export file to archive.
-        Boolean needZip = !argumentExist(givenArguments, "-zip");
+        Boolean needZip = argumentExist(givenArguments, "-zip");
         if (needZip){
             String newFullAdress = new String(file.getAbsolutePath().replace(file.getAbsolutePath().substring(file.getAbsolutePath().lastIndexOf(".")), ".zip"));
             file = zipFile(file, newFullAdress);
+        }
+
+        // Delete oldest export files.
+        String argument_DeleteOldest = getArgumentValue(givenArguments, "-delete");
+//        addToResultString("Argument -delete:".concat(argument_DeleteOldest).concat("."),  addTo.LogFileAndConsole);
+        try {
+            if (argument_DeleteOldest.isEmpty()){
+                addToResultString("Not set value of argument '-delete'.",  addTo.LogFileAndConsole);
+            }else {
+                int periodForDelete = Integer.valueOf(String.valueOf(argument_DeleteOldest));
+                deleteOldest(file.getParent(), "/var/www/parserpro.ru/public_html/Parser/",  periodForDelete);
+            }
+        }catch (Exception e){
+            addToResultString("Wrong value of argument '-delete' :".concat(argument_DeleteOldest),  addTo.LogFileAndConsole);
+            e.printStackTrace();
+            addToResultString(e.toString(),  addTo.LogFileAndConsole);
         }
 
         copyToWebServer(file);
@@ -216,6 +235,47 @@ class ExportFromBase {
         } catch (IOException e) {
             addToResultString("Error create export file.", addTo.LogFileAndConsole);
             addToResultString(e.toString(), addTo.LogFileAndConsole);
+        }
+    }
+
+    private void deleteOldest(String exportCatalog1, String exportCatalog2, int periodForDelete){
+
+        if (currentOS != OS.Linux) return;
+
+
+        File сatalogForExportFiles;
+        сatalogForExportFiles = new File(exportCatalog1);
+
+        File webCatalogForExportFiles;
+        webCatalogForExportFiles = new File(exportCatalog2);
+
+        try {
+            addToResultString("Delete old files from :".concat(exportCatalog1), addTo.LogFileAndConsole);
+            for (File fileInCatalog: сatalogForExportFiles.listFiles()
+                    ) {
+                if (fileInCatalog==null) continue;
+                Boolean fileIsOld = new Date(fileInCatalog.lastModified()).before(new Date(new Date().getTime() - periodForDelete * 1000 * 60 * 60 * 24));
+                Boolean fileForCurrentShop = fileInCatalog.getName().contains(shopName.name().concat(shopCityCode.name()));
+                if (fileIsOld & fileForCurrentShop){
+                    if (fileInCatalog.delete()) addToResultString("Old export file is delete: ".concat(fileInCatalog.getName()), addTo.LogFileAndConsole);
+                    else addToResultString("Can't delete old export file: ".concat(fileInCatalog.getName()), addTo.LogFileAndConsole);
+                }
+            }
+
+            addToResultString("Delete old files from :".concat(exportCatalog2), addTo.LogFileAndConsole);
+            for (File fileInCatalog: webCatalogForExportFiles.listFiles()
+                    ) {
+                if (fileInCatalog==null) continue;
+                Boolean fileIsOld = new Date(fileInCatalog.lastModified()).before(new Date(new Date().getTime() - periodForDelete * 1000 * 60 * 60 * 24));
+                Boolean fileForCurrentShop = fileInCatalog.getName().contains(shopName.name().concat(shopCityCode.name()));
+                if (fileIsOld & fileForCurrentShop){
+                    if (fileInCatalog.delete()) addToResultString("Old export file is delete: ".concat(fileInCatalog.getName()), addTo.LogFileAndConsole);
+                    else addToResultString("Can't delete old export file: ".concat(fileInCatalog.getName()), addTo.LogFileAndConsole);
+                }
+            }
+        }catch (NullPointerException npe){
+            npe.printStackTrace();
+            addToResultString(npe.toString(), addTo.LogFileAndConsole);
         }
     }
 

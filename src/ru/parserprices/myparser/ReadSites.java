@@ -800,7 +800,7 @@ public class ReadSites {
                                                    String cssSelector_HaveNextPage,
                                                    String cssSelector_GoodItems,
                                                    String cssSelector_GoodItem,
-                                                  String cssSelector_GoodCategory,
+                                                   String cssSelector_GoodCategory,
                                                    String cssSelector_GoodTitle,
                                                    String cssSelector_GoodPrice,
                                                    String cssSelector_GoodLink) {
@@ -1145,15 +1145,42 @@ public class ReadSites {
                 driver_GUI.manage().deleteCookieNamed("city_path");
                 driver_GUI.manage().deleteCookieNamed("city_guid_1c");
 
-                if (MainParsingPrices.shopCity == shopCities.samara){
-                    cookieCityPath = "samara";
-                    cookieCityGuid1C = "55506b53-0565-11df-9cf0-00151716f9f5";
+                if (MainParsingPrices.shopCity == shopCities.aznakaevo && false){
+                    cookieCityPath = "";
+                    cookieCityGuid1C = "";
+                }else if (MainParsingPrices.shopCity == shopCities.bugulma){
+                    cookieCityPath = "bugulma";
+                    cookieCityGuid1C = "da27fa97-5b7d-11e2-aee1-00155d030b1f";
+                }else if (MainParsingPrices.shopCity == shopCities.buzuluk){
+                    cookieCityPath = "buzuluk";
+                    cookieCityGuid1C = "aaee8b82-4fcc-11e2-aee1-00155d030b1f";
+                }else if (MainParsingPrices.shopCity == shopCities.volsk){
+                    cookieCityPath = "volsk";
+                    cookieCityGuid1C = "3cb9a040-ad7c-11e3-80bd-00155d031202";
+                }else if (MainParsingPrices.shopCity == shopCities.dimitrovgrad){
+                    cookieCityPath = "dimitrovgrad";
+                    cookieCityGuid1C = "51643c3d-8e76-11e1-979d-001517c526f0";
+                }else if (MainParsingPrices.shopCity == shopCities.zainsk){
+                    cookieCityPath = "zainsk";
+                    cookieCityGuid1C = "8f454fe2-b4b4-11e3-abb8-00155d031202";
+                }else if (MainParsingPrices.shopCity == shopCities.leninogorsk){
+                    cookieCityPath = "leninogorsk";
+                    cookieCityGuid1C = "da27fa99-5b7d-11e2-aee1-00155d030b1f";
                 }else if (MainParsingPrices.shopCity == shopCities.novokuybishevsk){
                     cookieCityPath = "novokuybishevsk";
                     cookieCityGuid1C = "5acb57ac-40a6-11e1-8064-001517c526f0";
+                }else if (MainParsingPrices.shopCity == shopCities.samara){
+                    cookieCityPath = "samara";
+                    cookieCityGuid1C = "55506b53-0565-11df-9cf0-00151716f9f5";
+                }else if (MainParsingPrices.shopCity == shopCities.syzran){
+                    cookieCityPath = "syzran";
+                    cookieCityGuid1C = "5acb57ad-40a6-11e1-8064-001517c526f0";
                 }else if (MainParsingPrices.shopCity == shopCities.chapaevsk){
                     cookieCityPath = "chapaevsk";
                     cookieCityGuid1C = "eaa9918b-bc8d-11e4-bd90-00155d03361b";
+                }else if (MainParsingPrices.shopCity == shopCities.chistopol){
+                    cookieCityPath = "chistopol";
+                    cookieCityGuid1C = "673efaf9-aca3-11e2-a322-00155d030b1f";
                 }else {
                     cookieCityPath = "samara";
                     cookieCityGuid1C = "55506b53-0565-11df-9cf0-00151716f9f5";
