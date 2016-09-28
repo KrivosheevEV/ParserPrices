@@ -112,11 +112,8 @@ class ExportFromBase {
 
         // Delete oldest export files.
         String argument_DeleteOldest = getArgumentValue(givenArguments, "-delete");
-//        addToResultString("Argument -delete:".concat(argument_DeleteOldest).concat("."),  addTo.LogFileAndConsole);
         try {
-            if (argument_DeleteOldest.isEmpty()){
-                addToResultString("Not set value of argument '-delete'.",  addTo.LogFileAndConsole);
-            }else {
+            if (!argument_DeleteOldest.isEmpty()){
                 int periodForDelete = Integer.valueOf(String.valueOf(argument_DeleteOldest));
                 deleteOldest(file.getParent(), "/var/www/parserpro.ru/public_html/Parser/",  periodForDelete);
             }
@@ -155,24 +152,29 @@ class ExportFromBase {
                 //ReadSites.addToResultString(resultSet.getString("good"), addTo.Console);
                 Element record = doc.createElement("record");
 
+                String goodValue = resultSet.getString("good");
                 Element good = doc.createElement("good");
-                good.setTextContent(resultSet.getString("good"));
+                good.setTextContent(goodValue!=null ? goodValue : " ");
                 record.appendChild(good);
 
+                String itemValue = resultSet.getString("item");
                 Element item = doc.createElement("item");
-                item.setTextContent(resultSet.getString("item"));
+                item.setTextContent(itemValue!=null ? itemValue : " ");
                 record.appendChild(item);
 
+                String shopValue = resultSet.getString("shop");
                 Element shop = doc.createElement("shop");
-                shop.setTextContent(resultSet.getString("shop"));
+                shop.setTextContent(shopValue!=null ? shopValue : " ");
                 record.appendChild(shop);
 
+                String priceValue = resultSet.getString("price");
                 Element price = doc.createElement("price");
-                price.setTextContent(resultSet.getString("price"));
+                price.setTextContent(priceValue!=null ? priceValue : " ");
                 record.appendChild(price);
 
+                String categoryValue = resultSet.getString("category");
                 Element category = doc.createElement("category");
-                price.setTextContent(resultSet.getString("category"));
+                category.setTextContent(categoryValue!=null ? categoryValue : " ");
                 record.appendChild(category);
 
                 goods.appendChild(record);
