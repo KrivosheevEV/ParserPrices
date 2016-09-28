@@ -14,21 +14,22 @@ public class ReadWriteFile {
     private String fileFullAddress;
     private static File mFile;
 
-    public ReadWriteFile(String givenFileName){
+    ReadWriteFile(String givenFileName){
 
         this.fileFullAddress = getCurrentPath() + givenFileName;
-        this.mFile = new File(fileFullAddress);
+        mFile = new File(fileFullAddress);
 
         if(!mFile.exists()){
             File path = new File(mFile.getParent());
             if (!path.exists()) {
-                if (path.mkdir()) addToResultString("Directory is creating.", addTo.LogFileAndConsole);
+                if (path.mkdir()) addToResultString("Directory is creating :".concat(path.getParent()), addTo.LogFileAndConsole);
                 else addToResultString("Error creating of directory: ".concat(path.toString()), addTo.LogFileAndConsole);
             }
             try {
                 mFile.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();
+                addToResultString("Can't create file.", addTo.LogFileAndConsole);
             }
         }
 

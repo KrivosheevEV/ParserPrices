@@ -1,19 +1,21 @@
 package ru.parserprices.myparser;
 
 
-import com.googlecode.fannj.ActivationFunction;
-import com.googlecode.fannj.Fann;
-import com.googlecode.fannj.Layer;
-
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
+import java.util.Properties;
 
 public class MainParsingPrices {
+
+    static String PROP_SHOP;
+    static String PROP_CITY;
+    static String PROP_EXPORT;
+    static String PROP_ZIP;
+    static String PROP_DELETE;
+    static boolean haveProperty;
 
     private static String resultOfPasring = "";
     private static long startTime;
@@ -30,39 +32,15 @@ public class MainParsingPrices {
 
         startTime = System.currentTimeMillis();
 
-        /*String path = "D:/Temp/FANN-2.2.0-Source/bin";
-        System.setProperty("jna.library.path", path);
-
-        System.out.println(path); //maybe the path is malformed
-        File file = new File(path + "/fannfloat.dll");
-        System.out.println("Is the dll file there:" + file.exists());
-        System.load(file.getAbsolutePath());
-
-        Fann fann = new Fann("D:/Temp/avito_phonenumber.png" );
-        float[] inputs = new float[]{};
-
-//        List<Layer> layers = new ArrayList<Layer>();
-//        layers.add(Layer.create(2));
-//        layers.add(Layer.create(3, ActivationFunction.FANN_SIGMOID_SYMMETRIC));
-//        layers.add(Layer.create(2, ActivationFunction.FANN_SIGMOID_SYMMETRIC));
-//        layers.add(Layer.create(1, ActivationFunction.FANN_SIGMOID_SYMMETRIC));
-
-
-        float[] outputs = fann.run( inputs );
-        fann.close();
-
-        for (float f : outputs) {
-            System.out.print(f + ",");
-        }
-*/
-
         // Get current OS.
         if (System.getProperty("os.name").startsWith("Windows")) {
             currentOS = OS.Windows;
         } else currentOS = OS.Linux;
 
-        setShop(getArgumentValue(args, "-shop"));
-        setCityShop(getArgumentValue(args, "-city"));
+        haveProperty = readProperty(getArgumentValue(args, "-property"));
+
+        setShop(haveProperty ? PROP_SHOP : getArgumentValue(args, "-shop"));
+        setCityShop(haveProperty ? PROP_CITY : getArgumentValue(args, "-city"));
 
         // Get string-date for file name.
         String dateToName = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
@@ -81,7 +59,8 @@ public class MainParsingPrices {
         }
 
         // Export file if it set in argument package.
-        if (args != null && !getArgumentValue(args, "-export").isEmpty()){
+        boolean needExport = haveProperty ? !PROP_EXPORT.isEmpty() : !getArgumentValue(args, "-export").isEmpty();
+        if (args != null && needExport){
             new ExportFromBase(args);
             return;
         }
@@ -187,7 +166,7 @@ public class MainParsingPrices {
 
     public String getResultOfParsing() {
 
-        return this.resultOfPasring;
+        return resultOfPasring;
     }
 
     public static void addToResultString(String addedString, addTo writeIntoLogFile) {
@@ -247,4 +226,33 @@ public class MainParsingPrices {
         return findArgument;
 
     }
+
+    private static Boolean readProperty(String nameFileProperty){
+
+        File fileProperty = new File(new ReadWriteFile(nameFileProperty).getFullAddress());
+        if (!fileProperty.exists() && !fileProperty.isFile()) return false;
+
+        Properties property = new Properties();
+
+        try {
+            FileInputStream fis = new FileInputStream(fileProperty);
+            property.load(fis);
+
+            PROP_SHOP = property.getProperty("shop").trim();
+            PROP_CITY = property.getProperty("city").trim();
+            PROP_EXPORT = property.getProperty("export").trim();
+            PROP_ZIP = property.getProperty("zip").trim();
+            PROP_DELETE = property.getProperty("delete").trim();
+
+            return !(PROP_SHOP==null || PROP_CITY==null || PROP_EXPORT==null || PROP_ZIP==null || PROP_DELETE==null ||
+                    PROP_SHOP.isEmpty() || PROP_CITY.isEmpty() || PROP_EXPORT.isEmpty() || PROP_ZIP.isEmpty() || PROP_DELETE.isEmpty());
+
+        } catch (IOException e) {
+            addToResultString("Error reading property file.", addTo.LogFileAndConsole);
+            e.printStackTrace();e.printStackTrace();
+            return false;
+        }
+
+    }
+
 }

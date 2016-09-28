@@ -6,9 +6,10 @@ Frontime{
         good [text]
         item [text]
         shop [text]
-        price [int]
+        price [text]
         dateofprice [date]
         link [text]
+        category [text]
     }
 
 }

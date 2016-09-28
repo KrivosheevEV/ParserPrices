@@ -1,0 +1,7 @@
+
+    -property conf.property
+    -shop DNS(CITILINK, DOMO, CORPCENTRE, FENIXCOMP..)
+    -city 846(84635, 82634..)
+    -export xml(xls)
+    -zip
+    -delete 5

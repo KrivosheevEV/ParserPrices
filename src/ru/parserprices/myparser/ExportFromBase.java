@@ -34,7 +34,7 @@ class ExportFromBase {
 
     public ExportFromBase(String[] givenArguments){
 
-        String argument_Export = getArgumentValue(givenArguments, "-export").toUpperCase();
+        String argument_Export = haveProperty ? PROP_EXPORT.toUpperCase() : getArgumentValue(givenArguments, "-export").toUpperCase();
         if (argument_Export.isEmpty()){
             addToResultString("Not set value of argument '-export'.",  addTo.LogFileAndConsole);
             addToResultString("Finish export: ".concat(new Date().toString()), addTo.LogFileAndConsole);
@@ -104,14 +104,14 @@ class ExportFromBase {
         }
 
         // Export file to archive.
-        Boolean needZip = argumentExist(givenArguments, "-zip");
+        Boolean needZip = haveProperty ? PROP_ZIP.toUpperCase().equals("YES") : argumentExist(givenArguments, "-zip");
         if (needZip){
             String newFullAdress = new String(file.getAbsolutePath().replace(file.getAbsolutePath().substring(file.getAbsolutePath().lastIndexOf(".")), ".zip"));
             file = zipFile(file, newFullAdress);
         }
 
         // Delete oldest export files.
-        String argument_DeleteOldest = getArgumentValue(givenArguments, "-delete");
+        String argument_DeleteOldest = haveProperty ? PROP_DELETE : getArgumentValue(givenArguments, "-delete");
         try {
             if (!argument_DeleteOldest.isEmpty()){
                 int periodForDelete = Integer.valueOf(String.valueOf(argument_DeleteOldest));
@@ -242,39 +242,46 @@ class ExportFromBase {
 
     private void deleteOldest(String exportCatalog1, String exportCatalog2, int periodForDelete){
 
-        if (currentOS != OS.Linux) return;
+        //if (currentOS != OS.Linux) return;
 
-
-        File сatalogForExportFiles;
-        сatalogForExportFiles = new File(exportCatalog1);
-
-        File webCatalogForExportFiles;
-        webCatalogForExportFiles = new File(exportCatalog2);
+        if (periodForDelete == -1) return;
 
         try {
-            addToResultString("Delete old files from :".concat(exportCatalog1), addTo.LogFileAndConsole);
-            for (File fileInCatalog: сatalogForExportFiles.listFiles()
-                    ) {
-                if (fileInCatalog==null) continue;
-                Boolean fileIsOld = new Date(fileInCatalog.lastModified()).before(new Date(new Date().getTime() - periodForDelete * 1000 * 60 * 60 * 24));
-                Boolean fileForCurrentShop = fileInCatalog.getName().contains(shopName.name().concat(shopCityCode.name()));
-                if (fileIsOld & fileForCurrentShop){
-                    if (fileInCatalog.delete()) addToResultString("Old export file is delete: ".concat(fileInCatalog.getName()), addTo.LogFileAndConsole);
-                    else addToResultString("Can't delete old export file: ".concat(fileInCatalog.getName()), addTo.LogFileAndConsole);
+
+            File сatalog1 = new File(exportCatalog1);
+            if (сatalog1.exists() & сatalog1.isDirectory()) {
+                addToResultString("Delete old files from :".concat(exportCatalog1), addTo.LogFileAndConsole);
+                for (File fileInCatalog : сatalog1.listFiles()
+                        ) {
+                    if (fileInCatalog == null) continue;
+                    Boolean fileIsOld = new Date(fileInCatalog.lastModified()).before(new Date(new Date().getTime() - periodForDelete * 1000 * 60 * 60 * 24));
+                    Boolean fileForCurrentShop = fileInCatalog.getName().contains(shopName.name().concat(shopCityCode.name()));
+                    if (fileIsOld & fileForCurrentShop) {
+                        if (fileInCatalog.delete())
+                            addToResultString("Old export file is delete: ".concat(fileInCatalog.getName()), addTo.LogFileAndConsole);
+                        else
+                            addToResultString("Can't delete old export file: ".concat(fileInCatalog.getName()), addTo.LogFileAndConsole);
+                    }
                 }
             }
 
-            addToResultString("Delete old files from :".concat(exportCatalog2), addTo.LogFileAndConsole);
-            for (File fileInCatalog: webCatalogForExportFiles.listFiles()
-                    ) {
-                if (fileInCatalog==null) continue;
-                Boolean fileIsOld = new Date(fileInCatalog.lastModified()).before(new Date(new Date().getTime() - periodForDelete * 1000 * 60 * 60 * 24));
-                Boolean fileForCurrentShop = fileInCatalog.getName().contains(shopName.name().concat(shopCityCode.name()));
-                if (fileIsOld & fileForCurrentShop){
-                    if (fileInCatalog.delete()) addToResultString("Old export file is delete: ".concat(fileInCatalog.getName()), addTo.LogFileAndConsole);
-                    else addToResultString("Can't delete old export file: ".concat(fileInCatalog.getName()), addTo.LogFileAndConsole);
+            File catalog2 = new File(exportCatalog2);
+            if (catalog2.exists() & catalog2.isDirectory()) {
+                addToResultString("Delete old files from :".concat(exportCatalog2), addTo.LogFileAndConsole);
+                for (File fileInCatalog : catalog2.listFiles()
+                        ) {
+                    if (fileInCatalog == null) continue;
+                    Boolean fileIsOld = new Date(fileInCatalog.lastModified()).before(new Date(new Date().getTime() - periodForDelete * 1000 * 60 * 60 * 24));
+                    Boolean fileForCurrentShop = fileInCatalog.getName().contains(shopName.name().concat(shopCityCode.name()));
+                    if (fileIsOld & fileForCurrentShop) {
+                        if (fileInCatalog.delete())
+                            addToResultString("Old export file is delete: ".concat(fileInCatalog.getName()), addTo.LogFileAndConsole);
+                        else
+                            addToResultString("Can't delete old export file: ".concat(fileInCatalog.getName()), addTo.LogFileAndConsole);
+                    }
                 }
             }
+
         }catch (NullPointerException npe){
             npe.printStackTrace();
             addToResultString(npe.toString(), addTo.LogFileAndConsole);
