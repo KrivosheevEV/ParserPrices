@@ -1020,7 +1020,7 @@ public class ReadSites {
                 " VALUES ('" + writeDataToBase.clearLetters(stringToBase[1]) + "', '" +
                                 stringToBase[2] + "', '" +
                                 stringToBase[3] + "', '" +
-                                Integer.parseInt(stringToBase[4]) + "', '" +
+                                stringToBase[4] + "', '" +
                                 dateOfPriceToQuery + "', '" +
                                 stringToBase[6] + "', '" +
                                 stringToBase[7] + "');";
