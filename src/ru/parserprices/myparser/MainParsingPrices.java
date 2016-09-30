@@ -15,6 +15,7 @@ public class MainParsingPrices {
     static String PROP_EXPORT;
     static String PROP_ZIP;
     static String PROP_DELETE;
+    static String PROP_EMAIL;
     static boolean haveProperty;
 
     private static String resultOfPasring = "";
@@ -70,6 +71,21 @@ public class MainParsingPrices {
         // Read sites. DNS.
         ReadSites readSites = new ReadSites();
         readSites.ReadSite(shopName);
+
+        // Send Email.
+        String emailAdress = haveProperty ? PROP_EMAIL : getArgumentValue(args, "-email");
+        boolean sendEmail = emailAdress.toUpperCase().equals("NO");
+        if (sendEmail){
+            String[] paramConnect = {emailAdress, "root@parserpro.ru", "owa.axus.name"};
+            String mSubject = "Cron on \"parser\" for ".concat(shopName.name()).concat(shopCityCode.name());
+            String mText = resultOfPasring;
+            try {
+                new Email(paramConnect, mSubject, mText);
+            }catch (Exception e) {
+                addToResultString(e.toString(), addTo.LogFileAndConsole);
+            }
+        }
+
 
         // Write logs.
         resultToLog.writeResultToFile(resultToLog.getFullAddress(), resultOfPasring, false);
@@ -243,13 +259,14 @@ public class MainParsingPrices {
             PROP_EXPORT = property.getProperty("export").trim();
             PROP_ZIP = property.getProperty("zip").trim();
             PROP_DELETE = property.getProperty("delete").trim();
+            PROP_EMAIL = property.getProperty("email").trim();
 
-            return !(PROP_SHOP==null || PROP_CITY==null || PROP_EXPORT==null || PROP_ZIP==null || PROP_DELETE==null ||
-                    PROP_SHOP.isEmpty() || PROP_CITY.isEmpty() || PROP_EXPORT.isEmpty() || PROP_ZIP.isEmpty() || PROP_DELETE.isEmpty());
+            return !(PROP_SHOP==null || PROP_CITY==null || PROP_EXPORT==null || PROP_ZIP==null || PROP_DELETE==null || PROP_EMAIL==null ||
+                    PROP_SHOP.isEmpty() || PROP_CITY.isEmpty() || PROP_EXPORT.isEmpty() || PROP_ZIP.isEmpty() || PROP_DELETE.isEmpty() || PROP_EMAIL.isEmpty());
 
         } catch (IOException e) {
             addToResultString("Error reading property file.", addTo.LogFileAndConsole);
-            e.printStackTrace();e.printStackTrace();
+            e.printStackTrace();
             return false;
         }
 
