@@ -16,6 +16,9 @@ public class MainParsingPrices {
     static String PROP_ZIP;
     static String PROP_DELETE;
     static String PROP_EMAIL;
+    static String PROP_URL;
+    static String PROP_CATEGORY1;
+    static String PROP_SUBCATEGORIES1;
     static boolean haveProperty;
 
     private static String resultOfPasring = "";
@@ -37,6 +40,21 @@ public class MainParsingPrices {
         if (System.getProperty("os.name").startsWith("Windows")) {
             currentOS = OS.Windows;
         } else currentOS = OS.Linux;
+
+       /* // Anticaptcha.
+        int conutIteration = 0;
+        try {
+            AntiCaptcha antiCaptcha = new AntiCaptcha("D:\\Temp\\avito_phonenumber.png");
+            while (!antiCaptcha.getCaptchaStatus() & conutIteration++ <= 10){
+                //Thread.sleep(3000);
+            }
+            if (antiCaptcha.getCaptchaStatus()){
+                System.out.printf(antiCaptcha.getCaptchaText().concat(""));
+            }else System.out.println("Error read captcha.");
+        }catch (Exception e){
+            *//**//*
+        }*/
+
 
         haveProperty = readProperty(getArgumentValue(args, "-property"));
 
@@ -60,7 +78,7 @@ public class MainParsingPrices {
         }
 
         // Export file if it set in argument package.
-        boolean needExport = haveProperty ? !PROP_EXPORT.isEmpty() : !getArgumentValue(args, "-export").isEmpty();
+        boolean needExport = haveProperty  ? !PROP_EXPORT.toUpperCase().equals("NO") : !getArgumentValue(args, "-export").isEmpty();
         if (args != null && needExport){
             new ExportFromBase(args);
             return;
@@ -68,9 +86,13 @@ public class MainParsingPrices {
 
 //        readPattern = new ReadWriteFile("Pattern_DNS1_.xml");
 
-        // Read sites. DNS.
-        ReadSites readSites = new ReadSites();
-        readSites.ReadSite(shopName);
+        // Read sites.
+        if (shopName == shopNames.AVITO) {
+            new ReadSite.Read_Avito(PROP_URL);
+        }else{
+            ReadSites readSites = new ReadSites();
+            readSites.ReadSite(shopName);
+        }
 
         // Send Email.
         String emailAdress = haveProperty ? PROP_EMAIL : getArgumentValue(args, "-email");
@@ -85,7 +107,6 @@ public class MainParsingPrices {
                 addToResultString(e.toString(), addTo.LogFileAndConsole);
             }
         }
-
 
         // Write logs.
         resultToLog.writeResultToFile(resultToLog.getFullAddress(), resultOfPasring, false);
@@ -167,6 +188,10 @@ public class MainParsingPrices {
                 shopCity = shopCities.tolyatti;
                 shopCityCode = shopCityCodes._8482;
             }
+            else if (argumentValue.equals("84165")) {
+                shopCity = shopCities.nikolsk;
+                shopCityCode = shopCityCodes._84165;
+            }
             else {
                 shopCity = shopCities.empty;
                 shopCityCode = shopCityCodes.empty;
@@ -246,7 +271,7 @@ public class MainParsingPrices {
     private static Boolean readProperty(String nameFileProperty){
 
         File fileProperty = new File(new ReadWriteFile(nameFileProperty).getFullAddress());
-        if (!fileProperty.exists() && !fileProperty.isFile()) return false;
+        if (!fileProperty.exists() || fileProperty.isDirectory()) return false;
 
         Properties property = new Properties();
 
@@ -254,15 +279,18 @@ public class MainParsingPrices {
             FileInputStream fis = new FileInputStream(fileProperty);
             property.load(fis);
 
-            PROP_SHOP = property.getProperty("shop").trim();
-            PROP_CITY = property.getProperty("city").trim();
-            PROP_EXPORT = property.getProperty("export").trim();
-            PROP_ZIP = property.getProperty("zip").trim();
-            PROP_DELETE = property.getProperty("delete").trim();
-            PROP_EMAIL = property.getProperty("email").trim();
+            PROP_SHOP           = property.getProperty("shop").trim();
+            PROP_CITY           = property.getProperty("city").trim();
+            PROP_EXPORT         = property.getProperty("export").trim();
+            PROP_ZIP            = property.getProperty("zip").trim();
+            PROP_DELETE         = property.getProperty("delete").trim();
+            PROP_EMAIL          = property.getProperty("email").trim();
+            PROP_URL            = property.getProperty("url").trim();
+            PROP_CATEGORY1      = property.getProperty("category1").trim();
+            PROP_SUBCATEGORIES1 = property.getProperty("subcategories1").trim();
 
-            return !(PROP_SHOP==null || PROP_CITY==null || PROP_EXPORT==null || PROP_ZIP==null || PROP_DELETE==null || PROP_EMAIL==null ||
-                    PROP_SHOP.isEmpty() || PROP_CITY.isEmpty() || PROP_EXPORT.isEmpty() || PROP_ZIP.isEmpty() || PROP_DELETE.isEmpty() || PROP_EMAIL.isEmpty());
+            return !(PROP_SHOP==null || PROP_CITY==null || PROP_EXPORT==null || PROP_ZIP==null || PROP_DELETE==null || PROP_EMAIL==null || PROP_URL==null ||
+                    PROP_SHOP.isEmpty() || PROP_CITY.isEmpty() || PROP_EXPORT.isEmpty() || PROP_ZIP.isEmpty() || PROP_DELETE.isEmpty() || PROP_EMAIL.isEmpty() || PROP_URL.isEmpty());
 
         } catch (IOException e) {
             addToResultString("Error reading property file.", addTo.LogFileAndConsole);

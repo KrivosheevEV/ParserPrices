@@ -1069,6 +1069,8 @@ public class ReadSites {
                 GENERAL_URL = "http://www.corpcentre.ru"; break;
             case FENIXCOMP:
                 GENERAL_URL = "http://www.fenixcomp.ru"; break;
+            case AVITO:
+                GENERAL_URL = "http://www.avito.ru"; break;
             default:
                 GENERAL_URL = "http://www.dns-shop.ru";
         }
@@ -1115,6 +1117,13 @@ public class ReadSites {
                     break;
 
                 case FENIXCOMP:
+
+                    addToResultString("Trying start new WebDriver(HtmlUnit)", addTo.LogFileAndConsole);
+                    driver_noGUI = new HtmlUnitDriver(BrowserVersion.CHROME);
+                    driver_noGUI.getBrowserVersion().setUserAgent(userAgent);
+                    break;
+
+                case AVITO:
 
                     addToResultString("Trying start new WebDriver(HtmlUnit)", addTo.LogFileAndConsole);
                     driver_noGUI = new HtmlUnitDriver(BrowserVersion.CHROME);
@@ -1267,6 +1276,16 @@ public class ReadSites {
                 }
 
                 driver_noGUI.manage().addCookie(new Cookie("city", cookie_city));
+
+                break;
+
+            case AVITO:
+
+                if (MainParsingPrices.shopCity == shopCities.nikolsk){
+                    GENERAL_URL = "https://www.avito.ru/penzenskaya_oblast_nikolsk";
+                }else {
+                    GENERAL_URL = "https://www.avito.ru/penzenskaya_oblast_nikolsk";
+                }
 
                 break;
 
