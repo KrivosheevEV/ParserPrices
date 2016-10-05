@@ -32,6 +32,7 @@ public class AntiCaptcha {
                     break;
                 } else {
                     decryption = response;
+                    break;
                 }
             }
             captchaIsReady = true;
