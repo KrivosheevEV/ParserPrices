@@ -70,17 +70,20 @@ public class ReadWriteBase {
             else return false;
         } catch (SQLException sqlEx) {
             addToResultString("Wrong query: ".concat(queryText), addTo.LogFileAndConsole);
+            addToResultString(sqlEx.getMessage(), addTo.LogFileAndConsole);
             return false;
         }
     }
 
-    public void writeData(Statement statement, String queryText) {
+    public Boolean writeDataSuccessfully(Statement statement, String queryText) {
 
         try {
             statement.executeUpdate(queryText);
+            return true;
         } catch (SQLException sqlEx) {
             addToResultString("Wrong query: ".concat(queryText), addTo.LogFileAndConsole);
-//            sqlEx.printStackTrace();
+            addToResultString(sqlEx.getMessage(), addTo.LogFileAndConsole);
+            return false;
         }
     }
 

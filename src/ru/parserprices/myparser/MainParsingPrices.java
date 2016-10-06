@@ -77,6 +77,14 @@ public class MainParsingPrices {
             return;
         }
 
+        // Read another sites.
+        if (shopName == shopNames.AVITO) {
+            new ReadSite.Read_Avito(PROP_URL);
+        }else{
+            ReadSites readSites = new ReadSites();
+            readSites.ReadSite(shopName);
+        }
+
         // Export file if it set in argument package.
         boolean needExport = haveProperty  ? !PROP_EXPORT.toUpperCase().equals("NO") : !getArgumentValue(args, "-export").isEmpty();
         if (args != null && needExport){
@@ -86,13 +94,6 @@ public class MainParsingPrices {
 
 //        readPattern = new ReadWriteFile("Pattern_DNS1_.xml");
 
-        // Read sites.
-        if (shopName == shopNames.AVITO) {
-            new ReadSite.Read_Avito(PROP_URL);
-        }else{
-            ReadSites readSites = new ReadSites();
-            readSites.ReadSite(shopName);
-        }
 
         // Send Email.
         String emailAdress = haveProperty ? PROP_EMAIL : getArgumentValue(args, "-email");

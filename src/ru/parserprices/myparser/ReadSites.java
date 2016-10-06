@@ -1026,19 +1026,8 @@ public class ReadSites {
                                 stringToBase[7] + "');";
 
             if (writeDataToBase.dataExist(statement, query_recordExist)) {
-                if (writeDataToBase.dataExist(statement, query_needUpdate)) {
-                    //addToResultString("Update record(" + countOfRecords + ") in base", addTo.Console);
-//                writeDataToBase.updateData(statement, stringToBase);
-                    writeDataToBase.writeData(statement, query_updateRecord);
-                    countOfUpdate++;
-                }else {
-                    //addToResultString("Not need update(" + countOfRecords + ") record", addTo.Console);
-                }
-            } else {
-                //addToResultString("Write new record(" + countOfRecords + ") in base", addTo.Console);
-                writeDataToBase.writeData(statement, query_writeNewRecord);
-                countOfNewRecords++;
-            }
+                if (writeDataToBase.dataExist(statement, query_needUpdate) && writeDataToBase.writeDataSuccessfully(statement, query_updateRecord)) countOfUpdate++;
+            } else if (writeDataToBase.writeDataSuccessfully(statement, query_writeNewRecord))countOfNewRecords++;
 
             //System.out.println(stringToBase[2]);
 

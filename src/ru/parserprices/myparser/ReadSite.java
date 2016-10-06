@@ -1,8 +1,6 @@
 package ru.parserprices.myparser;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
-//import org.apache.xpath.operations.String;
-import org.apache.xpath.operations.Bool;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
@@ -15,7 +13,8 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Base64;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -33,19 +32,21 @@ public class ReadSite {
     private static WebDriver driver;
     private static ArrayList<String> listPages;
     private static ArrayList<String[]> dataToBase;
-    private static int MAX_COUNT_PAGES = 1;
-    private static int MAX_COUNT_ITEMS = 10;
+    private static int MAX_COUNT_PAGES = -1;
+    private static int MAX_COUNT_ITEMS = -1;
+//    private static int MAX_COUNT_TOBASE = 10;
     private static int MAX_COUNT_EXPAND = 3;
-    private static int WAITING_FOR_EXPAND = 3;
+    private static int WAITING_FOR_EXPAND = 4;
+    private static int BLOCK_RECORDS_TO_BASE = 10;
+    private static boolean NEED_PHONE_NUMBER = true;
 
     public static class Read_Avito{
 
         public Read_Avito(String givenURL){
 
-            int countIteration = 0;
+            int countIteration = 1;
 
             startingWebDriver(givenURL);
-//            setCookie(givenURL);
 
             if (driver.getCurrentUrl().equals("https://www.avito.ru/blocked")) {
                 addToResultString(driver.getCurrentUrl(), addTo.LogFileAndConsole);
@@ -66,21 +67,34 @@ public class ReadSite {
 
             if (listPages.size() != 0){
                 for (String linkOfItem: listPages) {
-                    addToResultString(String.valueOf(listPages.indexOf(linkOfItem)).concat("/").concat(String.valueOf(listPages.size())), addTo.LogFileAndConsole);
-                    readItemDiscription(dataToBase, linkOfItem);
-                    if (MAX_COUNT_ITEMS != -1 && countIteration++ >= MAX_COUNT_ITEMS) break;
+
+                    String countToLog = String.valueOf(listPages.indexOf(linkOfItem)+1).concat("/").concat(String.valueOf(listPages.size()));
+                    readItemDiscription(dataToBase, linkOfItem, countToLog);
+
+                    if (countIteration % BLOCK_RECORDS_TO_BASE == 0){
+                        addToResultString("Writing data in base..", addTo.LogFileAndConsole);
+                        writeDataIntoBase(dataToBase, countIteration - BLOCK_RECORDS_TO_BASE);
+                        addToResultString("Sum records (".concat(String.valueOf(dataToBase.size())).concat(") added into base."), addTo.LogFileAndConsole);
+                    }
+
+                    if (MAX_COUNT_ITEMS != -1 & countIteration++ >= MAX_COUNT_ITEMS) break;
                 }
             }
 
-            if (dataToBase.size() != 0) {
-                for (String[] item : dataToBase
-                     ) {
-//                    addToResultString(Arrays.toString(item), addTo.LogFileAndConsole);
-                    addToResultString(item[0].concat(" - ").concat(item[8]), addTo.LogFileAndConsole);
-                }
-            }
+//            if (dataToBase.size() != 0) {
+//                for (String[] item : dataToBase
+//                     ) {
+////                    addToResultString(Arrays.toString(item), addTo.LogFileAndConsole);
+//                    addToResultString(item[0].concat(" - ").concat(item[8]), addTo.LogFileAndConsole);
+//                }
+//            }
+
+
+
+            dataToBase = new ArrayList<String[]>();
 
             driver.close();
+//            driver_noGUI.close();
         }
     }
 
@@ -115,7 +129,7 @@ public class ReadSite {
 
             while (readPage) {
 
-                if (MAX_COUNT_PAGES != -1 && countIteration >= MAX_COUNT_PAGES) break;
+                if (MAX_COUNT_PAGES != -1 & countIteration >= MAX_COUNT_PAGES) break;
                 countIteration++;
 
                 listItems = driver.findElements(By.cssSelector(cssSelector_Items));
@@ -140,20 +154,21 @@ public class ReadSite {
                 }
             }
 
-            addToResultString("All item(".concat(Integer.toString(countIteration)).concat(") was reading"), addTo.LogFileAndConsole);
+            addToResultString("All pages(".concat(Integer.toString(countIteration)).concat(") was reading"), addTo.LogFileAndConsole);
         } catch (Exception e) {
             addToResultString("Error reading flipping page.", addTo.LogFileAndConsole);
         }
     }
 
-    private static void readItemDiscription(ArrayList<String[]> dataToBase, String givenLink) {
+    // Reading description.
+    private static void readItemDiscription(ArrayList<String[]> dataToBase, String givenLink, String countToLog) {
 
         try {
-            addToResultString("Trying open page: ".concat(givenLink), addTo.LogFileAndConsole);
+            addToResultString("Trying open page[".concat(countToLog).concat("]: ").concat(givenLink), addTo.LogFileAndConsole);
             if (driver == null) startingWebDriver(givenLink);
             driver.navigate().to(givenLink);
         } catch (Exception e) {
-            addToResultString("Can't open new page: ".concat(givenLink), addTo.LogFileAndConsole);
+            addToResultString("Can't open new page[".concat(countToLog).concat("]: ").concat(givenLink), addTo.LogFileAndConsole);
             addToResultString(e.toString(), addTo.LogFileAndConsole);
             try {
                 driver.quit();
@@ -168,107 +183,112 @@ public class ReadSite {
         String cssSelector_ItemCity = "div#map";
         String cssSelector_ItemParams = "div.item-params";
         String cssSelector_ItemDecription = "div.description.description-text";
-//        String cssSelector_ItemPhoneButton = "span.button.button-azure.description__phone-btn.js-phone-show__link";
         String cssSelector_ItemPhoneButton = "span.button-azure-text.description__phone-insert.js-phone-show__insert";
         String cssSelector_ItemPhoneNumberImage = "img.description__phone-img";
 
-        String goodCategory = PROP_CATEGORY1;
         String itemPhoneNumber = "";
 
-                WebElement but_ShowPhoneNumber = driver.findElement(By.cssSelector(cssSelector_ItemPhoneButton));
-        int countPages = 0;
+
+        String item = "";
+        String itemName = "";
+        String itemPrice = "";
+        String itemOwner = "";
+        String itemCity = "";
+        String itemParams = "";
+        String itemDescription = "";
 
         try {
-            while ((new WebDriverWait(driver, WAITING_FOR_EXPAND)).until(
-                    ExpectedConditions.invisibilityOfElementLocated(By.cssSelector(cssSelector_ItemPhoneNumberImage)))) {
+            item = driver.findElement(By.cssSelector(cssSelector_Item)).getText();
+            itemName = driver.findElement(By.cssSelector(cssSelector_ItemName)).getText();
+            itemPrice = driver.findElement(By.cssSelector(cssSelector_ItemPrice)).getText();
+            itemOwner = driver.findElement(By.cssSelector(cssSelector_ItemOwner)).getText();
+            itemCity = driver.findElement(By.cssSelector(cssSelector_ItemCity)).getText();
+            itemParams = driver.findElement(By.cssSelector(cssSelector_ItemParams)).getText();
+            itemDescription = driver.findElement(By.cssSelector(cssSelector_ItemDecription)).getText();
 
-                but_ShowPhoneNumber.sendKeys(Keys.ESCAPE);
-                but_ShowPhoneNumber.click();
+            // Read phonenumber (image).
+            if (NEED_PHONE_NUMBER) {
 
-                if (MAX_COUNT_EXPAND != -1 && countPages++ >= MAX_COUNT_EXPAND) break;
-            }
-        }catch (Throwable te) {
-
-            java.lang.String phoneNumberImageAdressEncode64 = "";
-            java.lang.String phoneNumberImageAdressDecode64 = "";
-
-            String imagePath = "";
-
-            try {
-                phoneNumberImageAdressEncode64 = driver.findElement(By.cssSelector(cssSelector_ItemPhoneNumberImage)).getAttribute("src");
-
-                phoneNumberImageAdressEncode64 = new String(phoneNumberImageAdressEncode64.getBytes("Cp1251"), "UTF-8");
-//                addToResultString(phoneNumberImageAdressEncode64, addTo.LogFileAndConsole);
-                java.lang.String FileURI = phoneNumberImageAdressEncode64.split(",")[1];
-
-                byte[] decodedValue = Base64.getDecoder().decode(FileURI);
-//                phoneNumberImageAdressDecode64 = new String(decodedValue, StandardCharsets.UTF_8);
-
-                File tmpFile = File.createTempFile("image_", ".png");
-                try (FileOutputStream fos = new FileOutputStream(tmpFile)) {
-                    fos.write(decodedValue);
-                } catch (IOException ioe) {
-//                    ioe.printStackTrace();
-                }
-
-                imagePath = tmpFile.getAbsolutePath();
-
-                //  data:image/png;base64,
-                //   iVBORw0KGgoAAAANSUhEUgAAAGYAAAAQCAYAAADkpAq+AAAACXBIWXMAAA7EAAAOxAGVKw4bAAADKElEQVRYhe3Yy2tdVRQG8N8KIVxCCEFqqVidKKlIBh0K/hMKIpJBB05EER9YHAniWBxEcCRSRKUWSqEISikOihMVpYOKTyqKSEmlSJqGKj62g7Ov7Jycs++5TszgLtjknP34vrW/tfda9yRSSma2/2zu/3ZgZt02C8w+tVlg9qullOQ6cxAncQ2/4C3cMh4vGxbxep57BRtYLMZfws/YxikczP2po/3VxTGJp+YvlnA28/+a5x2o8FT3Pi1esW69kXhPf6c+ZStvzJs4h9twOy7gRE88X8Fl3IEjeTNvQEQ8gy3clXG+xzv5EETZ8CBe7eGo8kzw9yl8i1vz+AU8XeGZtPdp8UTEnXiso79Xn11WRHEHC8X7CNs9J2ETy60TdSU/f6M4AVjGTgfGPC6VOFPy9PqLj7BWjK3gfIWnuvf/gDeHD7GmdWOG6lPemE+xHhELETGPh/FZ12nIxH8W76PsrJTSkZTSVYiIQ3gRZzowHsX7KaXrPRxVngn+ruKHYt0NjUh9Nmnv0+K9gPdSSl+0BwbrU0RuVXPFxrl/G3f3nIgTOK4R6oCmDvzRmjPOyddwtAPjIlYn5Ohenpq/+L0Da0/f0L1Pg4f7cK5431NjBunTmvh8FmExR/1UD+iypkBu4Ts8pCPtaU78Bi62+tfafdPy1PxtH5IBganufSieJtV+jsOTAlPTpx2YbSy1RNmaJF4h9OWKuDdbfcfx8hDsPp6av5raVNaMBWyOhSrbkL334bWxNEX8kZbPvYHp0yel3TXmekrpRvH+N34zzO7FxxARP0bE4WJsHldb8+/XFNRp7V8edX+/1qS+sa3kPmnvL8NJWL14HVjrOBkRadxg/Dc/D9FnV2BOR8STEbESESM8gXfbCzL4pYg4lovlPXhccyXhbTwbEUsRsYjnNLWhtDV82YU9BU/N3/M4FhGjiFjQFPMPKlST9j4Irx2oceCLAzBUn12pbITXNFd0Mz+Peq7fUXyCm/gKD7Su+Ybmm+MnzcfUXGv9juKDtHLNazy9/uJQFnNLk6bOKlJVB09179Pi1VLZEH1SSiJPntk+s9n/yvap/QOKThvshKiepwAAAABJRU5ErkJggg==data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGYAAAAQCAYAAADkpAq+AAAACXBIWXMAAA7EAAAOxAGVKw4bAAADKElEQVRYhe3Yy2tdVRQG8N8KIVxCCEFqqVidKKlIBh0K/hMKIpJBB05EER9YHAniWBxEcCRSRKUWSqEISikOihMVpYOKTyqKSEmlSJqGKj62g7Ov7Jycs++5TszgLtjknP34vrW/tfda9yRSSma2/2zu/3ZgZt02C8w+tVlg9qullOQ6cxAncQ2/4C3cMh4vGxbxep57BRtYLMZfws/YxikczP2po/3VxTGJp+YvlnA28/+a5x2o8FT3Pi1esW69kXhPf6c+ZStvzJs4h9twOy7gRE88X8Fl3IEjeTNvQEQ8gy3clXG+xzv5EETZ8CBe7eGo8kzw9yl8i1vz+AU8XeGZtPdp8UTEnXiso79Xn11WRHEHC8X7CNs9J2ETy60TdSU/f6M4AVjGTgfGPC6VOFPy9PqLj7BWjK3gfIWnuvf/gDeHD7GmdWOG6lPemE+xHhELETGPh/FZ12nIxH8W76PsrJTSkZTSVYiIQ3gRZzowHsX7KaXrPRxVngn+ruKHYt0NjUh9Nmnv0+K9gPdSSl+0BwbrU0RuVXPFxrl/G3f3nIgTOK4R6oCmDvzRmjPOyddwtAPjIlYn5Ohenpq/+L0Da0/f0L1Pg4f7cK5431NjBunTmvh8FmExR/1UD+iypkBu4Ts8pCPtaU78Bi62+tfafdPy1PxtH5IBganufSieJtV+jsOTAlPTpx2YbSy1RNmaJF4h9OWKuDdbfcfx8hDsPp6av5raVNaMBWyOhSrbkL334bWxNEX8kZbPvYHp0yel3TXmekrpRvH+N34zzO7FxxARP0bE4WJsHldb8+/XFNRp7V8edX+/1qS+sa3kPmnvL8NJWL14HVjrOBkRadxg/Dc/D9FnV2BOR8STEbESESM8gXfbCzL4pYg4lovlPXhccyXhbTwbEUsRsYjnNLWhtDV82YU9BU/N3/M4FhGjiFjQFPMPKlST9j4Irx2oceCLAzBUn12pbITXNFd0Mz+Peq7fUXyCm/gKD7Su+Ybmm+MnzcfUXGv9juKDtHLNazy9/uJQFnNLk6bOKlJVB09179Pi1VLZEH1SSiJPntk+s9n/yvap/QOKThvshKiepwAAAABJRU5ErkJggg==
-
-//                byte[] decodedBytes = Base64.getUrlDecoder().decode(FileURI);
-//                phoneNumberImageAdressDecode64 = new String(decodedBytes);
-
-                addToResultString(phoneNumberImageAdressDecode64, addTo.LogFileAndConsole);
-
-            }catch (Exception e){
-                addToResultString(e.getMessage(), addTo.LogFileAndConsole);
-            }
-
-            if (!imagePath.isEmpty()) {
-                // Anticaptcha.
-                int conutIteration = 0;
                 try {
-                    AntiCaptcha antiCaptcha = new AntiCaptcha(imagePath); // "D:\\Temp\\avito_phonenumber.png"
-//                while (!antiCaptcha.getCaptchaStatus() & conutIteration++ <= 10) {
-//                    //Thread.sleep(3000);
-//                }
-                    if (antiCaptcha.getCaptchaStatus()) {
-                        itemPhoneNumber = antiCaptcha.getCaptchaText();
-                    } else addToResultString("Error read captcha.", addTo.LogFileAndConsole);
-                } catch (Exception e) {
-                    itemPhoneNumber = e.toString();
-                    addToResultString(e.toString(), addTo.LogFileAndConsole);
-                    /*Some error*/
+                    WebElement but_ShowPhoneNumber = driver.findElement(By.cssSelector(cssSelector_ItemPhoneButton));
+                    int countPages = 0;
+                    while ((new WebDriverWait(driver, WAITING_FOR_EXPAND)).until(
+                            ExpectedConditions.invisibilityOfElementLocated(By.cssSelector(cssSelector_ItemPhoneNumberImage)))) {
+
+                        but_ShowPhoneNumber.sendKeys(Keys.ESCAPE);
+                        but_ShowPhoneNumber.click();
+                        if (MAX_COUNT_EXPAND != -1 && countPages++ >= MAX_COUNT_EXPAND) break;
+                    }
+                }catch (Throwable te) {/**/}
+
+                java.lang.String phoneNumberImageAdressEncode64 = "";
+                java.lang.String phoneNumberImageAdressDecode64 = "";
+                String imagePath = "";
+
+                try {
+                    phoneNumberImageAdressEncode64 = driver.findElement(By.cssSelector(cssSelector_ItemPhoneNumberImage)).getAttribute("src");
+                    phoneNumberImageAdressEncode64 = new String(phoneNumberImageAdressEncode64.getBytes("Cp1251"), "UTF-8");
+//                addToResultString(phoneNumberImageAdressEncode64, addTo.LogFileAndConsole);
+                    java.lang.String FileURI = phoneNumberImageAdressEncode64.split(",")[1];
+
+                    byte[] decodedValue = Base64.getDecoder().decode(FileURI);
+
+                    File tmpFile = File.createTempFile("image_", ".png");
+                    try (FileOutputStream fos = new FileOutputStream(tmpFile)) {
+                        fos.write(decodedValue);
+                    } catch (IOException ioe) {
+                        addToResultString(ioe.getMessage(), addTo.LogFileAndConsole);
+                    }
+
+                    imagePath = tmpFile.getAbsolutePath();
+                    addToResultString(phoneNumberImageAdressDecode64, addTo.LogFileAndConsole);
+
+                }catch (Exception e){
+                    addToResultString(e.getMessage(), addTo.LogFileAndConsole);
                 }
 
-                itemPhoneNumber = clearPhoneNumber(itemPhoneNumber);
+                if (!imagePath.isEmpty()) {
+                    // Anticaptcha.
+                    int conutIteration = 0;
+                    Boolean readCaptcha = true;
+                    try {
+                        while (readCaptcha) {
+                            AntiCaptcha antiCaptcha = new AntiCaptcha(imagePath); // "D:\\Temp\\avito_phonenumber.png"
+                            if (antiCaptcha.getCaptchaStatus()) {
+                                itemPhoneNumber = antiCaptcha.getCaptchaText();
+                                if (!itemPhoneNumber.equals("ERROR_CAPTCHA_UNSOLVABLE")) readCaptcha = false;
+                            } else {
+                                addToResultString("Error read captcha.", addTo.LogFileAndConsole);
+                                readCaptcha = false;
+                            }
+                        }
+                    } catch (Exception e) {
+                        itemPhoneNumber = e.toString();
+                        addToResultString(e.toString(), addTo.LogFileAndConsole);
+                    /*Some error*/
+                    }
+                    itemPhoneNumber = clearPhoneNumber(itemPhoneNumber);
+                }
             }
-        }
-
-        try {
-
-            String item = driver.findElement(By.cssSelector(cssSelector_Item)).getText();
-            String itemName = driver.findElement(By.cssSelector(cssSelector_ItemName)).getText();
-            String itemPrice = driver.findElement(By.cssSelector(cssSelector_ItemPrice)).getText();
-            String itemOwner = driver.findElement(By.cssSelector(cssSelector_ItemOwner)).getText();
-            String itemCity = driver.findElement(By.cssSelector(cssSelector_ItemCity)).getText();
-            String itemParams = driver.findElement(By.cssSelector(cssSelector_ItemParams)).getText();
-            String itemDescription = driver.findElement(By.cssSelector(cssSelector_ItemDecription)).getText();
-            String[] toList = {
-                    item,
-                    new SimpleDateFormat("yyyy-MM-dd").format(new Date()),
-                    itemName,
-                    itemPrice,
-                    itemOwner,
-                    itemCity,
-                    itemParams,
-                    itemDescription,
-                    itemPhoneNumber};
-            dataToBase.add(toList);
-
         } catch (Exception e) {
-            //addToResultString("Element not found: ".concat(e.toString()), addTo.LogFileAndConsole);
+            addToResultString("Element not found: ".concat(e.toString()), addTo.LogFileAndConsole);
+        }finally {
+
+            String[] toList = {"0",
+                    shopName.name().concat(MainParsingPrices.shopCityCode.name()), // 1
+                    PROP_CATEGORY1,         // 2
+                    PROP_SUBCATEGORIES1,    // 3
+                    item,                   // 4
+                    new SimpleDateFormat("yyyy-MM-dd").format(new Date()),  // 5
+                    itemName,               // 6
+                    itemPrice,              // 7
+                    itemOwner,              // 8
+                    itemPhoneNumber,        // 9
+                    itemCity,               // 10
+                    itemParams,             // 11
+                    itemDescription,        // 12
+                    givenLink};             // 13
+            dataToBase.add(toList);
         }
     }
 
@@ -332,7 +352,7 @@ public class ReadSite {
                     break;
             }
 
-            driver.navigate().to(givenURL);
+            //driver.navigate().to(givenURL);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -387,5 +407,100 @@ public class ReadSite {
         return givenPhoneNumber;
     }
 
+    // Write data into base.
+    private static void writeDataIntoBase(ArrayList<String[]> listDataToBase, int startRecordFromPosition) {
+
+        if (listDataToBase == null || listDataToBase.isEmpty()) {
+            addToResultString("Not have data to write into base.", addTo.LogFileAndConsole);
+            return;
+        }
+
+        ReadWriteBase writeDataToBase;
+        Statement statement;
+
+        addToResultString("Getting statement base start..", addTo.Console);
+        try {
+            writeDataToBase = new ReadWriteBase();
+            statement = writeDataToBase.getStatement();
+            addToResultString("Getting statement base finish.", addTo.Console);
+        } catch (Exception e) {
+            addToResultString(e.toString(), addTo.LogFileAndConsole);
+            return;
+        }
+
+        int countOfRecords = 0;
+        int countOfUpdate = 0;
+        int countOfNewRecords = 0;
+
+        for (String[] stringToBase : listDataToBase) {
+
+            if (listDataToBase.indexOf(stringToBase) < startRecordFromPosition - 1) continue;
+
+            java.sql.Date dateOfItemToQuery;
+            try {
+                dateOfItemToQuery = new java.sql.Date(new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(stringToBase[5]).getTime());
+            } catch (Exception e) {
+                dateOfItemToQuery = new java.sql.Date(System.currentTimeMillis());
+            }
+
+//            String query_recordExist = "SELECT item FROM goods t WHERE t.item LIKE '" + stringToBase[2] + "' AND t.shop LIKE '" + stringToBase[3] + "' LIMIT 5;";
+            String query_recordExist = "SELECT item FROM ".concat(shopName.name()).concat(" t WHERE t.item LIKE '").concat(stringToBase[4]).concat("' LIMIT 5;");
+
+            String query_needUpdate = "SELECT item FROM ".concat(shopName.name()).concat(" t WHERE t.item LIKE '").concat(stringToBase[4]).concat("' AND t.dateofitem <> '") + dateOfItemToQuery + ("' LIMIT 5;");
+
+            String query_updateRecord = "UPDATE ".concat(shopName.name()).concat(" SET ").concat(
+                    "city = '").concat(stringToBase[1]).concat("', ").concat(
+                    "category = '").concat(stringToBase[2]).concat("', ").concat(
+                    "subcategory = '").concat(stringToBase[3]).concat("', ").concat(
+                    "item = '").concat(stringToBase[4]).concat("', ").concat(
+                    "dateofitem = '").concat(String.valueOf(dateOfItemToQuery)).concat("', ").concat(
+                    "itemname = '").concat(stringToBase[6]).concat("', ").concat(
+                    "price = '").concat(stringToBase[7]).concat("', ").concat(
+                    "owner = '").concat(stringToBase[8]).concat("', ").concat(
+                    "phonenumber = '").concat(stringToBase[9]).concat("', ").concat(
+                    "cityitem = '").concat(stringToBase[10]).concat("', ").concat(
+                    "params = '").concat(stringToBase[11]).concat("', ").concat(
+                    "description = '").concat(stringToBase[12]).concat("', ").concat(
+                    "link = '").concat(stringToBase[13]).concat("' WHERE item LIKE '").concat(stringToBase[3]).concat("' LIMIT 5;");
+                                                                                                 //1,    2,        3,           4,    5,          6,        7,     8,     9,           10,      11,      12,           13
+            String query_writeNewRecord = "INSERT INTO general.".concat(shopName.name()).concat(" (city, category, subcategory, item, dateofitem, itemname, price, owner, phonenumber, cityitem, params, description,  link)") +
+                    " VALUES ('" +
+                    stringToBase[1].concat("', '").concat(
+                    stringToBase[2]).concat("', '").concat(
+                    stringToBase[3]).concat("', '").concat(
+                    stringToBase[4]).concat("', '") +
+                    dateOfItemToQuery + ("', '").concat(
+                    writeDataToBase.clearLetters(stringToBase[6])).concat("', '").concat(
+                    stringToBase[7]).concat("', '").concat(
+                    writeDataToBase.clearLetters(stringToBase[8])).concat("', '").concat(
+                    stringToBase[9]).concat("', '").concat(
+                    stringToBase[10]).concat("', '").concat(
+                    writeDataToBase.clearLetters(stringToBase[11])).concat("', '").concat(
+                    writeDataToBase.clearLetters(new String(stringToBase[12].replace(",", ";")))).concat("', '").concat(
+                    stringToBase[13]).concat("');");
+
+//            query_recordExist = writeDataToBase.clearLetters(query_recordExist);
+//            query_needUpdate = writeDataToBase.clearLetters(query_needUpdate);
+//            query_updateRecord = writeDataToBase.clearLetters(query_updateRecord);
+//            query_writeNewRecord = writeDataToBase.clearLetters(query_writeNewRecord);
+
+            if (writeDataToBase.dataExist(statement, query_recordExist)) {
+                if (writeDataToBase.dataExist(statement, query_needUpdate) && writeDataToBase.writeDataSuccessfully(statement, query_updateRecord)) countOfUpdate++;
+            } else if (writeDataToBase.writeDataSuccessfully(statement, query_writeNewRecord)) countOfNewRecords++;
+
+            if (MAX_COUNT_ITEMS != -1 & countOfRecords >= MAX_COUNT_ITEMS) break;
+            countOfRecords++;
+        }
+
+        addToResultString("Reading records: ".concat(String.valueOf(countOfRecords)).concat(" in base."), addTo.LogFileAndConsole);
+        addToResultString("Added records:   ".concat(String.valueOf(countOfNewRecords)).concat(" in base."), addTo.LogFileAndConsole);
+        addToResultString("Updated records: ".concat(String.valueOf(countOfUpdate)).concat(" in base."), addTo.LogFileAndConsole);
+
+        addToResultString("Close base connections", addTo.Console);
+        writeDataToBase.closeBase();
+        try {
+            if (statement != null) statement.close();
+        } catch (SQLException se) { /*can't do anything */ }
+    }
 
 }
