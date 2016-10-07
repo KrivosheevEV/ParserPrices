@@ -99,7 +99,7 @@ public class MainParsingPrices {
         String emailAdress = haveProperty ? PROP_EMAIL : getArgumentValue(args, "-email");
         boolean sendEmail = emailAdress.toUpperCase().equals("NO");
         if (sendEmail){
-            String[] paramConnect = {emailAdress, "root@parserpro.ru", "owa.axus.name"};
+            String[] paramConnect = {emailAdress, "KrivosheevEV@frontime.ru", "owa.axus.name"};
             String mSubject = "Cron on \"parser\" for ".concat(shopName.name()).concat(shopCityCode.name());
             String mText = resultOfPasring;
             try {
@@ -193,6 +193,10 @@ public class MainParsingPrices {
                 shopCity = shopCities.nikolsk;
                 shopCityCode = shopCityCodes._84165;
             }
+            else if (argumentValue.equals("84253")) {
+                    shopCity = shopCities.barysh;
+                    shopCityCode = shopCityCodes._84253;
+                }
             else {
                 shopCity = shopCities.empty;
                 shopCityCode = shopCityCodes.empty;

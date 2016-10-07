@@ -1,6 +1,7 @@
 package ru.parserprices.myparser;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
+import net.marketer.RuCaptcha;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
@@ -36,15 +37,21 @@ public class ReadSite {
     private static int MAX_COUNT_ITEMS = -1;
 //    private static int MAX_COUNT_TOBASE = 10;
     private static int MAX_COUNT_EXPAND = 3;
-    private static int WAITING_FOR_EXPAND = 4;
+    private static int WAITING_FOR_EXPAND = 5;
     private static int BLOCK_RECORDS_TO_BASE = 10;
+    private static int START_RECORDS_WITH = 9;      // !!!!!
     private static boolean NEED_PHONE_NUMBER = true;
+    private static int MAX_COUNT_REREADING_CAPTCHA = 3;
 
     public static class Read_Avito{
 
         public Read_Avito(String givenURL){
 
-            int countIteration = 1;
+            int countIteration = 0;
+
+            if (shopCity == shopCities.barysh) givenURL = "https://www.avito.ru/barysh";
+            else if (shopCity == shopCities.nikolsk) givenURL = "https://www.avito.ru/penzenskaya_oblast_nikolsk";
+            else if (shopCity == shopCities.novokuybishevsk) givenURL = "https://www.avito.ru/novokuybyshevsk";
 
             startingWebDriver(givenURL);
 
@@ -63,10 +70,13 @@ public class ReadSite {
                 }
             }else if (!PROP_CATEGORY1.toUpperCase().equals("NO")){
                 readAllItemLinks(listPages, givenURL.concat("/").concat(PROP_CATEGORY1));
-            }
+            }else readAllItemLinks(listPages, givenURL);
 
             if (listPages.size() != 0){
                 for (String linkOfItem: listPages) {
+
+                    if (listPages.indexOf(linkOfItem) + 1 < START_RECORDS_WITH) continue;
+                    countIteration++;
 
                     String countToLog = String.valueOf(listPages.indexOf(linkOfItem)+1).concat("/").concat(String.valueOf(listPages.size()));
                     readItemDiscription(dataToBase, linkOfItem, countToLog);
@@ -77,7 +87,7 @@ public class ReadSite {
                         addToResultString("Sum records (".concat(String.valueOf(dataToBase.size())).concat(") added into base."), addTo.LogFileAndConsole);
                     }
 
-                    if (MAX_COUNT_ITEMS != -1 & countIteration++ >= MAX_COUNT_ITEMS) break;
+                    if (MAX_COUNT_ITEMS != -1 & countIteration >= MAX_COUNT_ITEMS) break;
                 }
             }
 
@@ -111,7 +121,7 @@ public class ReadSite {
             addToResultString("Trying open page: ".concat(givenLink), addTo.LogFileAndConsole);
             if (driver == null) startingWebDriver(givenLink);
             driver.navigate().to(givenLink);
-            addToResultString(driver.getCurrentUrl(), addTo.LogFileAndConsole);
+            //addToResultString(driver.getCurrentUrl(), addTo.LogFileAndConsole);
         } catch (Exception e) {
 //                e.printStackTrace();
             addToResultString("Can't open new page: ".concat(givenLink), addTo.LogFileAndConsole);
@@ -129,8 +139,7 @@ public class ReadSite {
 
             while (readPage) {
 
-                if (MAX_COUNT_PAGES != -1 & countIteration >= MAX_COUNT_PAGES) break;
-                countIteration++;
+                if (MAX_COUNT_PAGES != -1 & ++countIteration > MAX_COUNT_PAGES) break;
 
                 listItems = driver.findElements(By.cssSelector(cssSelector_Items));
 
@@ -181,13 +190,10 @@ public class ReadSite {
         String cssSelector_ItemPrice = "span.p_i_price > span";
         String cssSelector_ItemOwner = "div#seller > strong";
         String cssSelector_ItemCity = "div#map";
-        String cssSelector_ItemParams = "div.item-params";
+        String cssSelector_ItemParams = "div.description.description-expanded div.item-params";
         String cssSelector_ItemDecription = "div.description.description-text";
         String cssSelector_ItemPhoneButton = "span.button-azure-text.description__phone-insert.js-phone-show__insert";
         String cssSelector_ItemPhoneNumberImage = "img.description__phone-img";
-
-        String itemPhoneNumber = "";
-
 
         String item = "";
         String itemName = "";
@@ -196,15 +202,17 @@ public class ReadSite {
         String itemCity = "";
         String itemParams = "";
         String itemDescription = "";
+        String itemPhoneNumber = "";
 
         try {
+
             item = driver.findElement(By.cssSelector(cssSelector_Item)).getText();
             itemName = driver.findElement(By.cssSelector(cssSelector_ItemName)).getText();
             itemPrice = driver.findElement(By.cssSelector(cssSelector_ItemPrice)).getText();
             itemOwner = driver.findElement(By.cssSelector(cssSelector_ItemOwner)).getText();
             itemCity = driver.findElement(By.cssSelector(cssSelector_ItemCity)).getText();
-            itemParams = driver.findElement(By.cssSelector(cssSelector_ItemParams)).getText();
-            itemDescription = driver.findElement(By.cssSelector(cssSelector_ItemDecription)).getText();
+            for (WebElement element: driver.findElements(By.cssSelector(cssSelector_ItemParams))) itemParams = itemParams.concat(element.getText()).concat(" ");
+            try {itemDescription = driver.findElement(By.cssSelector(cssSelector_ItemDecription)).getText();} catch (Exception e){itemDescription = "";};
 
             // Read phonenumber (image).
             if (NEED_PHONE_NUMBER) {
@@ -217,7 +225,7 @@ public class ReadSite {
 
                         but_ShowPhoneNumber.sendKeys(Keys.ESCAPE);
                         but_ShowPhoneNumber.click();
-                        if (MAX_COUNT_EXPAND != -1 && countPages++ >= MAX_COUNT_EXPAND) break;
+                        if (MAX_COUNT_EXPAND != -1 & countPages++ >= MAX_COUNT_EXPAND) break;
                     }
                 }catch (Throwable te) {/**/}
 
@@ -247,25 +255,25 @@ public class ReadSite {
                     addToResultString(e.getMessage(), addTo.LogFileAndConsole);
                 }
 
+                // Anticaptcha.
                 if (!imagePath.isEmpty()) {
-                    // Anticaptcha.
-                    int conutIteration = 0;
+                    int conutReReadingCaptcha = 0;
                     Boolean readCaptcha = true;
-                    try {
-                        while (readCaptcha) {
+                    while (readCaptcha) {
+                        try {
                             AntiCaptcha antiCaptcha = new AntiCaptcha(imagePath); // "D:\\Temp\\avito_phonenumber.png"
                             if (antiCaptcha.getCaptchaStatus()) {
                                 itemPhoneNumber = antiCaptcha.getCaptchaText();
-                                if (!itemPhoneNumber.equals("ERROR_CAPTCHA_UNSOLVABLE")) readCaptcha = false;
+                                if (itemPhoneNumber.equals(RuCaptcha.Responses.ERROR_NO_SLOT_AVAILABLE.toString())) {
+                                    if (MAX_COUNT_REREADING_CAPTCHA != -1 & ++conutReReadingCaptcha > MAX_COUNT_REREADING_CAPTCHA) readCaptcha = false;
+                                } else readCaptcha = false;
                             } else {
                                 addToResultString("Error read captcha.", addTo.LogFileAndConsole);
                                 readCaptcha = false;
                             }
+                        } catch (Exception e) {
+                            if (MAX_COUNT_REREADING_CAPTCHA != -1 & ++conutReReadingCaptcha > MAX_COUNT_REREADING_CAPTCHA) readCaptcha = false;
                         }
-                    } catch (Exception e) {
-                        itemPhoneNumber = e.toString();
-                        addToResultString(e.toString(), addTo.LogFileAndConsole);
-                    /*Some error*/
                     }
                     itemPhoneNumber = clearPhoneNumber(itemPhoneNumber);
                 }
@@ -434,7 +442,7 @@ public class ReadSite {
 
         for (String[] stringToBase : listDataToBase) {
 
-            if (listDataToBase.indexOf(stringToBase) < startRecordFromPosition - 1) continue;
+            if (listDataToBase.indexOf(stringToBase) < startRecordFromPosition - 1) ;
 
             java.sql.Date dateOfItemToQuery;
             try {

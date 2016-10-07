@@ -25,7 +25,7 @@ public class AntiCaptcha {
             while (true) {
                 response = RuCaptcha.getDecryption(CAPCHA_ID);
                 if (response.equals(RuCaptcha.Responses.CAPCHA_NOT_READY.toString())) {
-                    Thread.sleep(3000);
+                    Thread.sleep(5000);
 //                    continue;
                 } else if (response.startsWith("OK")) {
                     decryption = response.substring(3);
