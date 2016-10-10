@@ -1,12 +1,14 @@
 package ru.parserprices.myparser;
 
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
+
+import javax.net.ssl.HttpsURLConnection;
 
 public class MainParsingPrices {
 
@@ -19,6 +21,7 @@ public class MainParsingPrices {
     static String PROP_URL;
     static String PROP_CATEGORY1;
     static String PROP_SUBCATEGORIES1;
+    static String PROP_PROXY;
     static boolean haveProperty;
 
     private static String resultOfPasring = "";
@@ -76,6 +79,8 @@ public class MainParsingPrices {
             addToResultString("Error to reading arguments value.",  addTo.LogFileAndConsole);
             return;
         }
+
+
 
         // Read another sites.
         if (shopName == shopNames.AVITO) {
@@ -293,9 +298,10 @@ public class MainParsingPrices {
             PROP_URL            = property.getProperty("url").trim();
             PROP_CATEGORY1      = property.getProperty("category1").trim();
             PROP_SUBCATEGORIES1 = property.getProperty("subcategories1").trim();
+            PROP_PROXY          = property.getProperty("proxy").trim();
 
-            return !(PROP_SHOP==null || PROP_CITY==null || PROP_EXPORT==null || PROP_ZIP==null || PROP_DELETE==null || PROP_EMAIL==null || PROP_URL==null ||
-                    PROP_SHOP.isEmpty() || PROP_CITY.isEmpty() || PROP_EXPORT.isEmpty() || PROP_ZIP.isEmpty() || PROP_DELETE.isEmpty() || PROP_EMAIL.isEmpty() || PROP_URL.isEmpty());
+            return !(PROP_SHOP==null || PROP_CITY==null || PROP_EXPORT==null || PROP_ZIP==null || PROP_DELETE==null || PROP_EMAIL==null ||
+                    PROP_SHOP.isEmpty() || PROP_CITY.isEmpty() || PROP_EXPORT.isEmpty() || PROP_ZIP.isEmpty() || PROP_DELETE.isEmpty() || PROP_EMAIL.isEmpty());
 
         } catch (IOException e) {
             addToResultString("Error reading property file.", addTo.LogFileAndConsole);

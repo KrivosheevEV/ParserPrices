@@ -206,11 +206,11 @@ public class ReadSite {
 
         try {
 
-            item = driver.findElement(By.cssSelector(cssSelector_Item)).getText();
-            itemName = driver.findElement(By.cssSelector(cssSelector_ItemName)).getText();
-            itemPrice = driver.findElement(By.cssSelector(cssSelector_ItemPrice)).getText();
-            itemOwner = driver.findElement(By.cssSelector(cssSelector_ItemOwner)).getText();
-            itemCity = driver.findElement(By.cssSelector(cssSelector_ItemCity)).getText();
+            try {item = driver.findElement(By.cssSelector(cssSelector_Item)).getText();} catch (Exception e){item = "";}
+            try {itemName = driver.findElement(By.cssSelector(cssSelector_ItemName)).getText();} catch (Exception e){itemName = "";}
+            try {itemPrice = clearPrice(driver.findElement(By.cssSelector(cssSelector_ItemPrice)).getText());} catch (Exception e){itemPrice = "";}
+            try {itemOwner = driver.findElement(By.cssSelector(cssSelector_ItemOwner)).getText();} catch (Exception e){itemOwner = "";}
+            try {itemCity = driver.findElement(By.cssSelector(cssSelector_ItemCity)).getText();} catch (Exception e){itemCity = "";}
             for (WebElement element: driver.findElements(By.cssSelector(cssSelector_ItemParams))) itemParams = itemParams.concat(element.getText()).concat(" ");
             try {itemDescription = driver.findElement(By.cssSelector(cssSelector_ItemDecription)).getText();} catch (Exception e){itemDescription = "";};
 
@@ -303,6 +303,8 @@ public class ReadSite {
     // Start new WebDriver.
     private static void startingWebDriver(String givenURL) {
 
+        String proxyString = getRandomProxy();
+
         FirefoxProfile profile = new FirefoxProfile();
         profile.setPreference("browser.download.manager.alertOnEXEOpen", false);
         profile.setPreference("browser.helperApps.neverAsk.saveToDisk", "application/msword,application/csv,text/csv,image/png ,image/jpeg");
@@ -315,6 +317,14 @@ public class ReadSite {
         profile.setPreference("browser.download.manager.showAlertOnComplete", false);
         profile.setPreference("browser.download.manager.useWindow", false);
         profile.setPreference("browser.download.manager.showWhenStarting", false);
+        if (!proxyString.isEmpty()) {
+            String[] proxy = proxyString.split(":");
+            profile.setPreference("network.proxy.type", 1);
+            profile.setPreference("network.proxy.http", proxy[0]);
+            profile.setPreference("network.proxy.http_port", Integer.valueOf(proxy[1]));
+            profile.setPreference("network.proxy.ssl", proxy[0]);
+            profile.setPreference("network.proxy.ssl_port", Integer.valueOf(proxy[1]));
+        }
         profile.setPreference("services.sync.prefs.sync.browser.download.manager.showWhenStarting", false);
         profile.setPreference("pdfjs.disabled", true);
 
@@ -500,7 +510,7 @@ public class ReadSite {
             countOfRecords++;
         }
 
-        addToResultString("Reading records: ".concat(String.valueOf(countOfRecords)).concat(" in base."), addTo.LogFileAndConsole);
+        addToResultString("Reading records: ".concat(String.valueOf(countOfRecords - startRecordFromPosition)).concat(" in base."), addTo.LogFileAndConsole);
         addToResultString("Added records:   ".concat(String.valueOf(countOfNewRecords)).concat(" in base."), addTo.LogFileAndConsole);
         addToResultString("Updated records: ".concat(String.valueOf(countOfUpdate)).concat(" in base."), addTo.LogFileAndConsole);
 
@@ -510,5 +520,38 @@ public class ReadSite {
             if (statement != null) statement.close();
         } catch (SQLException se) { /*can't do anything */ }
     }
+
+    private static String clearPrice(String givenPrice){
+        givenPrice = new String(givenPrice.trim().replace("руб.", "").replace(" ", ""));
+        return givenPrice;
+    }
+
+    private static String getRandomProxy(){
+
+        String resultString;
+
+        if (PROP_PROXY.toUpperCase().equals("FOXTOOLS")){
+            GetPost getHtmlData = new GetPost();
+            try {
+                resultString = getHtmlData.sendGet("http://api.foxtools.ru/v2/Proxy.txt?cp=UTF-8&lang=RU&type=HTTPS&anonymity=All&available=Yes&free=Yes&limit=100&uptime=2&country=ru");
+            } catch (Exception e) {
+                resultString = "";
+//                e.printStackTrace();
+            }
+
+        }else resultString = "";
+
+        if (!resultString.isEmpty()){
+            String[] proxyList = resultString.split(";");
+            Random r = new Random(proxyList.length - 2);
+            resultString = proxyList[r.nextInt() + 1];
+        }
+
+        return resultString;
+    }
+
+
+
+
 
 }
