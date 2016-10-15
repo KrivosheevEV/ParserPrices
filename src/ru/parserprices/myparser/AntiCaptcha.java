@@ -11,6 +11,7 @@ public class AntiCaptcha {
 
     private String decryption = "";
     private Boolean captchaIsReady = false;
+    private int MAX_COUNT_RECOGNITION = 3;
 
     public AntiCaptcha(String pathToCaptcha) throws Exception {
 
@@ -19,6 +20,7 @@ public class AntiCaptcha {
         String CAPCHA_ID;
 
         String response = RuCaptcha.postCaptcha(imgFile);
+        int countRecignition = 0;
 
         if (response.startsWith("OK")) {
             CAPCHA_ID = response.substring(3);
@@ -26,9 +28,13 @@ public class AntiCaptcha {
                 response = RuCaptcha.getDecryption(CAPCHA_ID);
                 if (response.equals(RuCaptcha.Responses.CAPCHA_NOT_READY.toString())) {
                     Thread.sleep(5000);
+                    if (MAX_COUNT_RECOGNITION != -1 & ++countRecignition > MAX_COUNT_RECOGNITION) break;
 //                    continue;
                 } else if (response.startsWith("OK")) {
                     decryption = response.substring(3);
+                    if (new String(decryption.replace(" ", "").replace(" ", "").replace("-", "")).length() != 11){
+                        RuCaptcha.reportBad(CAPCHA_ID);
+                    }
                     break;
                 } else {
                     decryption = response;

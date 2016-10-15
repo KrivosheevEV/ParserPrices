@@ -199,9 +199,13 @@ public class MainParsingPrices {
                 shopCityCode = shopCityCodes._84165;
             }
             else if (argumentValue.equals("84253")) {
-                    shopCity = shopCities.barysh;
-                    shopCityCode = shopCityCodes._84253;
-                }
+                shopCity = shopCities.barysh;
+                shopCityCode = shopCityCodes._84253;
+            }
+            else if (argumentValue.equals("84564")) {
+                shopCity = shopCities.ershov;
+                shopCityCode = shopCityCodes._84564;
+            }
             else {
                 shopCity = shopCities.empty;
                 shopCityCode = shopCityCodes.empty;
@@ -299,6 +303,8 @@ public class MainParsingPrices {
             PROP_CATEGORY1      = property.getProperty("category1").trim();
             PROP_SUBCATEGORIES1 = property.getProperty("subcategories1").trim();
             PROP_PROXY          = property.getProperty("proxy").trim();
+
+
 
             return !(PROP_SHOP==null || PROP_CITY==null || PROP_EXPORT==null || PROP_ZIP==null || PROP_DELETE==null || PROP_EMAIL==null ||
                     PROP_SHOP.isEmpty() || PROP_CITY.isEmpty() || PROP_EXPORT.isEmpty() || PROP_ZIP.isEmpty() || PROP_DELETE.isEmpty() || PROP_EMAIL.isEmpty());

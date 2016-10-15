@@ -38,8 +38,8 @@ public class ReadSite {
 //    private static int MAX_COUNT_TOBASE = 10;
     private static int MAX_COUNT_EXPAND = 3;
     private static int WAITING_FOR_EXPAND = 5;
-    private static int BLOCK_RECORDS_TO_BASE = 10;
-    private static int START_RECORDS_WITH = 9;      // !!!!!
+    private static int BLOCK_RECORDS_TO_BASE = 5;
+    private static int START_RECORDS_WITH = 60;      // !!!!!
     private static boolean NEED_PHONE_NUMBER = true;
     private static int MAX_COUNT_REREADING_CAPTCHA = 3;
 
@@ -52,6 +52,7 @@ public class ReadSite {
             if (shopCity == shopCities.barysh) givenURL = "https://www.avito.ru/barysh";
             else if (shopCity == shopCities.nikolsk) givenURL = "https://www.avito.ru/penzenskaya_oblast_nikolsk";
             else if (shopCity == shopCities.novokuybishevsk) givenURL = "https://www.avito.ru/novokuybyshevsk";
+            else if (shopCity == shopCities.ershov) givenURL = "https://www.avito.ru/ershov";
 
             startingWebDriver(givenURL);
 
@@ -139,7 +140,7 @@ public class ReadSite {
 
             while (readPage) {
 
-                if (MAX_COUNT_PAGES != -1 & ++countIteration > MAX_COUNT_PAGES) break;
+                if (MAX_COUNT_PAGES != -1 & countIteration++ >= MAX_COUNT_PAGES) break;
 
                 listItems = driver.findElements(By.cssSelector(cssSelector_Items));
 
@@ -249,7 +250,7 @@ public class ReadSite {
                     }
 
                     imagePath = tmpFile.getAbsolutePath();
-                    addToResultString(phoneNumberImageAdressDecode64, addTo.LogFileAndConsole);
+                    //addToResultString(phoneNumberImageAdressDecode64, addTo.LogFileAndConsole);
 
                 }catch (Exception e){
                     addToResultString(e.getMessage(), addTo.LogFileAndConsole);
@@ -266,7 +267,8 @@ public class ReadSite {
                                 itemPhoneNumber = antiCaptcha.getCaptchaText();
                                 if (itemPhoneNumber.equals(RuCaptcha.Responses.ERROR_NO_SLOT_AVAILABLE.toString())) {
                                     if (MAX_COUNT_REREADING_CAPTCHA != -1 & ++conutReReadingCaptcha > MAX_COUNT_REREADING_CAPTCHA) readCaptcha = false;
-                                } else readCaptcha = false;
+                                } else
+                                    readCaptcha = false;
                             } else {
                                 addToResultString("Error read captcha.", addTo.LogFileAndConsole);
                                 readCaptcha = false;
@@ -530,7 +532,7 @@ public class ReadSite {
 
         String resultString;
 
-        if (PROP_PROXY.toUpperCase().equals("FOXTOOLS")){
+        if (PROP_PROXY.equalsIgnoreCase("FOXTOOLS")){
             GetPost getHtmlData = new GetPost();
             try {
                 resultString = getHtmlData.sendGet("http://api.foxtools.ru/v2/Proxy.txt?cp=UTF-8&lang=RU&type=HTTPS&anonymity=All&available=Yes&free=Yes&limit=100&uptime=2&country=ru");
@@ -543,8 +545,8 @@ public class ReadSite {
 
         if (!resultString.isEmpty()){
             String[] proxyList = resultString.split(";");
-            Random r = new Random(proxyList.length - 2);
-            resultString = proxyList[r.nextInt() + 1];
+            Random r = new Random();
+            resultString = proxyList[r.nextInt(proxyList.length - 2) + 1];
         }
 
         return resultString;

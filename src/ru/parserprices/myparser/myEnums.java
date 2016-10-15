@@ -27,7 +27,8 @@ enum shopCities{
     chistopol,
     tolyatti,
     nikolsk,
-    barysh
+    barysh,
+    ershov
 }
 
 enum shopCityCodes{
@@ -46,7 +47,8 @@ enum shopCityCodes{
     _84342,
     _8482,
     _84165,
-    _84253
+    _84253,
+    _84564
 }
 
 enum extensionForExport{
