@@ -1197,10 +1197,22 @@ public class ReadSites {
 
                 if (MainParsingPrices.shopCity == shopCities.samara){
                     cookie_space = "smr_cl%3A";
+                }else if (MainParsingPrices.shopCity == shopCities.bugulma){
+                    cookie_space = "kzn_cl%3Akzmbugul";
+                }else if (MainParsingPrices.shopCity == shopCities.buzuluk){
+                    cookie_space = "smr_cl%3Asmmbuzul";
+                }else if (MainParsingPrices.shopCity == shopCities.volsk){
+                    cookie_space = "srt_cl%3Asrtvolsk";
+                }else if (MainParsingPrices.shopCity == shopCities.dimitrovgrad){
+                    cookie_space = "smr_cl%3Asmmdimit";
+                }else if (MainParsingPrices.shopCity == shopCities.leninogorsk){
+                    cookie_space = "kzn_cl%3Akzmleninog";
                 }else if (MainParsingPrices.shopCity == shopCities.novokuybishevsk){
                     cookie_space = "smr_cl%3Asmmnovok";
                 }else if (MainParsingPrices.shopCity == shopCities.chapaevsk){
-                    cookie_space = "smr_cl%3A";
+                    cookie_space = "smr_cl%3Asmmchap";
+                }else if (MainParsingPrices.shopCity == shopCities.chistopol){
+                    cookie_space = "kzn_cl%3Akzmgchist";
                 }else {
                     cookie_space = "smr_cl%3A";
                 }
