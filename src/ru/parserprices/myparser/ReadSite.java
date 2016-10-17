@@ -14,12 +14,14 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Base64;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static ru.parserprices.myparser.MainParsingPrices.*;
 import static sun.net.www.protocol.http.HttpURLConnection.userAgent;
@@ -38,10 +40,11 @@ public class ReadSite {
 //    private static int MAX_COUNT_TOBASE = 10;
     private static int MAX_COUNT_EXPAND = 3;
     private static int WAITING_FOR_EXPAND = 5;
-    private static int BLOCK_RECORDS_TO_BASE = 5;
-    private static int START_RECORDS_WITH = 60;      // !!!!!
+    private static int BLOCK_RECORDS_TO_BASE = 15;
+    private static int START_RECORDS_WITH = 1;      // !!!!!
     private static boolean NEED_PHONE_NUMBER = true;
     private static int MAX_COUNT_REREADING_CAPTCHA = 3;
+    private static boolean USE_GUI = true;
 
     public static class Read_Avito{
 
@@ -53,13 +56,9 @@ public class ReadSite {
             else if (shopCity == shopCities.nikolsk) givenURL = "https://www.avito.ru/penzenskaya_oblast_nikolsk";
             else if (shopCity == shopCities.novokuybishevsk) givenURL = "https://www.avito.ru/novokuybyshevsk";
             else if (shopCity == shopCities.ershov) givenURL = "https://www.avito.ru/ershov";
+            else if (shopCity == shopCities.samara) givenURL = "https://www.avito.ru/samara";
 
             startingWebDriver(givenURL);
-
-            if (driver.getCurrentUrl().equals("https://www.avito.ru/blocked")) {
-                addToResultString(driver.getCurrentUrl(), addTo.LogFileAndConsole);
-                return;
-            }
 
             ArrayList<String> listPages = new ArrayList<String>();
             ArrayList<String[]> dataToBase = new ArrayList<String[]>();
@@ -104,7 +103,8 @@ public class ReadSite {
 
             dataToBase = new ArrayList<String[]>();
 
-            driver.close();
+            if (USE_GUI) driver.close();
+            else driver_noGUI.close();
 //            driver_noGUI.close();
         }
     }
@@ -120,14 +120,17 @@ public class ReadSite {
 
         try {
             addToResultString("Trying open page: ".concat(givenLink), addTo.LogFileAndConsole);
-            if (driver == null) startingWebDriver(givenLink);
-            driver.navigate().to(givenLink);
+//            if (driver == null) startingWebDriver(givenLink);
+            if (USE_GUI) driver.navigate().to(givenLink);
+            else driver_noGUI.navigate().to(givenLink);
+            if (avitoNeedCaptcha()) enterAvitoCaptcha(givenLink);
             //addToResultString(driver.getCurrentUrl(), addTo.LogFileAndConsole);
         } catch (Exception e) {
 //                e.printStackTrace();
             addToResultString("Can't open new page: ".concat(givenLink), addTo.LogFileAndConsole);
             addToResultString(e.toString(), addTo.LogFileAndConsole);
-            try {driver.quit();} catch (Exception e1){/**/};
+            if (USE_GUI) try {driver.quit();} catch (Exception e1){/**/}
+            else try {driver_noGUI.quit();} catch (Exception e1){/**/}
             return;
         }
 
@@ -142,7 +145,8 @@ public class ReadSite {
 
                 if (MAX_COUNT_PAGES != -1 & countIteration++ >= MAX_COUNT_PAGES) break;
 
-                listItems = driver.findElements(By.cssSelector(cssSelector_Items));
+                if (USE_GUI) listItems = driver.findElements(By.cssSelector(cssSelector_Items));
+                else listItems = driver_noGUI.findElements(By.cssSelector(cssSelector_Items));
 
                 for (WebElement elementGood : listItems) {
                     try {
@@ -156,9 +160,15 @@ public class ReadSite {
                 listItems.clear();
 
                 try {
-                    nextPage = driver.findElement(By.cssSelector(cssSelector_NextPage));
+                    if (USE_GUI) nextPage = driver.findElement(By.cssSelector(cssSelector_NextPage));
+                    else nextPage = driver_noGUI.findElement(By.cssSelector(cssSelector_NextPage));
                     String linkNextPage = nextPage.getAttribute("href");
-                    if (!driver.getCurrentUrl().equals(linkNextPage)) driver.get(linkNextPage);
+                    if (USE_GUI) {
+                        if (!driver.getCurrentUrl().equals(linkNextPage)) driver.get(linkNextPage);
+                    } else {
+                        if (!driver_noGUI.getCurrentUrl().equals(linkNextPage)) driver_noGUI.get(linkNextPage);
+                    }
+
                 }catch (Exception e) {
                     readPage = false;
                 }
@@ -175,14 +185,21 @@ public class ReadSite {
 
         try {
             addToResultString("Trying open page[".concat(countToLog).concat("]: ").concat(givenLink), addTo.LogFileAndConsole);
-            if (driver == null) startingWebDriver(givenLink);
-            driver.navigate().to(givenLink);
+
+
+            if (USE_GUI) if (driver == null) startingWebDriver(givenLink);
+            else if (driver_noGUI == null) startingWebDriver(givenLink);
+
+            if (USE_GUI) driver.navigate().to(givenLink);
+            else driver_noGUI.navigate().to(givenLink);
+
+            if (avitoNeedCaptcha()) enterAvitoCaptcha(givenLink);
+
         } catch (Exception e) {
             addToResultString("Can't open new page[".concat(countToLog).concat("]: ").concat(givenLink), addTo.LogFileAndConsole);
             addToResultString(e.toString(), addTo.LogFileAndConsole);
-            try {
-                driver.quit();
-            } catch (Exception e1) {/**/}
+            if (USE_GUI) try {driver.quit();} catch (Exception e1) {/**/}
+            else try {driver_noGUI.quit();} catch (Exception e1) {/**/}
             return;
         }
 
@@ -193,7 +210,8 @@ public class ReadSite {
         String cssSelector_ItemCity = "div#map";
         String cssSelector_ItemParams = "div.description.description-expanded div.item-params";
         String cssSelector_ItemDecription = "div.description.description-text";
-        String cssSelector_ItemPhoneButton = "span.button-azure-text.description__phone-insert.js-phone-show__insert";
+//        String cssSelector_ItemPhoneButton = "span.button-azure-text.description__phone-insert.js-phone-show__insert";
+        String cssSelector_ItemPhoneButton = "span.button.button-azure.description__phone-btn.js-phone-show__link";
         String cssSelector_ItemPhoneNumberImage = "img.description__phone-img";
 
         String item = "";
@@ -204,60 +222,144 @@ public class ReadSite {
         String itemParams = "";
         String itemDescription = "";
         String itemPhoneNumber = "";
+        String itemPhoneNumber64 = "";
 
         try {
-
-            try {item = driver.findElement(By.cssSelector(cssSelector_Item)).getText();} catch (Exception e){item = "";}
-            try {itemName = driver.findElement(By.cssSelector(cssSelector_ItemName)).getText();} catch (Exception e){itemName = "";}
-            try {itemPrice = clearPrice(driver.findElement(By.cssSelector(cssSelector_ItemPrice)).getText());} catch (Exception e){itemPrice = "";}
-            try {itemOwner = driver.findElement(By.cssSelector(cssSelector_ItemOwner)).getText();} catch (Exception e){itemOwner = "";}
-            try {itemCity = driver.findElement(By.cssSelector(cssSelector_ItemCity)).getText();} catch (Exception e){itemCity = "";}
-            for (WebElement element: driver.findElements(By.cssSelector(cssSelector_ItemParams))) itemParams = itemParams.concat(element.getText()).concat(" ");
-            try {itemDescription = driver.findElement(By.cssSelector(cssSelector_ItemDecription)).getText();} catch (Exception e){itemDescription = "";};
-
+            if (USE_GUI) {
+                try {
+                    item = driver.findElement(By.cssSelector(cssSelector_Item)).getText();
+                } catch (Exception e) {
+                    item = "";
+                }
+                try {
+                    itemName = driver.findElement(By.cssSelector(cssSelector_ItemName)).getText();
+                } catch (Exception e) {
+                    itemName = "";
+                }
+                try {
+                    itemPrice = clearPrice(driver.findElement(By.cssSelector(cssSelector_ItemPrice)).getText());
+                } catch (Exception e) {
+                    itemPrice = "";
+                }
+                try {
+                    itemOwner = driver.findElement(By.cssSelector(cssSelector_ItemOwner)).getText();
+                } catch (Exception e) {
+                    itemOwner = "";
+                }
+                try {
+                    itemCity = driver.findElement(By.cssSelector(cssSelector_ItemCity)).getText();
+                } catch (Exception e) {
+                    itemCity = "";
+                }
+                for (WebElement element : driver.findElements(By.cssSelector(cssSelector_ItemParams)))
+                    itemParams = itemParams.concat(element.getText()).concat(" ");
+                try {
+                    itemDescription = driver.findElement(By.cssSelector(cssSelector_ItemDecription)).getText();
+                } catch (Exception e) {
+                    itemDescription = "";
+                }
+            }else {
+                try {
+                    item = driver_noGUI.findElement(By.cssSelector(cssSelector_Item)).getText();
+                } catch (Exception e) {
+                    item = "";
+                }
+                try {
+                    itemName = driver_noGUI.findElement(By.cssSelector(cssSelector_ItemName)).getText();
+                } catch (Exception e) {
+                    itemName = "";
+                }
+                try {
+                    itemPrice = clearPrice(driver_noGUI.findElement(By.cssSelector(cssSelector_ItemPrice)).getText());
+                } catch (Exception e) {
+                    itemPrice = "";
+                }
+                try {
+                    itemOwner = driver_noGUI.findElement(By.cssSelector(cssSelector_ItemOwner)).getText();
+                } catch (Exception e) {
+                    itemOwner = "";
+                }
+                try {
+                    itemCity = driver_noGUI.findElement(By.cssSelector(cssSelector_ItemCity)).getText();
+                } catch (Exception e) {
+                    itemCity = "";
+                }
+                for (WebElement element : driver_noGUI.findElements(By.cssSelector(cssSelector_ItemParams)))
+                    itemParams = itemParams.concat(element.getText()).concat(" ");
+                try {
+                    itemDescription = driver_noGUI.findElement(By.cssSelector(cssSelector_ItemDecription)).getText();
+                } catch (Exception e) {
+                    itemDescription = "";
+                }
+            }
             // Read phonenumber (image).
             if (NEED_PHONE_NUMBER) {
 
-                try {
-                    WebElement but_ShowPhoneNumber = driver.findElement(By.cssSelector(cssSelector_ItemPhoneButton));
-                    int countPages = 0;
-                    while ((new WebDriverWait(driver, WAITING_FOR_EXPAND)).until(
-                            ExpectedConditions.invisibilityOfElementLocated(By.cssSelector(cssSelector_ItemPhoneNumberImage)))) {
 
-                        but_ShowPhoneNumber.sendKeys(Keys.ESCAPE);
-                        but_ShowPhoneNumber.click();
-                        if (MAX_COUNT_EXPAND != -1 & countPages++ >= MAX_COUNT_EXPAND) break;
+                try {
+                    WebElement but_ShowPhoneNumber;
+                    if (USE_GUI) but_ShowPhoneNumber = driver.findElement(By.cssSelector(cssSelector_ItemPhoneButton));
+                    else but_ShowPhoneNumber = driver_noGUI.findElement(By.cssSelector(cssSelector_ItemPhoneButton));
+                    int countPages = 0;
+                    if (USE_GUI) {
+                        while ((new WebDriverWait(driver, WAITING_FOR_EXPAND)).until(
+                                ExpectedConditions.invisibilityOfElementLocated(By.cssSelector(cssSelector_ItemPhoneNumberImage)))) {
+
+                            but_ShowPhoneNumber.sendKeys(Keys.ESCAPE);
+                            but_ShowPhoneNumber.click();
+                            if (MAX_COUNT_EXPAND != -1 & countPages++ >= MAX_COUNT_EXPAND) break;
+                        }
+                    }else {
+                        while ((new WebDriverWait(driver_noGUI, WAITING_FOR_EXPAND)).until(
+                                ExpectedConditions.invisibilityOfElementLocated(By.cssSelector(cssSelector_ItemPhoneNumberImage)))) {
+
+                            driver_noGUI.setJavascriptEnabled(true);
+//                            driver_noGUI.wait(1000);
+
+                            but_ShowPhoneNumber.sendKeys(Keys.ESCAPE);
+                            but_ShowPhoneNumber.click();
+                            driver_noGUI.manage().timeouts().implicitlyWait(5000, TimeUnit.MILLISECONDS);
+
+//                            driver_noGUI.wait(1000);
+                            if (MAX_COUNT_EXPAND != -1 & countPages++ >= MAX_COUNT_EXPAND) break;
+                        }
                     }
-                }catch (Throwable te) {/**/}
+                }catch (Exception e) {
+                    addToResultString(e.getMessage(), addTo.LogFileAndConsole);
+                }
 
                 java.lang.String phoneNumberImageAdressEncode64 = "";
                 java.lang.String phoneNumberImageAdressDecode64 = "";
                 String imagePath = "";
 
                 try {
-                    phoneNumberImageAdressEncode64 = driver.findElement(By.cssSelector(cssSelector_ItemPhoneNumberImage)).getAttribute("src");
+                    if (USE_GUI) phoneNumberImageAdressEncode64 = driver.findElement(By.cssSelector(cssSelector_ItemPhoneNumberImage)).getAttribute("src");
+                    else phoneNumberImageAdressEncode64 = driver_noGUI.findElement(By.cssSelector(cssSelector_ItemPhoneNumberImage)).getAttribute("src");
                     phoneNumberImageAdressEncode64 = new String(phoneNumberImageAdressEncode64.getBytes("Cp1251"), "UTF-8");
 //                addToResultString(phoneNumberImageAdressEncode64, addTo.LogFileAndConsole);
-                    java.lang.String FileURI = phoneNumberImageAdressEncode64.split(",")[1];
+                    itemPhoneNumber64 = phoneNumberImageAdressEncode64.split(",")[1];
+                    itemPhoneNumber = findNumberInBase(itemPhoneNumber64);
 
-                    byte[] decodedValue = Base64.getDecoder().decode(FileURI);
+                    if (itemPhoneNumber.isEmpty()){
+                        byte[] decodedValue = Base64.getDecoder().decode(itemPhoneNumber64);
 
-                    File tmpFile = File.createTempFile("image_", ".png");
-                    try (FileOutputStream fos = new FileOutputStream(tmpFile)) {
-                        fos.write(decodedValue);
-                    } catch (IOException ioe) {
-                        addToResultString(ioe.getMessage(), addTo.LogFileAndConsole);
+                        File tmpFile = File.createTempFile("image_", ".png");
+                        try (FileOutputStream fos = new FileOutputStream(tmpFile)) {
+                            fos.write(decodedValue);
+                        } catch (IOException ioe) {
+                            addToResultString(ioe.getMessage(), addTo.LogFileAndConsole);
+                        }
+                        imagePath = tmpFile.getAbsolutePath();
                     }
-
-                    imagePath = tmpFile.getAbsolutePath();
-                    //addToResultString(phoneNumberImageAdressDecode64, addTo.LogFileAndConsole);
 
                 }catch (Exception e){
                     addToResultString(e.getMessage(), addTo.LogFileAndConsole);
                 }
 
+                driver_noGUI.setJavascriptEnabled(false);
+
                 // Anticaptcha.
-                if (!imagePath.isEmpty()) {
+                if (!imagePath.isEmpty() & itemPhoneNumber.isEmpty()) {
                     int conutReReadingCaptcha = 0;
                     Boolean readCaptcha = true;
                     while (readCaptcha) {
@@ -297,7 +399,8 @@ public class ReadSite {
                     itemCity,               // 10
                     itemParams,             // 11
                     itemDescription,        // 12
-                    givenLink};             // 13
+                    givenLink,              // 13
+                    itemPhoneNumber64};     // 14
             dataToBase.add(toList);
         }
     }
@@ -330,6 +433,8 @@ public class ReadSite {
         profile.setPreference("services.sync.prefs.sync.browser.download.manager.showWhenStarting", false);
         profile.setPreference("pdfjs.disabled", true);
 
+        //userAgent = "Mozilla/5.0 (Linux; U; Android 2.3.3; en-us; sdk Build/GRI34) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1";
+
         try {
             switch (shopName){
 
@@ -349,7 +454,7 @@ public class ReadSite {
 
                     addToResultString("Trying start new WebDriver(HtmlUnit)", addTo.LogFileAndConsole);
                     driver_noGUI = new HtmlUnitDriver(BrowserVersion.CHROME);
-                    driver_noGUI.getBrowserVersion().setUserAgent(userAgent);
+                    driver_noGUI.getBrowserVersion().setUserAgent("Mozilla/5.0 (Linux; U; Android 2.3.3; en-us; sdk Build/GRI34) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1");
                     break;
 
                 case FENIXCOMP:
@@ -362,9 +467,13 @@ public class ReadSite {
                 case AVITO:
 
                     addToResultString("Trying start new WebDriver(HtmlUnit)", addTo.LogFileAndConsole);
-                    driver = new FirefoxDriver(profile);;
-//                    driver_noGUI = new HtmlUnitDriver(BrowserVersion.CHROME);
-//                    driver_noGUI.getBrowserVersion().setUserAgent(userAgent);
+                    if (USE_GUI){
+                        driver = new FirefoxDriver(profile);
+                    }else{
+                        driver_noGUI = new HtmlUnitDriver(BrowserVersion.FIREFOX_38, true);
+                        driver_noGUI.getBrowserVersion().setUserAgent(userAgent);
+
+                    }
                     break;
 
                 default:
@@ -454,7 +563,7 @@ public class ReadSite {
 
         for (String[] stringToBase : listDataToBase) {
 
-            if (listDataToBase.indexOf(stringToBase) < startRecordFromPosition - 1) ;
+//            if (listDataToBase.indexOf(stringToBase) < startRecordFromPosition - 1) ;
 
             java.sql.Date dateOfItemToQuery;
             try {
@@ -481,9 +590,10 @@ public class ReadSite {
                     "cityitem = '").concat(stringToBase[10]).concat("', ").concat(
                     "params = '").concat(stringToBase[11]).concat("', ").concat(
                     "description = '").concat(stringToBase[12]).concat("', ").concat(
-                    "link = '").concat(stringToBase[13]).concat("' WHERE item LIKE '").concat(stringToBase[3]).concat("' LIMIT 5;");
-                                                                                                 //1,    2,        3,           4,    5,          6,        7,     8,     9,           10,      11,      12,           13
-            String query_writeNewRecord = "INSERT INTO general.".concat(shopName.name()).concat(" (city, category, subcategory, item, dateofitem, itemname, price, owner, phonenumber, cityitem, params, description,  link)") +
+                    "link = '").concat(stringToBase[13]).concat("', ").concat(
+                    "phonenumber64 = '").concat(stringToBase[14]).concat("' WHERE item LIKE '").concat(stringToBase[3]).concat("' LIMIT 5;");
+                                                                                                 //1,    2,        3,           4,    5,          6,        7,     8,     9,           10,      11,      12,           13,   14
+            String query_writeNewRecord = "INSERT INTO general.".concat(shopName.name()).concat(" (city, category, subcategory, item, dateofitem, itemname, price, owner, phonenumber, cityitem, params, description,  link, phonenumber64)") +
                     " VALUES ('" +
                     stringToBase[1].concat("', '").concat(
                     stringToBase[2]).concat("', '").concat(
@@ -497,7 +607,8 @@ public class ReadSite {
                     stringToBase[10]).concat("', '").concat(
                     writeDataToBase.clearLetters(stringToBase[11])).concat("', '").concat(
                     writeDataToBase.clearLetters(new String(stringToBase[12].replace(",", ";")))).concat("', '").concat(
-                    stringToBase[13]).concat("');");
+                    stringToBase[13]).concat("', '").concat(
+                    stringToBase[14]).concat("');");
 
 //            query_recordExist = writeDataToBase.clearLetters(query_recordExist);
 //            query_needUpdate = writeDataToBase.clearLetters(query_needUpdate);
@@ -552,8 +663,46 @@ public class ReadSite {
         return resultString;
     }
 
+    private static String findNumberInBase(String givenString64) {
 
+        String number = "";
 
+        ReadWriteBase writeDataToBase;
+        Statement statement;
 
+        addToResultString("Getting statement base start..", addTo.Console);
+        try {
+            writeDataToBase = new ReadWriteBase();
+            statement = writeDataToBase.getStatement();
+            addToResultString("Getting statement base finish.", addTo.Console);
+        } catch (Exception e) {
+            addToResultString(e.toString(), addTo.LogFileAndConsole);
+            return number;
+        }
+
+        String query_readData = "SELECT t.phonenumber FROM AVITO as t WHERE phonenumber64 LIKE '".concat(givenString64).concat("';");
+
+        ResultSet resultSet = writeDataToBase.readData(statement, query_readData);
+        try {
+            while (resultSet.next()) {
+                number = resultSet.getString("phonenumber");
+            }
+
+        }catch (Exception e){/**/}
+
+        return number;
+    }
+
+    private static boolean avitoNeedCaptcha() {
+
+        if (USE_GUI) return driver.getCurrentUrl().equals("https://www.avito.ru/blocked");
+        else return driver_noGUI.getCurrentUrl().equals("https://www.avito.ru/blocked");
+    }
+
+    private static void enterAvitoCaptcha(String givenLink){
+
+        addToResultString("AVITO need captcha.", addTo.LogFileAndConsole);
+
+    }
 
 }
