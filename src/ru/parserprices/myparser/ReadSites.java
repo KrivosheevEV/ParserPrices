@@ -984,11 +984,11 @@ public class ReadSites {
         ReadWriteBase writeDataToBase;
         Statement statement;
 
-        addToResultString("Getting statement base start..", addTo.Console);
+        addToResultString("Getting statement base start..", addTo.LogFileAndConsole);
         try {
             writeDataToBase = new ReadWriteBase();
             statement = writeDataToBase.getStatement();
-            addToResultString("Getting statement base finish.", addTo.Console);
+            addToResultString("Getting statement base finish.", addTo.LogFileAndConsole);
         } catch (Exception e) {
             addToResultString(e.toString(), addTo.LogFileAndConsole);
             return;

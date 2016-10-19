@@ -80,8 +80,6 @@ public class MainParsingPrices {
             return;
         }
 
-
-
         // Read another sites.
         if (shopName == shopNames.AVITO) {
             new ReadSite.Read_Avito(PROP_URL);
@@ -228,10 +226,11 @@ public class MainParsingPrices {
         //if (addedString.isEmpty()) return;
         Long currentMilliseconds = System.currentTimeMillis();
         Long elapsedTime = (currentMilliseconds - startTime) / 1000;
-        Long secondsElapse = elapsedTime % 60;
-        Long minutsElapse = elapsedTime / 60 % 60;
-        Long hoursElapse = elapsedTime / 3600 % 24;
-        String timeForResult = Long.toString(hoursElapse) + "." + Long.toString(minutsElapse) + "." + Long.toString(secondsElapse);
+        String secondsElapse = String.format("%02d", elapsedTime % 60);
+        String minutsElapse = String.format("%02d", elapsedTime / 60 % 60);
+        String hoursElapse = String.format("%02d", elapsedTime / 3600 % 24);
+        String daysElapse = String.format("%02d", elapsedTime / (3600 * 24));
+        String timeForResult = daysElapse.concat(",").concat(hoursElapse).concat(".").concat(minutsElapse).concat(".").concat(secondsElapse);
         String stringToLog = timeForResult + " -> " + addedString + System.getProperty("line.separator");
         resultOfPasring = resultOfPasring.concat(stringToLog);
 
