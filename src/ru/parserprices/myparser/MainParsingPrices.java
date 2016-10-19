@@ -230,7 +230,7 @@ public class MainParsingPrices {
         String minutsElapse = String.format("%02d", elapsedTime / 60 % 60);
         String hoursElapse = String.format("%02d", elapsedTime / 3600 % 24);
         String daysElapse = String.format("%02d", elapsedTime / (3600 * 24));
-        String timeForResult = daysElapse.concat(",").concat(hoursElapse).concat(".").concat(minutsElapse).concat(".").concat(secondsElapse);
+        String timeForResult = daysElapse.concat(",").concat(hoursElapse).concat(":").concat(minutsElapse).concat(":").concat(secondsElapse);
         String stringToLog = timeForResult + " -> " + addedString + System.getProperty("line.separator");
         resultOfPasring = resultOfPasring.concat(stringToLog);
 
