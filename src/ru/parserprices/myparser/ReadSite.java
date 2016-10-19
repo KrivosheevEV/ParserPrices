@@ -560,12 +560,12 @@ public class ReadSite {
         int countOfRecords = 0;
         int countOfUpdate = 0;
         int countOfNewRecords = 0;
+        java.sql.Date dateOfItemToQuery;
 
         for (String[] stringToBase : listDataToBase) {
 
 //            if (listDataToBase.indexOf(stringToBase) < startRecordFromPosition - 1) ;
 
-            java.sql.Date dateOfItemToQuery;
             try {
                 dateOfItemToQuery = new java.sql.Date(new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(stringToBase[5]).getTime());
             } catch (Exception e) {
@@ -616,7 +616,7 @@ public class ReadSite {
 //            query_writeNewRecord = writeDataToBase.clearLetters(query_writeNewRecord);
 
             if (writeDataToBase.dataExist(statement, query_recordExist)) {
-                if (writeDataToBase.dataExist(statement, query_needUpdate) && writeDataToBase.writeDataSuccessfully(statement, query_updateRecord)) countOfUpdate++;
+                if (writeDataToBase.dataExist(statement, query_needUpdate) & writeDataToBase.writeDataSuccessfully(statement, query_updateRecord)) countOfUpdate++;
             } else if (writeDataToBase.writeDataSuccessfully(statement, query_writeNewRecord)) countOfNewRecords++;
 
             if (MAX_COUNT_ITEMS != -1 & countOfRecords >= MAX_COUNT_ITEMS) break;

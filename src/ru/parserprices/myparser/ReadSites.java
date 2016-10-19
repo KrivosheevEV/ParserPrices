@@ -571,9 +571,10 @@ public class ReadSites {
         String goodPrice = "";
         String goodLink = "";
 
+        int countIteration = 0;
+
         try {
             int countOfPage = 1;
-            int countIteration = 0;
             WebElement nextPage = driver.findElement(By.cssSelector(cssSelector_NextPage));
             while (nextPage != null) {
                 //addToResultString("Reading data in page[".concat(String.valueOf(countOfPage++).concat("]..")), addTo.LogFileAndConsole);
@@ -622,7 +623,8 @@ public class ReadSites {
 
             addToResultString("All item(".concat(Integer.toString(countIteration)).concat(") was reading"), addTo.LogFileAndConsole);
         } catch (Exception e) {
-            addToResultString("Error reading flipping page.", addTo.LogFileAndConsole);
+            addToResultString("Reading (".concat(Integer.toString(countIteration)).concat(") elements."), addTo.LogFileAndConsole);
+//            addToResultString("Error reading flipping page.", addTo.LogFileAndConsole);
         }
     }
 
@@ -997,8 +999,54 @@ public class ReadSites {
         int countOfRecords = 0;
         int countOfUpdate = 0;
         int countOfNewRecords = 0;
+        int MAX_RECORDS_FOR_INSERT = 50;
+
+        // vvv
+
+        java.sql.Date dateOfPriceToQuery;
+
+        String query_writeNewRecords_prefix = "INSERT INTO general.".concat(shopName.name()).concat(" (good, item, shop, price, dateofprice, link, category)").concat(" VALUES ");
+        String query_writeNewRecords_suffix = " ON DUPLICATE KEY UPDATE good=VALUES(good), price=VALUES(price), dateofprice=VALUES(dateofprice), link=VALUES(link), category=VALUES(category);";
+        String query_writeNewRecords = query_writeNewRecords_prefix;
+
+        addToResultString("Start record into base.", addTo.LogFileAndConsole);
 
         for (String[] stringToBase : listDataToBase) {
+
+            countOfRecords++;
+
+            try {
+                dateOfPriceToQuery = new java.sql.Date(new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(stringToBase[5]).getTime());
+            } catch (Exception e) {
+                dateOfPriceToQuery = new java.sql.Date(System.currentTimeMillis());
+            }
+
+            query_writeNewRecords = query_writeNewRecords.concat(" ('" + writeDataToBase.clearLetters(stringToBase[1]) + "', '" +
+                                stringToBase[2] + "', '" +
+                                stringToBase[3] + "', '" +
+                                stringToBase[4] + "', '" +
+                                dateOfPriceToQuery + "', '" +
+                                stringToBase[6] + "', '" +
+                                stringToBase[7] + "') ");
+
+            if (countOfRecords % MAX_RECORDS_FOR_INSERT == 0){
+                query_writeNewRecords = query_writeNewRecords.concat(query_writeNewRecords_suffix);
+                if (writeDataToBase.writeDataSuccessfully(statement, query_writeNewRecords)) countOfNewRecords++;
+                query_writeNewRecords = query_writeNewRecords_prefix;
+            }else if (countOfRecords != listDataToBase.size()) query_writeNewRecords = query_writeNewRecords.concat(",");
+
+            if (MAX_COUNT_TOBASE != -1 && countOfRecords >= MAX_COUNT_TOBASE) break;
+        }
+
+        if (countOfRecords % MAX_RECORDS_FOR_INSERT != 0){
+            query_writeNewRecords = query_writeNewRecords.concat(query_writeNewRecords_suffix);
+            if (writeDataToBase.writeDataSuccessfully(statement, query_writeNewRecords)) countOfNewRecords = (countOfNewRecords*MAX_RECORDS_FOR_INSERT) + (countOfRecords++ - (countOfNewRecords*MAX_RECORDS_FOR_INSERT));
+        }
+
+        addToResultString("Finish record into base.", addTo.LogFileAndConsole);
+
+
+        /*for (String[] stringToBase : listDataToBase) {
 
             countOfRecords++;
 
@@ -1012,33 +1060,33 @@ public class ReadSites {
 //            String query_recordExist = "SELECT item FROM goods t WHERE t.item LIKE '" + stringToBase[2] + "' AND t.shop LIKE '" + stringToBase[3] + "' LIMIT 5;";
             String query_recordExist = "SELECT item FROM ".concat(shopName.name()).concat(" t WHERE t.item LIKE '").concat(stringToBase[2]).concat("' AND t.shop LIKE '").concat(stringToBase[3]).concat("' LIMIT 5;");
 
-            String query_needUpdate = "SELECT item FROM ".concat(shopName.name()).concat(" t WHERE t.item LIKE '").concat(stringToBase[2]).concat("' AND t.shop LIKE '").concat(stringToBase[3]).concat("' AND t.price NOT LIKE '").concat(stringToBase[4]).concat("' LIMIT 5;");
-
+            String query_needUpdate = "SELECT item FROM ".concat(shopName.name()).concat(" t WHERE t.item LIKE '").concat(stringToBase[]).concat("' AND t.shop LIKE '").concat(stringToBase[3]).concat("' AND t.price NOT LIKE '").concat(stringToBase[4]).concat("' LIMIT 5;");
+2
             String query_updateRecord = "UPDATE ".concat(shopName.name()).concat(" SET price = '").concat(writeDataToBase.clearLetters(stringToBase[4])).concat("', dateofprice = '").concat(String.valueOf(dateOfPriceToQuery)).concat("' WHERE item LIKE '").concat(stringToBase[2]).concat("' AND shop LIKE '").concat(stringToBase[3]).concat("' LIMIT 5;");
 
             String query_writeNewRecord = "INSERT INTO general.".concat(shopName.name()).concat(" (good, item, shop, price, dateofprice, link, category)") +
-                " VALUES ('" + writeDataToBase.clearLetters(stringToBase[1]) + "', '" +
-                                stringToBase[2] + "', '" +
-                                stringToBase[3] + "', '" +
-                                stringToBase[4] + "', '" +
-                                dateOfPriceToQuery + "', '" +
-                                stringToBase[6] + "', '" +
-                                stringToBase[7] + "');";
+                    " VALUES ('" + writeDataToBase.clearLetters(stringToBase[1]) + "', '" +
+                    stringToBase[2] + "', '" +
+                    stringToBase[3] + "', '" +
+                    stringToBase[4] + "', '" +
+                    dateOfPriceToQuery + "', '" +
+                    stringToBase[6] + "', '" +
+                    stringToBase[7] + "');";
 
             if (writeDataToBase.dataExist(statement, query_recordExist)) {
-                if (writeDataToBase.dataExist(statement, query_needUpdate) && writeDataToBase.writeDataSuccessfully(statement, query_updateRecord)) countOfUpdate++;
+                if (writeDataToBase.dataExist(statement, query_needUpdate) & writeDataToBase.writeDataSuccessfully(statement, query_updateRecord)) countOfUpdate++;
             } else if (writeDataToBase.writeDataSuccessfully(statement, query_writeNewRecord))countOfNewRecords++;
 
             //System.out.println(stringToBase[2]);
 
             if (MAX_COUNT_TOBASE != -1 && countOfRecords >= MAX_COUNT_TOBASE) break;
-        }
+        }*/
 
         addToResultString("Reading records: " + countOfRecords + " in base.", addTo.LogFileAndConsole);
         addToResultString("Added records:   " + countOfNewRecords + " in base.", addTo.LogFileAndConsole);
         addToResultString("Updated records: " + countOfUpdate + " in base.", addTo.LogFileAndConsole);
 
-        addToResultString("Close base connections", addTo.Console);
+        addToResultString("Close base connections..", addTo.Console);
         writeDataToBase.closeBase();
         try {
             if (statement != null) statement.close();
