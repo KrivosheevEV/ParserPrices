@@ -572,11 +572,12 @@ public class ReadSites {
         String goodLink = "";
 
         int countIteration = 0;
+        Boolean readPage = true;
 
         try {
             int countOfPage = 1;
-            WebElement nextPage = driver.findElement(By.cssSelector(cssSelector_NextPage));
-            while (nextPage != null) {
+
+            while (readPage) {
                 //addToResultString("Reading data in page[".concat(String.valueOf(countOfPage++).concat("]..")), addTo.LogFileAndConsole);
 
                 listItems = driver.findElements(By.cssSelector(cssSelector_GoodItems));
@@ -614,11 +615,17 @@ public class ReadSites {
                 }
 
                 listItems.clear();
-                listItems = null;
 
-                String linkNextPage = nextPage.getAttribute("href");
-                if (!driver.getCurrentUrl().equals(linkNextPage)) driver.get(linkNextPage);
-                nextPage = driver.findElement(By.cssSelector(cssSelector_NextPage));
+                try {
+                    WebElement nextPage = driver.findElement(By.cssSelector(cssSelector_NextPage));
+                    String linkNextPage = nextPage.getAttribute("href");
+                    if (!driver.getCurrentUrl().equals(linkNextPage)) driver.get(linkNextPage);
+//                    nextPage = driver.findElement(By.cssSelector(cssSelector_NextPage));
+                }catch (Exception e){
+                    readPage = false;
+                }
+
+
             }
 
             addToResultString("All item(".concat(Integer.toString(countIteration)).concat(") was reading"), addTo.LogFileAndConsole);
@@ -1040,7 +1047,7 @@ public class ReadSites {
 
         if (countOfRecords % MAX_RECORDS_FOR_INSERT != 0){
             query_writeNewRecords = query_writeNewRecords.concat(query_writeNewRecords_suffix);
-            if (writeDataToBase.writeDataSuccessfully(statement, query_writeNewRecords)) countOfNewRecords = (countOfNewRecords*MAX_RECORDS_FOR_INSERT) + (countOfRecords++ - (countOfNewRecords*MAX_RECORDS_FOR_INSERT));
+            if (writeDataToBase.writeDataSuccessfully(statement, query_writeNewRecords)) countOfNewRecords = (countOfNewRecords*MAX_RECORDS_FOR_INSERT) + (++countOfRecords - (countOfNewRecords*MAX_RECORDS_FOR_INSERT));
         }
 
         addToResultString("Finish record into base.", addTo.LogFileAndConsole);
