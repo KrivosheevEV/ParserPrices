@@ -83,6 +83,8 @@ public class MainParsingPrices {
         // Read another sites.
         if (shopName == shopNames.AVITO) {
             new ReadSite.Read_Avito(PROP_URL);
+        }else if(shopName == shopNames.GIS){
+            new Read_2Gis.Read2Gis(PROP_URL);
         }else{
             ReadSites readSites = new ReadSites();
             readSites.ReadSite(shopName);
@@ -203,6 +205,10 @@ public class MainParsingPrices {
             else if (argumentValue.equals("84564")) {
                 shopCity = shopCities.ershov;
                 shopCityCode = shopCityCodes._84564;
+            }
+            else if (argumentValue.equals("812")) {
+                shopCity = shopCities.sanktpeterburg;
+                shopCityCode = shopCityCodes._812;
             }
             else {
                 shopCity = shopCities.empty;

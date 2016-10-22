@@ -8,7 +8,7 @@ enum OS{
 }
 
 enum shopNames{
-    empty, DNS, CITILINK, DOMO, CORPCENTRE, FENIXCOMP, AVITO
+    empty, DNS, CITILINK, DOMO, CORPCENTRE, FENIXCOMP, AVITO, GIS
 }
 
 enum shopCities{
@@ -28,7 +28,8 @@ enum shopCities{
     tolyatti,
     nikolsk,
     barysh,
-    ershov
+    ershov,
+    sanktpeterburg
 }
 
 enum shopCityCodes{
@@ -48,7 +49,8 @@ enum shopCityCodes{
     _8482,
     _84165,
     _84253,
-    _84564
+    _84564,
+    _812
 }
 
 enum extensionForExport{
