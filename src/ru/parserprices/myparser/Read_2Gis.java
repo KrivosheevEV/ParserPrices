@@ -35,7 +35,7 @@ public class Read_2Gis {
     private static int MAX_COUNT_EXPAND = 3;
     private static int WAITING_FOR_EXPAND = 5;
     private static int BLOCK_RECORDS_TO_BASE = 5;
-    private static int START_RECORDS_WITH = 385;      // !!!!!
+    private static int START_RECORDS_WITH = 1;      // !!!!!
     private static boolean NEED_PHONE_NUMBER = true;
     private static int MAX_COUNT_REREADING_CAPTCHA = 3;
     private static boolean USE_GUI = true;
@@ -426,7 +426,7 @@ public class Read_2Gis {
                     shopName.name().concat(MainParsingPrices.shopCityCode.name()), // 1
                     PROP_CATEGORY1,                                         // 2
                     PROP_SUBCATEGORIES1,                                    // 3
-                    firmName,                                               // 4
+                    new String(firmName.replace(",", ";")),                                               // 4
                     new SimpleDateFormat("yyyy-MM-dd").format(new Date()),  // 5
                     new String(firmEmail.replace("mailto:","")),            // 6
                     new String(firmPhone.replace("tel:", "")),              // 7
