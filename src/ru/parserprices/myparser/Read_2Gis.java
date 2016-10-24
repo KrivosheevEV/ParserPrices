@@ -1,7 +1,6 @@
 package ru.parserprices.myparser;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
-import net.marketer.RuCaptcha;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
@@ -9,13 +8,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
@@ -35,20 +28,21 @@ public class Read_2Gis {
     private static WebDriver driver;
     private static ArrayList<String> listPages;
     private static ArrayList<String[]> dataToBase;
-    private static int MAX_COUNT_PAGES = 3;
+    private static int MAX_COUNT_PAGES = -1;
     private static int MAX_COUNT_ITEMS = -1;
+    private static int MAX_COUNT_TOBASE = -1;
     //    private static int MAX_COUNT_TOBASE = 10;
     private static int MAX_COUNT_EXPAND = 3;
     private static int WAITING_FOR_EXPAND = 5;
-    private static int BLOCK_RECORDS_TO_BASE = 15;
-    private static int START_RECORDS_WITH = 1;      // !!!!!
+    private static int BLOCK_RECORDS_TO_BASE = 5;
+    private static int START_RECORDS_WITH = 385;      // !!!!!
     private static boolean NEED_PHONE_NUMBER = true;
     private static int MAX_COUNT_REREADING_CAPTCHA = 3;
     private static boolean USE_GUI = true;
 
-    public static class Read2Gis{
+    public static class Read2Gis {
 
-        public Read2Gis(String givenURL){
+        public Read2Gis(String givenURL) {
 
             int countIteration = 0;
 
@@ -63,27 +57,27 @@ public class Read_2Gis {
             ArrayList<String> listPages = new ArrayList<String>();
             ArrayList<String[]> dataToBase = new ArrayList<String[]>();
 
-            if (!PROP_SUBCATEGORIES1.toUpperCase().equals("NO")){
+            if (!PROP_SUBCATEGORIES1.toUpperCase().equals("NO")) {
                 String[] listSubcategories = PROP_SUBCATEGORIES1.split("|");
-                for (String link:listSubcategories) {
+                for (String link : listSubcategories) {
                     readAllItemLinks(listPages, link);
                 }
-            }else if (!PROP_CATEGORY1.toUpperCase().equals("NO")){
+            } else if (!PROP_CATEGORY1.toUpperCase().equals("NO")) {
                 readAllItemLinks(listPages, givenURL.concat("/").concat(PROP_CATEGORY1));
-            }else readAllItemLinks(listPages, givenURL);
+            } else readAllItemLinks(listPages, givenURL);
 
-            if (listPages.size() != 0){
-                for (String linkOfItem: listPages) {
+            if (listPages.size() != 0) {
+                for (String linkOfItem : listPages) {
 
                     if (listPages.indexOf(linkOfItem) + 1 < START_RECORDS_WITH) continue;
                     countIteration++;
 
-                    String countToLog = String.valueOf(listPages.indexOf(linkOfItem)+1).concat("/").concat(String.valueOf(listPages.size()));
+                    String countToLog = String.valueOf(listPages.indexOf(linkOfItem) + 1).concat("/").concat(String.valueOf(listPages.size()));
                     readItemDiscription(dataToBase, linkOfItem, countToLog);
 
-                    if (countIteration % BLOCK_RECORDS_TO_BASE == 0){
+                    if (countIteration % BLOCK_RECORDS_TO_BASE == 0) {
                         addToResultString("Writing data in base..", addTo.LogFileAndConsole);
-                        //writeDataIntoBase(dataToBase, countIteration - BLOCK_RECORDS_TO_BASE);
+                        writeDataIntoBase(dataToBase, countIteration - BLOCK_RECORDS_TO_BASE);
                         addToResultString("Sum records (".concat(String.valueOf(dataToBase.size())).concat(") added into base."), addTo.LogFileAndConsole);
                     }
 
@@ -100,7 +94,6 @@ public class Read_2Gis {
 //            }
 
 
-
             dataToBase = new ArrayList<String[]>();
 
             if (USE_GUI) driver.close();
@@ -109,7 +102,7 @@ public class Read_2Gis {
         }
     }
 
-    private static void readAllItemLinks(ArrayList<String> listPages, String givenLink){
+    private static void readAllItemLinks(ArrayList<String> listPages, String givenLink) {
 
         //?user=1 - частные
         //?user=2 - компании
@@ -130,8 +123,12 @@ public class Read_2Gis {
 //                e.printStackTrace();
             addToResultString("Can't open new page: ".concat(givenLink), addTo.LogFileAndConsole);
             addToResultString(e.toString(), addTo.LogFileAndConsole);
-            if (USE_GUI) try {driver.quit();} catch (Exception e1){/**/}
-            else try {driver_noGUI.quit();} catch (Exception e1){/**/}
+            if (USE_GUI) try {
+                driver.quit();
+            } catch (Exception e1) {/**/}
+            else try {
+                driver_noGUI.quit();
+            } catch (Exception e1) {/**/}
             return;
         }
 
@@ -174,23 +171,24 @@ public class Read_2Gis {
 //                        while ((new WebDriverWait(driver, WAITING_FOR_EXPAND)).until(
 //                                ExpectedConditions.invisibilityOfElementLocated(By.cssSelector(cssSelector_NextPage)))) {
 
-                            but_NextPage.sendKeys(Keys.ESCAPE);
-                            but_NextPage.click();
-                            driver.manage().timeouts().implicitlyWait(5000, TimeUnit.MILLISECONDS);
+                        but_NextPage.sendKeys(Keys.ESCAPE);
+                        but_NextPage.click();
+                        driver.manage().timeouts().implicitlyWait(5000, TimeUnit.MILLISECONDS);
 
 //                            if (MAX_COUNT_EXPAND != -1 & countPages++ >= MAX_COUNT_EXPAND) break;
 //                        }
-                    }else {
+                    } else {
 //                        while ((new WebDriverWait(driver_noGUI, WAITING_FOR_EXPAND)).until(
 //                                ExpectedConditions.invisibilityOfElementLocated(By.cssSelector(cssSelector_NextPage)))) {
 
-                            driver_noGUI.setJavascriptEnabled(true);
+                        driver_noGUI.setJavascriptEnabled(true);
 //                            driver_noGUI.wait(1000);
 
-                            but_NextPage.sendKeys(Keys.ESCAPE);
-                            but_NextPage.click();
-                            driver_noGUI.manage().timeouts().implicitlyWait(5000, TimeUnit.MILLISECONDS);
+                        but_NextPage.sendKeys(Keys.ESCAPE);
+                        but_NextPage.click();
+                        driver_noGUI.manage().timeouts().implicitlyWait(5000, TimeUnit.MILLISECONDS);
 
+                        driver_noGUI.setJavascriptEnabled(false);
 //                            driver_noGUI.wait(1000);
 //                            if (MAX_COUNT_EXPAND != -1 & countPages++ >= MAX_COUNT_EXPAND) break;
 //                        }
@@ -201,15 +199,15 @@ public class Read_2Gis {
                         if (USE_GUI) {
                             nextPageDisabled = driver.findElement(By.cssSelector(cssSelector_NextPageDisabled));
                             readPage = false;
-                        }else{
+                        } else {
                             nextPageDisabled = driver_noGUI.findElement(By.cssSelector(cssSelector_NextPageDisabled));
                             readPage = false;
                         }
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         /**/
                     }
 
-                }catch (Exception e) {
+                } catch (Exception e) {
                     readPage = false;
                 }
             }
@@ -229,8 +227,7 @@ public class Read_2Gis {
 
             if (USE_GUI) {
                 if (driver == null) startingWebDriver(givenLink);
-            }
-            else {
+            } else {
                 if (driver_noGUI == null) startingWebDriver(givenLink);
             }
 
@@ -242,8 +239,12 @@ public class Read_2Gis {
         } catch (Exception e) {
             addToResultString("Can't open new page[".concat(countToLog).concat("]: ").concat(givenLink), addTo.LogFileAndConsole);
             addToResultString(e.toString(), addTo.LogFileAndConsole);
-            if (USE_GUI) try {driver.quit();} catch (Exception e1) {/**/}
-            else try {driver_noGUI.quit();} catch (Exception e1) {/**/}
+            if (USE_GUI) try {
+                driver.quit();
+            } catch (Exception e1) {/**/}
+            else try {
+                driver_noGUI.quit();
+            } catch (Exception e1) {/**/}
             return;
         }
 
@@ -252,15 +253,29 @@ public class Read_2Gis {
         String cssSelector_Phone = "a.contact__phonesItemLink"; //href
         String cssSelector_Site = "div.contact__link._type_website > a.link.contact__linkText"; // innertext or title
         String cssSelector_VKontakte = "div.contact__link._social._type_vkontakte > a.link.contact__linkText";//href
+        String cssSelector_Odnoklassniki = "div.contact__link._social._type_odnoklassniki > a.link.contact__linkText";//href
         String cssSelector_Facebook = "div.contact__link._social._type_facebook > a.link.contact__linkText";//href
+        String cssSelector_Instagramm = "div.contact__link._social._type_instagram > a.link.contact__linkText";//href
         String cssSelector_Email = "div.contact__link._type_email > a.link.contact__linkText";//href
+        String cssSelector_Address = "span.card__addressPart > a.card__addressLink._undashed";//gettext()
+        String cssSelector_Worktime = "div.schedule__dropdown td.schedule__td > time.schedule__tableTime";// multi
+        String cssSelector_Rubrics = "div.cardRubrics__rubrics a.link.cardRubrics__rubricLink";
+        String cssSelector_Description = "a.cardAds__text";// gettext()
+        String cssSelector_butSeeWorktime = "svg.icon.schedule__toggle";// gettext()
 
         String firmName = "";
         String firmPhone = "";
         String firmSite = "";
         String firmVkontakte = "";
+        String firmOdnoklassniki = "";
         String firmFacebook = "";
-        String firmEmail= "";
+        String firmInstagram = "";
+        String firmEmail = "";
+        String firmAddress = "";
+        String firmWorktime = "";
+        String firmRubrics = "";
+        String firmDescrption = "";
+        String firmQuery = "MRT";
 
         try {
 
@@ -268,45 +283,164 @@ public class Read_2Gis {
                 WebElement butOtherContact = driver.findElement(By.cssSelector(cssSelector_butOtherContact));
                 butOtherContact.sendKeys(Keys.ESCAPE);
                 butOtherContact.click();
-            }catch (Exception e){/**/}
+            } catch (Exception e) {/**/}
 
             if (USE_GUI) {
-                try {firmName = driver.findElement(By.cssSelector(cssSelector_Name)).getText();} catch (Exception e) {firmName = "";}
+                try {
+                    firmName = driver.findElement(By.cssSelector(cssSelector_Name)).getText();
+                } catch (Exception e) {
+                    firmName = "";
+                }
                 try {
                     for (WebElement element : driver.findElements(By.cssSelector(cssSelector_Phone)))
                         firmPhone = firmPhone.concat(element.getAttribute("href")).concat(" ");
-                } catch (Exception e) {firmPhone = "";}
-                try {firmSite = driver.findElement(By.cssSelector(cssSelector_Site)).getAttribute("title");} catch (Exception e) {firmSite = "";}
-                try {firmVkontakte = driver.findElement(By.cssSelector(cssSelector_VKontakte)).getAttribute("href");} catch (Exception e) {firmVkontakte = "";}
-                try {firmFacebook = driver.findElement(By.cssSelector(cssSelector_Facebook)).getAttribute("href");} catch (Exception e) {firmFacebook = "";}
-                try {firmEmail = driver.findElement(By.cssSelector(cssSelector_Email)).getAttribute("href");} catch (Exception e) {firmEmail = "";}
-            }else {
-                try {firmName = driver_noGUI.findElement(By.cssSelector(cssSelector_Name)).getText();} catch (Exception e) {firmName = "";}
+                } catch (Exception e) {
+                    firmPhone = "";
+                }
+                try {
+                    firmSite = driver.findElement(By.cssSelector(cssSelector_Site)).getAttribute("title");
+                } catch (Exception e) {
+                    firmSite = "";
+                }
+                try {
+                    firmVkontakte = driver.findElement(By.cssSelector(cssSelector_VKontakte)).getAttribute("href");
+                } catch (Exception e) {
+                    firmVkontakte = "";
+                }
+                try {
+                    firmOdnoklassniki = driver.findElement(By.cssSelector(cssSelector_Odnoklassniki)).getAttribute("href");
+                } catch (Exception e) {
+                    firmOdnoklassniki = "";
+                }
+                try {
+                    firmFacebook = driver.findElement(By.cssSelector(cssSelector_Facebook)).getAttribute("href");
+                } catch (Exception e) {
+                    firmFacebook = "";
+                }
+                try {
+                    firmInstagram = driver.findElement(By.cssSelector(cssSelector_Instagramm)).getAttribute("href");
+                } catch (Exception e) {
+                    firmInstagram = "";
+                }
+                try {
+                    firmEmail = driver.findElement(By.cssSelector(cssSelector_Email)).getAttribute("href");
+                } catch (Exception e) {
+                    firmEmail = "";
+                }
+                try {
+                    firmAddress = driver.findElement(By.cssSelector(cssSelector_Address)).getText();
+                } catch (Exception e) {
+                    firmAddress = "";
+                }
+//                try {
+                    //WebElement but_SeeWorkTime = driver.findElement(By.cssSelector(cssSelector_butSeeWorktime));
+                    //but_SeeWorkTime.click();
+//                    for (WebElement element : driver.findElements(By.cssSelector(cssSelector_Worktime)))
+//                        firmWorktime = firmWorktime.concat(element.getText()).concat(firmWorktime.endsWith("- ") ? ", " : " - ");
+//                } catch (Exception e) {
+                    firmWorktime = "";
+//                }
+                try {
+                    for (WebElement element : driver.findElements(By.cssSelector(cssSelector_Rubrics)))
+                        firmRubrics = firmRubrics.concat(element.getText()).concat(", ");
+                    if (firmRubrics.endsWith(", ")) firmRubrics = firmRubrics.substring(0, firmRubrics.length() - 2);
+                } catch (Exception e) {
+                    firmRubrics = "";
+                }
+                try {
+                    firmDescrption = driver.findElement(By.cssSelector(cssSelector_Description)).getText();
+                } catch (Exception e) {
+                    firmDescrption = "";
+                }
+            } else {
+                try {
+                    firmName = driver_noGUI.findElement(By.cssSelector(cssSelector_Name)).getText();
+                } catch (Exception e) {
+                    firmName = "";
+                }
                 try {
                     for (WebElement element : driver_noGUI.findElements(By.cssSelector(cssSelector_Phone)))
                         firmPhone = firmPhone.concat(element.getAttribute("href")).concat(" ");
-                } catch (Exception e) {firmPhone = "";}
-                try {firmSite = driver_noGUI.findElement(By.cssSelector(cssSelector_Site)).getAttribute("title");} catch (Exception e) {firmSite = "";}
-                try {firmVkontakte = driver_noGUI.findElement(By.cssSelector(cssSelector_VKontakte)).getAttribute("href");} catch (Exception e) {firmVkontakte = "";}
-                try {firmFacebook = driver_noGUI.findElement(By.cssSelector(cssSelector_Facebook)).getAttribute("href");} catch (Exception e) {firmFacebook = "";}
-                try {firmEmail = driver_noGUI.findElement(By.cssSelector(cssSelector_Email)).getAttribute("href");} catch (Exception e) {firmEmail = "";}
+                } catch (Exception e) {
+                    firmPhone = "";
+                }
+                try {
+                    firmSite = driver_noGUI.findElement(By.cssSelector(cssSelector_Site)).getAttribute("title");
+                } catch (Exception e) {
+                    firmSite = "";
+                }
+                try {
+                    firmVkontakte = driver_noGUI.findElement(By.cssSelector(cssSelector_VKontakte)).getAttribute("href");
+                } catch (Exception e) {
+                    firmVkontakte = "";
+                }
+                try {
+                    firmOdnoklassniki = driver_noGUI.findElement(By.cssSelector(cssSelector_Odnoklassniki)).getAttribute("href");
+                } catch (Exception e) {
+                    firmOdnoklassniki = "";
+                }
+                try {
+                    firmFacebook = driver_noGUI.findElement(By.cssSelector(cssSelector_Facebook)).getAttribute("href");
+                } catch (Exception e) {
+                    firmFacebook = "";
+                }
+                try {
+                    firmInstagram = driver_noGUI.findElement(By.cssSelector(cssSelector_Instagramm)).getAttribute("href");
+                } catch (Exception e) {
+                    firmInstagram = "";
+                }
+                try {
+                    firmEmail = driver_noGUI.findElement(By.cssSelector(cssSelector_Email)).getAttribute("href");
+                } catch (Exception e) {
+                    firmEmail = "";
+                }
+                try {
+                    firmAddress = driver_noGUI.findElement(By.cssSelector(cssSelector_Address)).getText();
+                } catch (Exception e) {
+                    firmAddress = "";
+                }
+                try {
+                    for (WebElement element : driver_noGUI.findElements(By.cssSelector(cssSelector_Worktime)))
+                        firmWorktime = firmPhone.concat(element.getText()).concat(firmWorktime.endsWith("- ") ? ", " : " - ");
+                } catch (Exception e) {
+                    firmWorktime = "";
+                }
+                try {
+                    for (WebElement element : driver_noGUI.findElements(By.cssSelector(cssSelector_Rubrics)))
+                        firmRubrics = firmPhone.concat(element.getText()).concat(", ");
+                    if (firmRubrics.endsWith(", ")) firmRubrics = firmRubrics.substring(0, firmRubrics.length() - 2);
+                } catch (Exception e) {
+                    firmRubrics = "";
+                }
+                try {
+                    firmDescrption = driver_noGUI.findElement(By.cssSelector(cssSelector_Description)).getText();
+                } catch (Exception e) {
+                    firmDescrption = "";
+                }
             }
         } catch (Exception e) {
             addToResultString("Element not found: ".concat(e.toString()), addTo.LogFileAndConsole);
-        }finally {
+        } finally {
 
             String[] toList = {"0",
                     shopName.name().concat(MainParsingPrices.shopCityCode.name()), // 1
-                    PROP_CATEGORY1,         // 2
-                    PROP_SUBCATEGORIES1,    // 3
-                    firmName,               // 4
+                    PROP_CATEGORY1,                                         // 2
+                    PROP_SUBCATEGORIES1,                                    // 3
+                    firmName,                                               // 4
                     new SimpleDateFormat("yyyy-MM-dd").format(new Date()),  // 5
-                    firmEmail,              // 6
-                    firmPhone,              // 7
+                    new String(firmEmail.replace("mailto:","")),            // 6
+                    new String(firmPhone.replace("tel:", "")),              // 7
                     firmSite,               // 8
                     firmVkontakte,          // 9
-                    firmFacebook,           // 10
-                    givenLink};             // 11
+                    firmOdnoklassniki,      // 10
+                    firmFacebook,           // 11
+                    firmInstagram,         // 12
+                    givenLink.contains("?queryState") ? givenLink.substring(0, givenLink.indexOf("?queryState")) : givenLink, // 13
+                    new String(firmAddress.replace(",", "-")),  // 14
+                    firmWorktime,           // 15
+                    new String(firmRubrics.replace(",", ";")),            // 16
+                    firmDescrption,         // 17
+                    firmQuery};             // 18
             dataToBase.add(toList);
         }
     }
@@ -342,7 +476,7 @@ public class Read_2Gis {
         //userAgent = "Mozilla/5.0 (Linux; U; Android 2.3.3; en-us; sdk Build/GRI34) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1";
 
         try {
-            switch (shopName){
+            switch (shopName) {
 
                 case DNS:
 
@@ -373,9 +507,9 @@ public class Read_2Gis {
                 case AVITO:
 
                     addToResultString("Trying start new WebDriver(HtmlUnit)", addTo.LogFileAndConsole);
-                    if (USE_GUI){
+                    if (USE_GUI) {
                         driver = new FirefoxDriver(profile);
-                    }else{
+                    } else {
                         driver_noGUI = new HtmlUnitDriver(BrowserVersion.FIREFOX_38, true);
                         driver_noGUI.getBrowserVersion().setUserAgent(userAgent);
                     }
@@ -384,10 +518,10 @@ public class Read_2Gis {
                 case GIS:
 
                     addToResultString("Trying start new WebDriver(HtmlUnit)", addTo.LogFileAndConsole);
-                    if (USE_GUI){
+                    if (USE_GUI) {
                         driver = new FirefoxDriver(profile);
-                    }else{
-                        driver_noGUI = new HtmlUnitDriver(BrowserVersion.FIREFOX_38, true);
+                    } else {
+                        driver_noGUI = new HtmlUnitDriver(BrowserVersion.FIREFOX_38);
                         driver_noGUI.getBrowserVersion().setUserAgent(userAgent);
                     }
                     break;
@@ -406,7 +540,7 @@ public class Read_2Gis {
         }
     }
 
-    private static void setCookie(String givenURL){
+    private static void setCookie(String givenURL) {
 
         FirefoxProfile profile = new FirefoxProfile();
         profile.setPreference("browser.download.manager.alertOnEXEOpen", false);
@@ -439,7 +573,7 @@ public class Read_2Gis {
 //        button.button.button-origin // submit
     }
 
-    private static String clearPhoneNumber(String givenPhoneNumber){
+    private static String clearPhoneNumber(String givenPhoneNumber) {
 
         givenPhoneNumber = new String(givenPhoneNumber.trim()
                 .replace("-", "")
@@ -476,68 +610,62 @@ public class Read_2Gis {
         int countOfRecords = 0;
         int countOfUpdate = 0;
         int countOfNewRecords = 0;
-        java.sql.Date dateOfItemToQuery;
+//        int MAX_RECORDS_FOR_INSERT = 50;
+
+        java.sql.Date dateToQuery;
+
+        String query_writeNewRecords_prefix = "INSERT INTO general.".concat("2").concat(shopName.name()).concat(" (city, name, date, email, phone, site, vkontakte, odnoklassniki, facebook, instagram, link, address, worktime, rubrics, description, query)").concat(" VALUES ");
+        String query_writeNewRecords_suffix = " ON DUPLICATE KEY UPDATE city=VALUES(city), email=VALUES(email), phone=VALUES(phone), site=VALUES(site), vkontakte=VALUES(vkontakte), odnoklassniki=VALUES(odnoklassniki), facebook=VALUES(facebook), instagram=VALUES(instagram), link=VALUES(link), worktime=VALUES(worktime), rubrics=VALUES(rubrics), description=VALUES(description), query=VALUES(query);";
+        String query_writeNewRecords = query_writeNewRecords_prefix;
+
+
+        addToResultString("Start record into base.", addTo.LogFileAndConsole);
 
         for (String[] stringToBase : listDataToBase) {
 
-//            if (listDataToBase.indexOf(stringToBase) < startRecordFromPosition - 1) ;
+            countOfRecords++;
 
             try {
-                dateOfItemToQuery = new java.sql.Date(new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(stringToBase[5]).getTime());
+                dateToQuery = new java.sql.Date(new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(stringToBase[5]).getTime());
             } catch (Exception e) {
-                dateOfItemToQuery = new java.sql.Date(System.currentTimeMillis());
+                dateToQuery = new java.sql.Date(System.currentTimeMillis());
             }
 
-//            String query_recordExist = "SELECT item FROM goods t WHERE t.item LIKE '" + stringToBase[2] + "' AND t.shop LIKE '" + stringToBase[3] + "' LIMIT 5;";
-            String query_recordExist = "SELECT item FROM ".concat(shopName.name()).concat(" t WHERE t.item LIKE '").concat(stringToBase[4]).concat("' LIMIT 5;");
+            query_writeNewRecords = query_writeNewRecords.concat(" ('" + stringToBase[1] + "', '" +
+                    writeDataToBase.clearLetters(stringToBase[4]) + "', '" +
+                    dateToQuery + "', '" +
+                    stringToBase[6] + "', '" +
+                    stringToBase[7] + "', '" +
+                    stringToBase[8] + "', '" +
+                    stringToBase[9] + "', '" +
+                    stringToBase[10] + "', '" +
+                    stringToBase[11] + "', '" +
+                    stringToBase[12] + "', '" +
+                    stringToBase[13] + "', '" +
+                    stringToBase[14] + "', '" +
+                    stringToBase[15] + "', '" +
+                    stringToBase[16] + "', '" +
+                    stringToBase[17] + "', '" +
+                    stringToBase[18] + "') ");
 
-            String query_needUpdate = "SELECT item FROM ".concat(shopName.name()).concat(" t WHERE t.item LIKE '").concat(stringToBase[4]).concat("' AND t.dateofitem <> '") + dateOfItemToQuery + ("' LIMIT 5;");
+            if (countOfRecords % BLOCK_RECORDS_TO_BASE == 0) {
+                query_writeNewRecords = query_writeNewRecords.concat(query_writeNewRecords_suffix);
+                if (writeDataToBase.writeDataSuccessfully(statement, query_writeNewRecords)) countOfNewRecords++;
+                query_writeNewRecords = query_writeNewRecords_prefix;
+            } else if (countOfRecords != listDataToBase.size())
+                query_writeNewRecords = query_writeNewRecords.concat(",");
 
-            String query_updateRecord = "UPDATE ".concat(shopName.name()).concat(" SET ").concat(
-                    "city = '").concat(stringToBase[1]).concat("', ").concat(
-                    "category = '").concat(stringToBase[2]).concat("', ").concat(
-                    "subcategory = '").concat(stringToBase[3]).concat("', ").concat(
-                    "item = '").concat(stringToBase[4]).concat("', ").concat(
-                    "dateofitem = '").concat(String.valueOf(dateOfItemToQuery)).concat("', ").concat(
-                    "itemname = '").concat(stringToBase[6]).concat("', ").concat(
-                    "price = '").concat(stringToBase[7]).concat("', ").concat(
-                    "owner = '").concat(stringToBase[8]).concat("', ").concat(
-                    "phonenumber = '").concat(stringToBase[9]).concat("', ").concat(
-                    "cityitem = '").concat(stringToBase[10]).concat("', ").concat(
-                    "params = '").concat(stringToBase[11]).concat("', ").concat(
-                    "description = '").concat(stringToBase[12]).concat("', ").concat(
-                    "link = '").concat(stringToBase[13]).concat("', ").concat(
-                    "phonenumber64 = '").concat(stringToBase[14]).concat("' WHERE item LIKE '").concat(stringToBase[3]).concat("' LIMIT 5;");
-            //1,    2,        3,           4,    5,          6,        7,     8,     9,           10,      11,      12,           13,   14
-            String query_writeNewRecord = "INSERT INTO general.".concat(shopName.name()).concat(" (city, category, subcategory, item, dateofitem, itemname, price, owner, phonenumber, cityitem, params, description,  link, phonenumber64)") +
-                    " VALUES ('" +
-                    stringToBase[1].concat("', '").concat(
-                            stringToBase[2]).concat("', '").concat(
-                            stringToBase[3]).concat("', '").concat(
-                            stringToBase[4]).concat("', '") +
-                    dateOfItemToQuery + ("', '").concat(
-                    writeDataToBase.clearLetters(stringToBase[6])).concat("', '").concat(
-                    stringToBase[7]).concat("', '").concat(
-                    writeDataToBase.clearLetters(stringToBase[8])).concat("', '").concat(
-                    stringToBase[9]).concat("', '").concat(
-                    stringToBase[10]).concat("', '").concat(
-                    writeDataToBase.clearLetters(stringToBase[11])).concat("', '").concat(
-                    writeDataToBase.clearLetters(new String(stringToBase[12].replace(",", ";")))).concat("', '").concat(
-                    stringToBase[13]).concat("', '").concat(
-                    stringToBase[14]).concat("');");
-
-//            query_recordExist = writeDataToBase.clearLetters(query_recordExist);
-//            query_needUpdate = writeDataToBase.clearLetters(query_needUpdate);
-//            query_updateRecord = writeDataToBase.clearLetters(query_updateRecord);
-//            query_writeNewRecord = writeDataToBase.clearLetters(query_writeNewRecord);
-
-            if (writeDataToBase.dataExist(statement, query_recordExist)) {
-                if (writeDataToBase.dataExist(statement, query_needUpdate) & writeDataToBase.writeDataSuccessfully(statement, query_updateRecord)) countOfUpdate++;
-            } else if (writeDataToBase.writeDataSuccessfully(statement, query_writeNewRecord)) countOfNewRecords++;
-
-            if (MAX_COUNT_ITEMS != -1 & countOfRecords >= MAX_COUNT_ITEMS) break;
-            countOfRecords++;
+            if (MAX_COUNT_TOBASE != -1 && countOfRecords >= MAX_COUNT_TOBASE) break;
         }
+
+        if (countOfRecords % BLOCK_RECORDS_TO_BASE != 0) {
+            query_writeNewRecords = query_writeNewRecords.concat(query_writeNewRecords_suffix);
+            if (writeDataToBase.writeDataSuccessfully(statement, query_writeNewRecords))
+                countOfNewRecords = (countOfNewRecords * BLOCK_RECORDS_TO_BASE) + (countOfRecords - (countOfNewRecords * BLOCK_RECORDS_TO_BASE));
+        }
+
+        addToResultString("Finish record into base.", addTo.LogFileAndConsole);
+
 
         addToResultString("Reading records: ".concat(String.valueOf(countOfRecords - startRecordFromPosition)).concat(" in base."), addTo.LogFileAndConsole);
         addToResultString("Added records:   ".concat(String.valueOf(countOfNewRecords)).concat(" in base."), addTo.LogFileAndConsole);
@@ -550,16 +678,16 @@ public class Read_2Gis {
         } catch (SQLException se) { /*can't do anything */ }
     }
 
-    private static String clearPrice(String givenPrice){
+    private static String clearPrice(String givenPrice) {
         givenPrice = new String(givenPrice.trim().replace("руб.", "").replace(" ", ""));
         return givenPrice;
     }
 
-    private static String getRandomProxy(){
+    private static String getRandomProxy() {
 
         String resultString;
 
-        if (PROP_PROXY.equalsIgnoreCase("FOXTOOLS")){
+        if (PROP_PROXY.equalsIgnoreCase("FOXTOOLS")) {
             GetPost getHtmlData = new GetPost();
             try {
                 resultString = getHtmlData.sendGet("http://api.foxtools.ru/v2/Proxy.txt?cp=UTF-8&lang=RU&type=HTTPS&anonymity=All&available=Yes&free=Yes&limit=100&uptime=2&country=ru");
@@ -568,9 +696,9 @@ public class Read_2Gis {
 //                e.printStackTrace();
             }
 
-        }else resultString = "";
+        } else resultString = "";
 
-        if (!resultString.isEmpty()){
+        if (!resultString.isEmpty()) {
             String[] proxyList = resultString.split(";");
             Random r = new Random();
             resultString = proxyList[r.nextInt(proxyList.length - 2) + 1];
@@ -578,4 +706,5 @@ public class Read_2Gis {
 
         return resultString;
     }
+}
 

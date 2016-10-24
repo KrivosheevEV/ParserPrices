@@ -102,9 +102,9 @@ public class MainParsingPrices {
 
         // Send Email.
         String emailAdress = haveProperty ? PROP_EMAIL : getArgumentValue(args, "-email");
-        boolean sendEmail = emailAdress.toUpperCase().equals("NO");
+        boolean sendEmail = !emailAdress.equalsIgnoreCase("NO");
         if (sendEmail){
-            String[] paramConnect = {emailAdress, "KrivosheevEV@frontime.ru", "owa.axus.name"};
+            String[] paramConnect = {emailAdress, "support@parserpro.ru", "owa.axus.name"};
             String mSubject = "Cron on \"parser\" for ".concat(shopName.name()).concat(shopCityCode.name());
             String mText = resultOfPasring;
             try {
