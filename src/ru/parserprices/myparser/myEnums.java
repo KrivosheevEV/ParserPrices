@@ -29,7 +29,8 @@ enum shopCities{
     nikolsk,
     barysh,
     ershov,
-    sanktpeterburg
+    sanktpeterburg,
+    moscow
 }
 
 enum shopCityCodes{
@@ -50,7 +51,8 @@ enum shopCityCodes{
     _84165,
     _84253,
     _84564,
-    _812
+    _812,
+    _495
 }
 
 enum extensionForExport{

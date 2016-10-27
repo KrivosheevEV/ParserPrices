@@ -35,9 +35,8 @@ public class Read_2Gis {
     private static int MAX_COUNT_EXPAND = 3;
     private static int WAITING_FOR_EXPAND = 5;
     private static int BLOCK_RECORDS_TO_BASE = 5;
-    private static int START_RECORDS_WITH = 1;      // !!!!!
-    private static boolean NEED_PHONE_NUMBER = true;
-    private static int MAX_COUNT_REREADING_CAPTCHA = 3;
+    private static int START_RECORDS_WITH = PROP_START_RECORD_IN;      // !!!!!
+    private static int FINISH_RECORDS_IN = PROP_FINISH_RECORD_IN;
     private static boolean USE_GUI = true;
 
     public static class Read2Gis {
@@ -81,18 +80,15 @@ public class Read_2Gis {
                         addToResultString("Sum records (".concat(String.valueOf(dataToBase.size())).concat(") added into base."), addTo.LogFileAndConsole);
                     }
 
-                    if (MAX_COUNT_ITEMS != -1 & countIteration >= MAX_COUNT_ITEMS) break;
+                    if (FINISH_RECORDS_IN != -1 & countIteration > FINISH_RECORDS_IN) break;
+//                    if (MAX_COUNT_ITEMS != -1 & countIteration >= MAX_COUNT_ITEMS) break;
+                }
+                if (countIteration % BLOCK_RECORDS_TO_BASE != 0) {
+                    addToResultString("Writing data in base..", addTo.LogFileAndConsole);
+                    writeDataIntoBase(dataToBase, countIteration - BLOCK_RECORDS_TO_BASE);
+                    addToResultString("Sum records (".concat(String.valueOf(dataToBase.size())).concat(") added into base."), addTo.LogFileAndConsole);
                 }
             }
-
-//            if (dataToBase.size() != 0) {
-//                for (String[] item : dataToBase
-//                     ) {
-////                    addToResultString(Arrays.toString(item), addTo.LogFileAndConsole);
-//                    addToResultString(item[0].concat(" - ").concat(item[8]), addTo.LogFileAndConsole);
-//                }
-//            }
-
 
             dataToBase = new ArrayList<String[]>();
 
@@ -147,8 +143,8 @@ public class Read_2Gis {
 
                 for (WebElement elementGood : listItems) {
                     try {
-                        listPages.add(elementGood.getAttribute("href"));
-
+                        String href = elementGood.getAttribute("href");
+                        listPages.add(href.contains("?queryState") ? href.substring(0, href.indexOf("?queryState")) : href);
                     } catch (Exception e) {
                         addToResultString("Error reading href : ".concat(e.toString()), addTo.LogFileAndConsole);
                     }
@@ -261,7 +257,7 @@ public class Read_2Gis {
         String cssSelector_Worktime = "div.schedule__dropdown td.schedule__td > time.schedule__tableTime";// multi
         String cssSelector_Rubrics = "div.cardRubrics__rubrics a.link.cardRubrics__rubricLink";
         String cssSelector_Description = "a.cardAds__text";// gettext()
-        String cssSelector_butSeeWorktime = "svg.icon.schedule__toggle";// gettext()
+        String cssSelector_butSeeWorktime = "header.schedule__header._expandable";
 
         String firmName = "";
         String firmPhone = "";
@@ -275,7 +271,7 @@ public class Read_2Gis {
         String firmWorktime = "";
         String firmRubrics = "";
         String firmDescrption = "";
-        String firmQuery = "MRT";
+        String firmQuery = PROP_DISCRIPTION;
 
         try {
 
@@ -283,6 +279,12 @@ public class Read_2Gis {
                 WebElement butOtherContact = driver.findElement(By.cssSelector(cssSelector_butOtherContact));
                 butOtherContact.sendKeys(Keys.ESCAPE);
                 butOtherContact.click();
+            } catch (Exception e) {/**/}
+
+            try {
+                WebElement but_SeeWorkTime = driver.findElement(By.cssSelector(cssSelector_butSeeWorktime));
+                but_SeeWorkTime.sendKeys(Keys.ESCAPE);
+                but_SeeWorkTime.click();
             } catch (Exception e) {/**/}
 
             if (USE_GUI) {
@@ -332,21 +334,20 @@ public class Read_2Gis {
                 } catch (Exception e) {
                     firmAddress = "";
                 }
-//                try {
-                    //WebElement but_SeeWorkTime = driver.findElement(By.cssSelector(cssSelector_butSeeWorktime));
-                    //but_SeeWorkTime.click();
-//                    for (WebElement element : driver.findElements(By.cssSelector(cssSelector_Worktime)))
-//                        firmWorktime = firmWorktime.concat(element.getText()).concat(firmWorktime.endsWith("- ") ? ", " : " - ");
-//                } catch (Exception e) {
-                    firmWorktime = "";
-//                }
                 try {
-                    for (WebElement element : driver.findElements(By.cssSelector(cssSelector_Rubrics)))
-                        firmRubrics = firmRubrics.concat(element.getText()).concat(", ");
-                    if (firmRubrics.endsWith(", ")) firmRubrics = firmRubrics.substring(0, firmRubrics.length() - 2);
+                    for (WebElement element : driver.findElements(By.cssSelector(cssSelector_Worktime)))
+                        firmWorktime = firmWorktime.concat(element.getText()).concat(firmWorktime.endsWith("- ") ? ", " : " - ");
+                    if (firmWorktime.endsWith(", ")) firmWorktime = new String(firmWorktime.substring(0, firmWorktime.length() - 2));
                 } catch (Exception e) {
-                    firmRubrics = "";
+                    firmWorktime = "";
                 }
+//                try {
+//                    for (WebElement element : driver.findElements(By.cssSelector(cssSelector_Rubrics)))
+//                        firmRubrics = firmRubrics.concat(element.getText()).concat(", ");
+//                    if (firmRubrics.endsWith(", ")) firmRubrics = firmRubrics.substring(0, firmRubrics.length() - 2);
+//                } catch (Exception e) {
+                    firmRubrics = "";
+//                }
                 try {
                     firmDescrption = driver.findElement(By.cssSelector(cssSelector_Description)).getText();
                 } catch (Exception e) {
@@ -615,7 +616,7 @@ public class Read_2Gis {
         java.sql.Date dateToQuery;
 
         String query_writeNewRecords_prefix = "INSERT INTO general.".concat("2").concat(shopName.name()).concat(" (city, name, date, email, phone, site, vkontakte, odnoklassniki, facebook, instagram, link, address, worktime, rubrics, description, query)").concat(" VALUES ");
-        String query_writeNewRecords_suffix = " ON DUPLICATE KEY UPDATE city=VALUES(city), email=VALUES(email), phone=VALUES(phone), site=VALUES(site), vkontakte=VALUES(vkontakte), odnoklassniki=VALUES(odnoklassniki), facebook=VALUES(facebook), instagram=VALUES(instagram), link=VALUES(link), worktime=VALUES(worktime), rubrics=VALUES(rubrics), description=VALUES(description), query=VALUES(query);";
+        String query_writeNewRecords_suffix = " ON DUPLICATE KEY UPDATE email=VALUES(email), phone=VALUES(phone), site=VALUES(site), vkontakte=VALUES(vkontakte), odnoklassniki=VALUES(odnoklassniki), facebook=VALUES(facebook), instagram=VALUES(instagram), link=VALUES(link), worktime=VALUES(worktime), rubrics=VALUES(rubrics), description=VALUES(description), query=VALUES(query);";
         String query_writeNewRecords = query_writeNewRecords_prefix;
 
 

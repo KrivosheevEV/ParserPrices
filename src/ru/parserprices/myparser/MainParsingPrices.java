@@ -22,6 +22,9 @@ public class MainParsingPrices {
     static String PROP_CATEGORY1;
     static String PROP_SUBCATEGORIES1;
     static String PROP_PROXY;
+    static String PROP_DISCRIPTION;
+    static int PROP_START_RECORD_IN;
+    static int PROP_FINISH_RECORD_IN;
     static boolean haveProperty;
 
     private static String resultOfPasring = "";
@@ -210,6 +213,10 @@ public class MainParsingPrices {
                 shopCity = shopCities.sanktpeterburg;
                 shopCityCode = shopCityCodes._812;
             }
+            else if (argumentValue.equals("495")) {
+                shopCity = shopCities.moscow;
+                shopCityCode = shopCityCodes._495;
+            }
             else {
                 shopCity = shopCities.empty;
                 shopCityCode = shopCityCodes.empty;
@@ -308,6 +315,9 @@ public class MainParsingPrices {
             PROP_CATEGORY1      = property.getProperty("category1").trim();
             PROP_SUBCATEGORIES1 = property.getProperty("subcategories1").trim();
             PROP_PROXY          = property.getProperty("proxy").trim();
+            PROP_DISCRIPTION    = property.getProperty("description").trim();
+            PROP_START_RECORD_IN = Integer.valueOf(property.getProperty("startrecordin").trim());
+            PROP_FINISH_RECORD_IN = Integer.valueOf(property.getProperty("finishrecordin").trim());
 
 
 
