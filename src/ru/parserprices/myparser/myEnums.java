@@ -30,7 +30,19 @@ enum shopCities{
     barysh,
     ershov,
     sanktpeterburg,
-    moscow
+    moscow,
+    novosibirsk,        // 8383
+    ekaterinburg,       // 8343
+    nizhniynovgorod,    // 8831
+    kazan,              // 8843
+    chelyabinsk,        // 8351 -
+    omsk,               // 83812
+    rostovnadonu,       // 8863 -
+    ufa,                // 8347 -
+    krasnoyarsk,        // 8391 -
+    perm,               // 8342 -
+    voronezh,           // 8473 -
+    volgograd           // 8844
 }
 
 enum shopCityCodes{
@@ -52,7 +64,19 @@ enum shopCityCodes{
     _84253,
     _84564,
     _812,
-    _495
+    _495,
+    _8383,
+    _8343,
+    _8831,
+    _8843,
+    _8351,
+    _83812,
+    _8863,
+    _8347,
+    _8391,
+    _8342,
+    _8473,
+    _8844
 }
 
 enum extensionForExport{
