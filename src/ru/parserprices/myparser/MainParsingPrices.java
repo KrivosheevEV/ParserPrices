@@ -88,6 +88,8 @@ public class MainParsingPrices {
             new ReadSite.Read_Avito(PROP_URL);
         }else if(shopName == shopNames.GIS){
             new Read_2Gis.Read2Gis(PROP_URL);
+        }else if(shopName == shopNames.CORNKZ){
+            new Read_Cornkz.ReadCornkz(PROP_URL);
         }else{
             ReadSites readSites = new ReadSites();
             readSites.ReadSite(shopName);

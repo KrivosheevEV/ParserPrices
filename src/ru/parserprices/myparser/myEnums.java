@@ -8,7 +8,15 @@ enum OS{
 }
 
 enum shopNames{
-    empty, DNS, CITILINK, DOMO, CORPCENTRE, FENIXCOMP, AVITO, GIS
+    empty,
+    DNS,
+    CITILINK,
+    DOMO,
+    CORPCENTRE,
+    FENIXCOMP,
+    AVITO,
+    GIS,
+    CORNKZ
 }
 
 enum shopCities{
