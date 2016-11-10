@@ -16,7 +16,8 @@ enum shopNames{
     FENIXCOMP,
     AVITO,
     GIS,
-    CORNKZ
+    CORNKZ,
+    LUCKSHOP
 }
 
 enum shopCities{

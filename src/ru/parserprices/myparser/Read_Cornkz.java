@@ -99,78 +99,95 @@ public class Read_Cornkz {
             else driver_noGUI.close();
 //            driver_noGUI.close();
         }*/
-            startingWebDriver(givenURL);
-            String link, number="";
+//            startingWebDriver(givenURL);
+//            String link, number="";
             FileInputStream file;
             HSSFWorkbook workbook=null;
             HSSFSheet sheet;
-            HSSFRow row;
+            HSSFRow row, row_behind;
             try {
-                file = new FileInputStream(new File("CORNKZ_all_2.xls"));
+                file = new FileInputStream(new File("CORNKZ_all_sorted.xls"));
                 workbook = new HSSFWorkbook(file);
                 sheet = workbook.getSheetAt(0);
 
-                for (int i = 2512; i < 3930; i++ //3930
+                for (int i = 3915; i > 1 ; i-- //3930
                         ) {
                     row = sheet.getRow(i);
-
-                    link = row.getCell(2).getStringCellValue();
-
-                    driver_noGUI.navigate().to(link);
-                    try {
-                        number = driver_noGUI.findElement(By.cssSelector("table.total img")).getAttribute("src");
-                    } catch (Exception e) {
-                        number = "";
-                    }
-
-                    File tmpFile;
-                    String imagePath;
-                    try {
-                        tmpFile = File.createTempFile("image_", ".png");
-                        BufferedImage image = null;
-                        URL url = new URL(number);
-                        image = ImageIO.read(url);
-                        if (image != null) ImageIO.write(image, "png", tmpFile);
-                        imagePath = tmpFile.getAbsolutePath();
-                    } catch (Exception e) {
-                        imagePath = "";
-                    }
-
-                    int MAX_COUNT_REREADING_CAPTCHA = 3;
-
-                    if (NEED_PHONENUMBER & !imagePath.isEmpty()) {
-                        int conutReReadingCaptcha = 0;
-                        Boolean readCaptcha = true;
-                        while (readCaptcha) {
-                            try {
-                                AntiCaptcha antiCaptcha = new AntiCaptcha(imagePath); // "D:\\Temp\\avito_phonenumber.png"
-                                if (antiCaptcha.getCaptchaStatus()) {
-                                    number = antiCaptcha.getCaptchaText();
-                                    if (number.equals(RuCaptcha.Responses.ERROR_NO_SLOT_AVAILABLE.toString())) {
-                                        if (MAX_COUNT_REREADING_CAPTCHA != -1 & ++conutReReadingCaptcha > MAX_COUNT_REREADING_CAPTCHA)
-                                            readCaptcha = false;
-                                    } else
-                                        readCaptcha = false;
-                                } else {
-                                    addToResultString("Error read captcha.", addTo.LogFileAndConsole);
-                                    readCaptcha = false;
-                                }
-                            } catch (Exception e) {
-                                if (MAX_COUNT_REREADING_CAPTCHA != -1 & ++conutReReadingCaptcha > MAX_COUNT_REREADING_CAPTCHA)
-                                    readCaptcha = false;
-                            }
+                    row_behind = sheet.getRow(i-1);
+                    Cell cell =row.getCell(1);
+                    Cell cell_behind =row_behind.getCell(1);
+                        if (cell == null) cell = row.createCell(1);
+                        int type = cell.getCellType();
+                        int type_behind = cell_behind.getCellType();
+//                        cell.setCellValue(number);
+                    if (type == cell.CELL_TYPE_STRING & type_behind == cell_behind.CELL_TYPE_STRING ){
+                        if (cell.getStringCellValue().equals(cell_behind.getStringCellValue())){
+                            cell.setCellValue("");
                         }
-//                        number = clearPhoneNumber(number);
-                    }
 
-                    if (!number.isEmpty() & !number.contains("mid")) {
-                        System.out.println(i);
-                        Cell cell =row.getCell(3);
-                        if (cell == null) cell = row.createCell(3);
-//                        cell.setCellType(Cell.CELL_TYPE_STRING);
-                        cell.setCellValue(number);
-                        workbook.write(new File("CORNKZ_all_3.xls"));
+                    }else if (type == cell.CELL_TYPE_NUMERIC & type_behind == cell_behind.CELL_TYPE_NUMERIC){
+                        if (cell.getNumericCellValue() == cell_behind.getNumericCellValue()) cell.setCellValue(0);
                     }
+                    System.out.println(i);
+//                        workbook.write(new File("CORNKZ_all_3.xls"));
+
+//                    link = row.getCell(2).getStringCellValue();
+
+//                    driver_noGUI.navigate().to(link);
+//                    try {
+//                        number = driver_noGUI.findElement(By.cssSelector("table.total img")).getAttribute("src");
+//                    } catch (Exception e) {
+//                        number = "";
+//                    }
+
+////                    File tmpFile;
+////                    String imagePath;
+////                    try {
+////                        tmpFile = File.createTempFile("image_", ".png");
+////                        BufferedImage image = null;
+////                        URL url = new URL(number);
+////                        image = ImageIO.read(url);
+////                        if (image != null) ImageIO.write(image, "png", tmpFile);
+////                        imagePath = tmpFile.getAbsolutePath();
+////                    } catch (Exception e) {
+////                        imagePath = "";
+////                    }
+////
+////                    int MAX_COUNT_REREADING_CAPTCHA = 3;
+////
+////                    if (NEED_PHONENUMBER & !imagePath.isEmpty()) {
+////                        int conutReReadingCaptcha = 0;
+////                        Boolean readCaptcha = true;
+////                        while (readCaptcha) {
+////                            try {
+////                                AntiCaptcha antiCaptcha = new AntiCaptcha(imagePath); // "D:\\Temp\\avito_phonenumber.png"
+////                                if (antiCaptcha.getCaptchaStatus()) {
+////                                    number = antiCaptcha.getCaptchaText();
+////                                    if (number.equals(RuCaptcha.Responses.ERROR_NO_SLOT_AVAILABLE.toString())) {
+////                                        if (MAX_COUNT_REREADING_CAPTCHA != -1 & ++conutReReadingCaptcha > MAX_COUNT_REREADING_CAPTCHA)
+////                                            readCaptcha = false;
+////                                    } else
+////                                        readCaptcha = false;
+////                                } else {
+////                                    addToResultString("Error read captcha.", addTo.LogFileAndConsole);
+////                                    readCaptcha = false;
+////                                }
+////                            } catch (Exception e) {
+////                                if (MAX_COUNT_REREADING_CAPTCHA != -1 & ++conutReReadingCaptcha > MAX_COUNT_REREADING_CAPTCHA)
+////                                    readCaptcha = false;
+////                            }
+////                        }
+//////                        number = clearPhoneNumber(number);
+////                    }
+//
+//                    if (!number.isEmpty() & !number.contains("mid")) {
+//                        System.out.println(i);
+//                        Cell cell =row.getCell(1);
+//                        if (cell == null) cell = row.createCell(1);
+////                        cell.setCellType(Cell.CELL_TYPE_STRING);
+//                        cell.setCellValue(number);
+//                        workbook.write(new File("CORNKZ_all_3.xls"));
+//                    }
 
                 }
             } catch (Exception e) {System.out.println(e.getMessage());

@@ -11,7 +11,7 @@ public class AntiCaptcha {
 
     private String decryption = "";
     private Boolean captchaIsReady = false;
-    private int MAX_COUNT_RECOGNITION = 10;
+    private int MAX_COUNT_RECOGNITION = 40;
 
     public AntiCaptcha(String pathToCaptcha) throws Exception {
 

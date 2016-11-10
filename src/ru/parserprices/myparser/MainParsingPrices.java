@@ -90,6 +90,8 @@ public class MainParsingPrices {
             new Read_2Gis.Read2Gis(PROP_URL);
         }else if(shopName == shopNames.CORNKZ){
             new Read_Cornkz.ReadCornkz(PROP_URL);
+        }else if(shopName == shopNames.LUCKSHOP){
+            new Read_LuckShop.ReadLuckShop();
         }else{
             ReadSites readSites = new ReadSites();
             readSites.ReadSite(shopName);
