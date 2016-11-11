@@ -35,12 +35,12 @@ public class ReadSite {
     private static WebDriver driver;
     private static ArrayList<String> listPages;
     private static ArrayList<String[]> dataToBase;
-    private static int MAX_COUNT_PAGES = -1;
+    private static int MAX_COUNT_PAGES = 1;
     private static int MAX_COUNT_ITEMS = -1;
 //    private static int MAX_COUNT_TOBASE = 10;
     private static int MAX_COUNT_EXPAND = 3;
     private static int WAITING_FOR_EXPAND = 5;
-    private static int BLOCK_RECORDS_TO_BASE = 15;
+    private static int BLOCK_RECORDS_TO_BASE = 5;
     private static int START_RECORDS_WITH = 1;      // !!!!!
     private static boolean NEED_PHONE_NUMBER = true;
     private static int MAX_COUNT_REREADING_CAPTCHA = 3;
@@ -79,7 +79,8 @@ public class ReadSite {
                     countIteration++;
 
                     String countToLog = String.valueOf(listPages.indexOf(linkOfItem)+1).concat("/").concat(String.valueOf(listPages.size()));
-                    readItemDiscription(dataToBase, linkOfItem, countToLog);
+//                    readItemDiscription(dataToBase, linkOfItem, countToLog);
+                    readResumeDiscription(dataToBase, linkOfItem, countToLog);
 
                     if (countIteration % BLOCK_RECORDS_TO_BASE == 0){
                         addToResultString("Writing data in base..", addTo.LogFileAndConsole);
@@ -187,8 +188,10 @@ public class ReadSite {
             addToResultString("Trying open page[".concat(countToLog).concat("]: ").concat(givenLink), addTo.LogFileAndConsole);
 
 
-            if (USE_GUI) if (driver == null) startingWebDriver(givenLink);
-            else if (driver_noGUI == null) startingWebDriver(givenLink);
+            if (USE_GUI) {
+                if (driver == null) startingWebDriver(givenLink);
+                else if (driver_noGUI == null) startingWebDriver(givenLink);
+            }
 
             if (USE_GUI) driver.navigate().to(givenLink);
             else driver_noGUI.navigate().to(givenLink);
@@ -266,6 +269,234 @@ public class ReadSite {
                 }
                 try {
                     itemName = driver_noGUI.findElement(By.cssSelector(cssSelector_ItemName)).getText();
+                } catch (Exception e) {
+                    itemName = "";
+                }
+                try {
+                    itemPrice = clearPrice(driver_noGUI.findElement(By.cssSelector(cssSelector_ItemPrice)).getText());
+                } catch (Exception e) {
+                    itemPrice = "";
+                }
+                try {
+                    itemOwner = driver_noGUI.findElement(By.cssSelector(cssSelector_ItemOwner)).getText();
+                } catch (Exception e) {
+                    itemOwner = "";
+                }
+                try {
+                    itemCity = driver_noGUI.findElement(By.cssSelector(cssSelector_ItemCity)).getText();
+                } catch (Exception e) {
+                    itemCity = "";
+                }
+                for (WebElement element : driver_noGUI.findElements(By.cssSelector(cssSelector_ItemParams)))
+                    itemParams = itemParams.concat(element.getText()).concat(" ");
+                try {
+                    itemDescription = driver_noGUI.findElement(By.cssSelector(cssSelector_ItemDecription)).getText();
+                } catch (Exception e) {
+                    itemDescription = "";
+                }
+            }
+            // Read phonenumber (image).
+            if (NEED_PHONE_NUMBER) {
+
+
+                try {
+                    WebElement but_ShowPhoneNumber;
+                    if (USE_GUI) but_ShowPhoneNumber = driver.findElement(By.cssSelector(cssSelector_ItemPhoneButton));
+                    else but_ShowPhoneNumber = driver_noGUI.findElement(By.cssSelector(cssSelector_ItemPhoneButton));
+                    int countPages = 0;
+                    if (USE_GUI) {
+                        while ((new WebDriverWait(driver, WAITING_FOR_EXPAND)).until(
+                                ExpectedConditions.invisibilityOfElementLocated(By.cssSelector(cssSelector_ItemPhoneNumberImage)))) {
+
+                            but_ShowPhoneNumber.sendKeys(Keys.ESCAPE);
+                            but_ShowPhoneNumber.click();
+                            if (MAX_COUNT_EXPAND != -1 & countPages++ >= MAX_COUNT_EXPAND) break;
+                        }
+                    }else {
+                        while ((new WebDriverWait(driver_noGUI, WAITING_FOR_EXPAND)).until(
+                                ExpectedConditions.invisibilityOfElementLocated(By.cssSelector(cssSelector_ItemPhoneNumberImage)))) {
+
+                            driver_noGUI.setJavascriptEnabled(true);
+//                            driver_noGUI.wait(1000);
+
+                            but_ShowPhoneNumber.sendKeys(Keys.ESCAPE);
+                            but_ShowPhoneNumber.click();
+                            driver_noGUI.manage().timeouts().implicitlyWait(5000, TimeUnit.MILLISECONDS);
+
+//                            driver_noGUI.wait(1000);
+                            if (MAX_COUNT_EXPAND != -1 & countPages++ >= MAX_COUNT_EXPAND) break;
+                        }
+                    }
+                }catch (Exception e) {
+                    addToResultString(e.getMessage(), addTo.LogFileAndConsole);
+                }
+
+                java.lang.String phoneNumberImageAdressEncode64 = "";
+                java.lang.String phoneNumberImageAdressDecode64 = "";
+                String imagePath = "";
+
+                try {
+                    if (USE_GUI) phoneNumberImageAdressEncode64 = driver.findElement(By.cssSelector(cssSelector_ItemPhoneNumberImage)).getAttribute("src");
+                    else phoneNumberImageAdressEncode64 = driver_noGUI.findElement(By.cssSelector(cssSelector_ItemPhoneNumberImage)).getAttribute("src");
+                    phoneNumberImageAdressEncode64 = new String(phoneNumberImageAdressEncode64.getBytes("Cp1251"), "UTF-8");
+//                addToResultString(phoneNumberImageAdressEncode64, addTo.LogFileAndConsole);
+                    itemPhoneNumber64 = phoneNumberImageAdressEncode64.split(",")[1];
+                    itemPhoneNumber = findNumberInBase(itemPhoneNumber64);
+
+                    if (itemPhoneNumber.isEmpty()){
+                        byte[] decodedValue = Base64.getDecoder().decode(itemPhoneNumber64);
+
+                        File tmpFile = File.createTempFile("image_", ".png");
+                        try (FileOutputStream fos = new FileOutputStream(tmpFile)) {
+                            fos.write(decodedValue);
+                        } catch (IOException ioe) {
+                            addToResultString(ioe.getMessage(), addTo.LogFileAndConsole);
+                        }
+                        imagePath = tmpFile.getAbsolutePath();
+                    }
+
+                }catch (Exception e){
+                    addToResultString(e.getMessage(), addTo.LogFileAndConsole);
+                }
+
+                driver_noGUI.setJavascriptEnabled(false);
+
+                // Anticaptcha.
+                if (!imagePath.isEmpty() & itemPhoneNumber.isEmpty()) {
+                    int conutReReadingCaptcha = 0;
+                    Boolean readCaptcha = true;
+                    while (readCaptcha) {
+                        try {
+                            AntiCaptcha antiCaptcha = new AntiCaptcha(imagePath); // "D:\\Temp\\avito_phonenumber.png"
+                            if (antiCaptcha.getCaptchaStatus()) {
+                                itemPhoneNumber = antiCaptcha.getCaptchaText();
+                                if (itemPhoneNumber.equals(RuCaptcha.Responses.ERROR_NO_SLOT_AVAILABLE.toString())) {
+                                    if (MAX_COUNT_REREADING_CAPTCHA != -1 & ++conutReReadingCaptcha > MAX_COUNT_REREADING_CAPTCHA) readCaptcha = false;
+                                } else
+                                    readCaptcha = false;
+                            } else {
+                                addToResultString("Error read captcha.", addTo.LogFileAndConsole);
+                                readCaptcha = false;
+                            }
+                        } catch (Exception e) {
+                            if (MAX_COUNT_REREADING_CAPTCHA != -1 & ++conutReReadingCaptcha > MAX_COUNT_REREADING_CAPTCHA) readCaptcha = false;
+                        }
+                    }
+                    itemPhoneNumber = clearPhoneNumber(itemPhoneNumber);
+                }
+            }
+        } catch (Exception e) {
+            addToResultString("Element not found: ".concat(e.toString()), addTo.LogFileAndConsole);
+        }finally {
+
+            String[] toList = {"0",
+                    shopName.name().concat(MainParsingPrices.shopCityCode.name()), // 1
+                    PROP_CATEGORY1,         // 2
+                    PROP_SUBCATEGORIES1,    // 3
+                    item,                   // 4
+                    new SimpleDateFormat("yyyy-MM-dd").format(new Date()),  // 5
+                    itemName,               // 6
+                    itemPrice,              // 7
+                    itemOwner,              // 8
+                    itemPhoneNumber,        // 9
+                    itemCity,               // 10
+                    itemParams,             // 11
+                    itemDescription,        // 12
+                    givenLink,              // 13
+                    itemPhoneNumber64};     // 14
+            dataToBase.add(toList);
+        }
+    }
+
+    private static void readResumeDiscription(ArrayList<String[]> dataToBase, String givenLink, String countToLog) {
+
+        try {
+            addToResultString("Trying open page[".concat(countToLog).concat("]: ").concat(givenLink), addTo.LogFileAndConsole);
+
+
+            if (USE_GUI) {
+                if (driver == null) startingWebDriver(givenLink);
+            } else {
+                if (driver_noGUI == null) startingWebDriver(givenLink);
+            }
+
+
+            if (USE_GUI) driver.navigate().to(givenLink);
+            else driver_noGUI.navigate().to(givenLink);
+
+            if (avitoNeedCaptcha()) enterAvitoCaptcha(givenLink);
+
+        } catch (Exception e) {
+            addToResultString("Can't open new page[".concat(countToLog).concat("]: ").concat(givenLink), addTo.LogFileAndConsole);
+            addToResultString(e.toString(), addTo.LogFileAndConsole);
+            if (USE_GUI) try {driver.quit();} catch (Exception e1) {/**/}
+            else try {driver_noGUI.quit();} catch (Exception e1) {/**/}
+            return;
+        }
+
+        String cssSelector_ResumeTitle = "h1.title-info-title > span.title-info-title-text";
+        String cssSelector_ResumeName = "div.seller-info-name";
+        String cssSelector_ItemPrice = "span.p_i_price > span";
+        String cssSelector_ItemOwner = "div#seller > strong";
+        String cssSelector_ItemCity = "div#map";
+        String cssSelector_ItemParams = "div.description.description-expanded div.item-params";
+        String cssSelector_ItemDecription = "div.description.description-text";
+        String cssSelector_ItemPhoneButton = "div.item-phone-number.js-item-phone-number";
+//        String cssSelector_ItemPhoneButton = "button.button.item-phone-button.js-item-phone-button.button-origin.button-origin-blue.button-origin_small.item-phone-button_header.js-item-phone-button_header";
+        String cssSelector_ItemPhoneNumberImage = "div.item-phone-number.js-item-phone-number";
+
+        String item = "";
+        String itemName = "";
+        String itemPrice = "";
+        String itemOwner = "";
+        String itemCity = "";
+        String itemParams = "";
+        String itemDescription = "";
+        String itemPhoneNumber = "";
+        String itemPhoneNumber64 = "";
+
+        try {
+            if (USE_GUI) {
+                try {
+                    item = driver.findElement(By.cssSelector(cssSelector_ResumeTitle)).getText();
+                } catch (Exception e) {
+                    item = "";
+                }
+                try {
+                    itemName = driver.findElement(By.cssSelector(cssSelector_ResumeName)).getText();
+                } catch (Exception e) {
+                    itemName = "";
+                }
+                try {
+                    itemPrice = clearPrice(driver.findElement(By.cssSelector(cssSelector_ItemPrice)).getText());
+                } catch (Exception e) {
+                    itemPrice = "";
+                }
+                try {
+                    itemOwner = driver.findElement(By.cssSelector(cssSelector_ItemOwner)).getText();
+                } catch (Exception e) {
+                    itemOwner = "";
+                }
+                try {
+                    itemCity = driver.findElement(By.cssSelector(cssSelector_ItemCity)).getText();
+                } catch (Exception e) {
+                    itemCity = "";
+                }
+                for (WebElement element : driver.findElements(By.cssSelector(cssSelector_ItemParams)))
+                    itemParams = itemParams.concat(element.getText()).concat(" ");
+                try {
+                    itemDescription = driver.findElement(By.cssSelector(cssSelector_ItemDecription)).getText();
+                } catch (Exception e) {
+                    itemDescription = "";
+                }
+            }else {
+                try {
+                    item = driver_noGUI.findElement(By.cssSelector(cssSelector_ResumeTitle)).getText();
+                } catch (Exception e) {
+                    item = "";
+                }
+                try {
+                    itemName = driver_noGUI.findElement(By.cssSelector(cssSelector_ResumeName)).getText();
                 } catch (Exception e) {
                     itemName = "";
                 }

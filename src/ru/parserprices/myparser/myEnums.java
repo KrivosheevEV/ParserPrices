@@ -38,8 +38,8 @@ enum shopCities{
     nikolsk,
     barysh,
     ershov,
-    sanktpeterburg,
-    moscow,
+    sanktpeterburg,     // 812
+    moscow,             // 495
     novosibirsk,        // 8383
     ekaterinburg,       // 8343
     nizhniynovgorod,    // 8831
