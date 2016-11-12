@@ -79,8 +79,8 @@ public class ReadSite {
                     countIteration++;
 
                     String countToLog = String.valueOf(listPages.indexOf(linkOfItem)+1).concat("/").concat(String.valueOf(listPages.size()));
-//                    readItemDiscription(dataToBase, linkOfItem, countToLog);
-                    readResumeDiscription(dataToBase, linkOfItem, countToLog);
+                    readItemDiscription(dataToBase, linkOfItem, countToLog);
+//                    readResumeDiscription(dataToBase, linkOfItem, countToLog);
 
                     if (countIteration % BLOCK_RECORDS_TO_BASE == 0){
                         addToResultString("Writing data in base..", addTo.LogFileAndConsole);

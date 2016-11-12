@@ -1,32 +1,19 @@
 package ru.parserprices.myparser;
 
-import com.gargoylesoftware.htmlunit.BrowserVersion;
-import net.marketer.RuCaptcha;
-import org.apache.poi.hssf.usermodel.HSSFRow;
-import org.apache.poi.hssf.usermodel.HSSFSheet;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.PictureData;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxProfile;
-import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import static ru.parserprices.myparser.MainParsingPrices.*;
 import static sun.net.www.protocol.http.HttpURLConnection.userAgent;
@@ -47,21 +34,25 @@ public class Read_LuckShop {
     private static int BLOCK_RECORDS_TO_BASE = 5;
     private static int START_RECORDS_WITH = PROP_START_RECORD_IN;
     private static int FINISH_RECORDS_IN = PROP_FINISH_RECORD_IN;
+    private static File parentDirectory;
 
     public static class ReadLuckShop {
 
         public ReadLuckShop() {
 
-            File dir = new File("/home/clLuckShop");
-            if (!dir.isDirectory()) return;
-            for (File file : dir.listFiles()){
+            dataToPrice = new ArrayList<String[]>();
+
+            parentDirectory = new File("/home/clLuckShop");
+            File fileResult = new File(parentDirectory.getAbsolutePath().concat("/ResultPrice.csv"));
+            if (!parentDirectory.isDirectory()) return;
+            for (File file : parentDirectory.listFiles()){
                 if (file.isDirectory()) continue;
                 String fileName = file.getName();
                 if (fileName.lastIndexOf(".") == -1 || fileName.lastIndexOf(".") == 0) continue;
                 String fileExtention = fileName.substring(fileName.lastIndexOf(".") + 1);
                 switch (fileExtention){
-                    case "xls": readXLSToArray(file); break;
-                    case "xlsx": readXLSToArray(file); break;
+                    case "xls": readXLSToArray(file); addDataToResultPrice(fileResult.getAbsolutePath()); break;
+                    //case "xlsx": readXLSToArray(file); break;
 
                 }
             }
@@ -72,7 +63,7 @@ public class Read_LuckShop {
         }
    }
 
-    private static void readXLSToArray(File givenFile){
+    private static void readXLSToArray(File givenFile) {
 
         InputStream in = null;
         HSSFWorkbook wb = null;
@@ -83,55 +74,141 @@ public class Read_LuckShop {
             e.printStackTrace();
         }
 
-        int[] accordCells = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-        String[][] findParentPrice = {{"0", "3", "patskan-time.ru", "patskantime", "10"}};
+        int[] accordCells = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        //                              0row, 1col, 2uniqe text,       3name,         4row start, 5col image
+        String[][] findParentPrice = {{"0", "3", "patskan-time.ru", "patskantime", "10", "1"}};
         int startRow = 0;
+        int pictureColumn = 0;
+        String[] imagesName;
+        String companyAlias = "";
 
-        for (String[] parentPrice: findParentPrice
-             ) {
-            if (wb.getSheetAt(0).getRow(Integer.valueOf(parentPrice[0])).getCell(Integer.valueOf(parentPrice[1])).getStringCellValue().contains(parentPrice[2])){
-                switch (parentPrice[3]){
+        for (String[] parentPrice : findParentPrice
+                ) {
+            if (wb.getSheetAt(0).getRow(Integer.valueOf(parentPrice[0])).getCell(Integer.valueOf(parentPrice[1])).getStringCellValue().contains(parentPrice[2])) {
+                switch (parentPrice[3]) {
                     case "patskantime":
                         accordCells[1] = 2;
                         accordCells[2] = 3;
                         accordCells[11] = 4;
-                        //accordCells[17] = 1;
+                        accordCells[17] = 1000;
                         startRow = Integer.valueOf(parentPrice[4]);
+                        pictureColumn = Integer.valueOf(parentPrice[5]);
+                        companyAlias = parentPrice[3];
                 }
             }
         }
 
         int countOfRows = 0;
         for (int i = 0; i < wb.getNumberOfSheets(); i++) {
+            // Save images.
+            HSSFSheet sheet_ = wb.getSheetAt(i);
+            imagesName = new String[sheet_.getLastRowNum()+1];
+            for (HSSFShape shape : sheet_.getDrawingPatriarch().getChildren()) {
+                if (shape instanceof HSSFPicture) {
+                    HSSFPicture picture = (HSSFPicture) shape;
+                    HSSFClientAnchor anchor = (HSSFClientAnchor) picture.getAnchor();
+                    if (anchor.getCol1() == pictureColumn) {
+                        HSSFRow pictureRow = sheet_.getRow(anchor.getRow1());
+                        if (pictureRow != null) {
+                            int rowNum = pictureRow.getRowNum() + 1;
+                            PictureData pic = picture.getPictureData();
+                            String ext = pic.suggestFileExtension();
+                            byte[] data = pic.getData();
+                            String imageName = companyAlias.concat("_").concat(String.valueOf(rowNum)).concat(".").concat(ext);
+                            try {
+                                FileOutputStream out = new FileOutputStream(parentDirectory.getAbsolutePath().concat("/images/").concat(imageName));
+                                out.write(data);
+                                out.close();
+                                imagesName[rowNum] = imageName;
+                            }catch (Exception e){
+                                System.out.println(e.getMessage());
+                            }
+                        }
+                    }
+                }
+            }
+
             Sheet sheet = wb.getSheetAt(i);
             Iterator<Row> it = sheet.iterator();
-            while (it.hasNext() & countOfRows++ >= startRow) {
+            String[] lineToPrice;
+            while (it.hasNext()) {
                 Row row = it.next();
-                String[] lineToPrice = {""};
+                if (countOfRows++ < startRow) continue;
+                int countCols = 0;
+                lineToPrice = new String[18];
                 for (int col : accordCells
                         ) {
+                    if (col == 0) {
+                        lineToPrice[countCols] = "";
+                        countCols++;
+                        continue;
+                    }else if (col == 1000){
+                        lineToPrice[countCols] = imagesName[countOfRows];
+                        countCols++;
+                        continue;
+                    }
                     Cell cell = row.getCell(col);
+                    if(cell == null) continue;;
                     int cellType = cell.getCellType();
                     switch (cellType) {
                         case Cell.CELL_TYPE_STRING:
-                            lineToPrice[col] = cell.getStringCellValue();
+                            lineToPrice[countCols] = cell.getStringCellValue();
                             break;
                         case Cell.CELL_TYPE_NUMERIC:
-                            lineToPrice[col] = String.valueOf(cell.getNumericCellValue());
+                            lineToPrice[countCols] = String.valueOf(cell.getNumericCellValue());
                             break;
                         case Cell.CELL_TYPE_FORMULA:
-                            lineToPrice[col] = String.valueOf(cell.getNumericCellValue());
+                            lineToPrice[countCols] = String.valueOf(cell.getNumericCellValue());
                             break;
                         default:
-                            lineToPrice[col] = "";
+                            lineToPrice[countCols] = "";
                             break;
                     }
+                    countCols++;
                 }
                 dataToPrice.add(lineToPrice);
             }
         }
 
+    }
 
+    private static void addDataToResultPrice(String givenResultPricePath){
+        File resultFie = new File(givenResultPricePath);
+        if (!resultFie.exists()) {
+            try {
+                if (!resultFie.createNewFile()) return;
+            }catch (Exception e) {/**/}
+        }else if (!resultFie.isFile()) return;
+
+        for (String[] str: dataToPrice
+             ) {
+            try {
+                FileWriter writer = new FileWriter(givenResultPricePath, true);
+                BufferedWriter bufferWriter = new BufferedWriter(writer);
+                bufferWriter.write(arrayToString(str, ";").concat("\n"));
+                bufferWriter.close();
+                dataToPrice = new ArrayList<String[]>();
+            }catch (Exception e) {
+                System.out.println("Error write result price. ".concat(e.getMessage()));
+            }
+        }
+
+    }
+
+    private static String arrayToString(String[] givenArray, String givenSeparator){
+
+        String result = "";
+        for (String element:givenArray
+             ) {
+            result = result.concat(element.concat(givenSeparator));
+        }
+        byte [] b_strutf;
+        String result_c = "";
+        try {
+            b_strutf = result.getBytes("cp1251");
+            result_c = new String (b_strutf, "cp1251");
+        }catch (Exception e){/**/}
+        return result_c;
     }
 
       private static String clearPhoneNumber(String givenPhoneNumber) {
