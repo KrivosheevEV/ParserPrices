@@ -17,7 +17,9 @@ enum shopNames{
     AVITO,
     GIS,
     CORNKZ,
-    LUCKSHOP
+    LUCKSHOP,
+    YOUTUBE,
+    CERAMTRADE
 }
 
 enum shopCities{

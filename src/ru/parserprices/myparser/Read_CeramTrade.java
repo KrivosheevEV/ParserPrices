@@ -7,7 +7,6 @@ import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.openqa.selenium.By;
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -15,6 +14,7 @@ import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
 import javax.imageio.ImageIO;
+import javax.lang.model.util.Elements;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,7 +22,10 @@ import java.net.URL;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import static ru.parserprices.myparser.MainParsingPrices.*;
@@ -31,40 +34,39 @@ import static sun.net.www.protocol.http.HttpURLConnection.userAgent;
 /**
  * Created by vnc on 10/22/16.
  */
-public class Read_Cornkz {
+public class Read_CeramTrade {
 
     private static HtmlUnitDriver driver_noGUI;
     private static WebDriver driver;
     private static ArrayList<String> listPages;
     private static ArrayList<String[]> dataToBase;
-    private static int MAX_COUNT_PAGES = 212;
+    private static int MAX_COUNT_PAGES = 3; //309
     private static int MAX_COUNT_ITEMS = -1;
     private static int MAX_COUNT_TOBASE = -1;
     private static int MAX_COUNT_EXPAND = 3;
     private static int WAITING_FOR_EXPAND = 5;
-    private static int BLOCK_RECORDS_TO_BASE = 5;
+    private static int BLOCK_RECORDS_TO_BASE = 15;
     private static int START_RECORDS_WITH = PROP_START_RECORD_IN;
     private static int FINISH_RECORDS_IN = PROP_FINISH_RECORD_IN;
-    private static boolean USE_GUI = false;
-    private static boolean NEED_PHONENUMBER = true;
+    private static boolean USE_GUI = true;
+//    private static boolean NEED_PHONENUMBER = true;
 
-    public static class ReadCornkz {
+    public static class ReadCeramTrade {
 
-        public ReadCornkz(String givenURL) {
+        public ReadCeramTrade(String givenURL) {
 
             int countIteration = 0;
 
-            /*startingWebDriver(givenURL);
 
             ArrayList<String> listPages = new ArrayList<String>();
             ArrayList<String[]> dataToBase = new ArrayList<String[]>();
 
-            if (!PROP_SUBCATEGORIES1.toUpperCase().equals("NO")) {
+            if (!PROP_SUBCATEGORIES1.equalsIgnoreCase("NO")) {
                 String[] listSubcategories = PROP_SUBCATEGORIES1.split("|");
                 for (String link : listSubcategories) {
                     readAllItemLinks(listPages, link);
                 }
-            } else if (!PROP_CATEGORY1.toUpperCase().equals("NO")) {
+            } else if (!PROP_CATEGORY1.equalsIgnoreCase("NO")) {
                 readAllItemLinks(listPages, givenURL.concat("/").concat(PROP_CATEGORY1));
             } else readAllItemLinks(listPages, givenURL);
 
@@ -98,106 +100,6 @@ public class Read_Cornkz {
             if (USE_GUI) driver.close();
             else driver_noGUI.close();
 //            driver_noGUI.close();
-        }*/
-//            startingWebDriver(givenURL);
-//            String link, number="";
-            FileInputStream file;
-            HSSFWorkbook workbook=null;
-            HSSFSheet sheet;
-            HSSFRow row, row_behind;
-            try {
-                file = new FileInputStream(new File("CORNKZ_all_sorted.xls"));
-                workbook = new HSSFWorkbook(file);
-                sheet = workbook.getSheetAt(0);
-
-                for (int i = 3915; i > 1 ; i-- //3930
-                        ) {
-                    row = sheet.getRow(i);
-                    row_behind = sheet.getRow(i-1);
-                    Cell cell =row.getCell(1);
-                    Cell cell_behind =row_behind.getCell(1);
-                        if (cell == null) cell = row.createCell(1);
-//                        int type = cell.getCellType();
-//                        int type_behind = cell_behind.getCellType();
-//                        cell.setCellValue(number);
-                    /*if (type == cell.CELL_TYPE_STRING & type_behind == cell_behind.CELL_TYPE_STRING ){
-                        if (cell.getStringCellValue().equals(cell_behind.getStringCellValue())){
-                            cell.setCellValue("");
-                        }
-
-                    }else if (type == cell.CELL_TYPE_NUMERIC & type_behind == cell_behind.CELL_TYPE_NUMERIC){
-                        if (cell.getNumericCellValue() == cell_behind.getNumericCellValue()) cell.setCellValue(0);
-                    }*/
-                    System.out.println(i);
-//                        workbook.write(new File("CORNKZ_all_3.xls"));
-
-//                    link = row.getCell(2).getStringCellValue();
-
-//                    driver_noGUI.navigate().to(link);
-//                    try {
-//                        number = driver_noGUI.findElement(By.cssSelector("table.total img")).getAttribute("src");
-//                    } catch (Exception e) {
-//                        number = "";
-//                    }
-
-////                    File tmpFile;
-////                    String imagePath;
-////                    try {
-////                        tmpFile = File.createTempFile("image_", ".png");
-////                        BufferedImage image = null;
-////                        URL url = new URL(number);
-////                        image = ImageIO.read(url);
-////                        if (image != null) ImageIO.write(image, "png", tmpFile);
-////                        imagePath = tmpFile.getAbsolutePath();
-////                    } catch (Exception e) {
-////                        imagePath = "";
-////                    }
-////
-////                    int MAX_COUNT_REREADING_CAPTCHA = 3;
-////
-////                    if (NEED_PHONENUMBER & !imagePath.isEmpty()) {
-////                        int conutReReadingCaptcha = 0;
-////                        Boolean readCaptcha = true;
-////                        while (readCaptcha) {
-////                            try {
-////                                AntiCaptcha antiCaptcha = new AntiCaptcha(imagePath); // "D:\\Temp\\avito_phonenumber.png"
-////                                if (antiCaptcha.getCaptchaStatus()) {
-////                                    number = antiCaptcha.getCaptchaText();
-////                                    if (number.equals(RuCaptcha.Responses.ERROR_NO_SLOT_AVAILABLE.toString())) {
-////                                        if (MAX_COUNT_REREADING_CAPTCHA != -1 & ++conutReReadingCaptcha > MAX_COUNT_REREADING_CAPTCHA)
-////                                            readCaptcha = false;
-////                                    } else
-////                                        readCaptcha = false;
-////                                } else {
-////                                    addToResultString("Error read captcha.", addTo.LogFileAndConsole);
-////                                    readCaptcha = false;
-////                                }
-////                            } catch (Exception e) {
-////                                if (MAX_COUNT_REREADING_CAPTCHA != -1 & ++conutReReadingCaptcha > MAX_COUNT_REREADING_CAPTCHA)
-////                                    readCaptcha = false;
-////                            }
-////                        }
-//////                        number = clearPhoneNumber(number);
-////                    }
-//
-//                    if (!number.isEmpty() & !number.contains("mid")) {
-//                        System.out.println(i);
-//                        Cell cell =row.getCell(1);
-//                        if (cell == null) cell = row.createCell(1);
-////                        cell.setCellType(Cell.CELL_TYPE_STRING);
-//                        cell.setCellValue(number);
-//                        workbook.write(new File("CORNKZ_all_3.xls"));
-//                    }
-
-                }
-            } catch (Exception e) {System.out.println(e.getMessage());
-            }finally {
-                try{workbook.write(new File("CORNKZ_all_4.xls"));}
-                catch (Exception e){
-                    System.out.println(e.getMessage());
-                }
-            }
-
 
         }
    }
@@ -205,8 +107,11 @@ public class Read_Cornkz {
 
     private static void readAllItemLinks(ArrayList<String> listPages, String givenLink) {
 
+//        driver_noGUI.setJavascriptEnabled(true);
+        USE_GUI = true;
+        startingWebDriver("");
 
-        String cssSelector_Items = "table.total a";
+        String cssSelector_Items = "div.ttl.fild a";
 
         List<WebElement> listItems;
         Boolean readPage = true;
@@ -218,12 +123,20 @@ public class Read_Cornkz {
 
                 if (MAX_COUNT_PAGES != -1 & countIteration++ >= MAX_COUNT_PAGES) break;
 
-                String linkOfPage = givenLink.concat(String.valueOf(212 - countIteration));
+                String linkOfPage = givenLink.concat("&page=").concat(String.valueOf(countIteration));
 
                 try {
-//                    addToResultString("Trying open page: ".concat(linkOfPage), addTo.LogFileAndConsole);
+                    addToResultString("Trying open page: ".concat(linkOfPage), addTo.LogFileAndConsole);
                     if (USE_GUI) driver.navigate().to(linkOfPage);
-                    else driver_noGUI.navigate().to(linkOfPage);
+                    else {
+//                        driver_noGUI.quit();
+//                        startingWebDriver(linkOfPage);
+                        driver_noGUI.setJavascriptEnabled(true);
+//                        driver_noGUI.get("http://www.ya.ru");
+                        driver_noGUI.navigate().to(linkOfPage);
+//                        driver_noGUI.get(linkOfPage);
+                        driver_noGUI.setJavascriptEnabled(false);
+                    }
                 } catch (Exception e) {
                     addToResultString("Can't open new page: ".concat(linkOfPage), addTo.LogFileAndConsole);
                     addToResultString(e.toString(), addTo.LogFileAndConsole);
@@ -242,7 +155,7 @@ public class Read_Cornkz {
                 for (WebElement elementGood : listItems) {
                     try {
                         String href = elementGood.getAttribute("href");
-                        if (href.contains("mid")) listPages.add(href);
+                        if(href.contains("product")) listPages.add(href);
                     } catch (Exception e) {
                         addToResultString("Error reading href : ".concat(e.toString()), addTo.LogFileAndConsole);
                     }
@@ -250,24 +163,26 @@ public class Read_Cornkz {
 
                 listItems.clear();
 
-                try {
-                    if (USE_GUI) {
-                        driver.manage().timeouts().implicitlyWait(5000, TimeUnit.MILLISECONDS);
+                /*try {
+                    if (driver!=null) {
+                        driver.manage().timeouts().implicitlyWait(15000, TimeUnit.MILLISECONDS);
                     } else {
 //                        driver_noGUI.setJavascriptEnabled(true);
-                        driver_noGUI.manage().timeouts().implicitlyWait(5000, TimeUnit.MILLISECONDS);
+//                        driver_noGUI.manage().timeouts().implicitlyWait(15000, TimeUnit.MILLISECONDS);
 //                        driver_noGUI.setJavascriptEnabled(false);
                     }
 
                 } catch (Exception e) {
                     readPage = false;
-                }
+                }*/
             }
 
-            addToResultString("All pages(".concat(Integer.toString(countIteration)).concat(") was reading"), addTo.LogFileAndConsole);
+            addToResultString("All pages(".concat(Integer.toString(--countIteration)).concat(") was reading(").concat(String.valueOf(listPages.size())).concat(")"), addTo.LogFileAndConsole);
         } catch (Exception e) {
             addToResultString("Error reading flipping page.", addTo.LogFileAndConsole);
         }
+//        driver_noGUI.setJavascriptEnabled(false);
+
     }
 
     // Reading description.
@@ -276,6 +191,8 @@ public class Read_Cornkz {
         try {
             addToResultString("Trying open page[".concat(countToLog).concat("]: ").concat(givenLink), addTo.LogFileAndConsole);
 
+            USE_GUI = false;
+            startingWebDriver("");
 
             if (USE_GUI) {
                 if (driver == null) startingWebDriver(givenLink);
@@ -300,95 +217,116 @@ public class Read_Cornkz {
             return;
         }
 
-        String cssSelector_Phone = "table.total img";
-        String cssSelector_Text = "table.total";
+        String cssSelector_LabelValue = "div.field span";
+        String cssSelector_Title = "h1.title";
 
-        String firmPhone = "";
-        String firmName = "";
+        String ceramicTitle = "";
+        String ceramicColection = "";
+        String ceramicUsed = "";
+        String ceramicStyle = "";
+        String ceramicColor = "";
+        String ceramicWidth = "";
+        String ceramicHight = "";
+        String ceramicPlace = "";
+        String ceramicCategory = "";
+        String ceramicSurface = "";
+        String ceramicPriceFor = "";
+        String ceramicTextured = "";
+        String ceramicRectified = "";
         String firmQuery = PROP_DISCRIPTION;
 
         try {
 
             if (USE_GUI) {
-                try {
-                    firmPhone = driver.findElement(By.cssSelector(cssSelector_Phone)).getAttribute("src");
-                } catch (Exception e) {
-                    firmPhone = "";
-                }
-                try {
-                    firmName = driver.findElement(By.cssSelector(cssSelector_Text)).getText();
-                } catch (Exception e) {
-                    firmName = "";
-                }
+//                try {
+//                    ceramicLabel = driver.findElement(By.cssSelector(cssSelector_Label)).getText();
+//                } catch (Exception e) {
+//                    ceramicLabel = "";
+//                }
+//                try {
+//                    ceramicValue = driver.findElement(By.cssSelector(cssSelector_Value)).getText();
+//                } catch (Exception e) {
+//                    ceramicValue = "";
+//                }
             } else {
                 try {
-                    firmPhone = driver_noGUI.findElement(By.cssSelector(cssSelector_Phone)).getAttribute("src");
+                    ceramicTitle = driver_noGUI.findElement(By.cssSelector(cssSelector_Title)).getText();
+                    List<WebElement> listElement = driver_noGUI.findElements(By.cssSelector(cssSelector_LabelValue));
+                    for (WebElement element : listElement) {
+                        switch (element.getText()) {
+                            case "Коллекция:":
+                                ceramicColection = listElement.get(listElement.indexOf(element) + 1).getText();
+                                break;
+                            case "Применение:":
+                                ceramicUsed = listElement.get(listElement.indexOf(element) + 1).getText();
+                                break;
+                            case "Стиль:":
+                                ceramicStyle = listElement.get(listElement.indexOf(element) + 1).getText();
+                                break;
+                            case "Цвет:":
+                                ceramicColor = listElement.get(listElement.indexOf(element) + 1).getText();
+                                break;
+                            case "Ширина:":
+                                ceramicWidth = listElement.get(listElement.indexOf(element) + 1).getText();
+                                break;
+                            case "Высота:":
+                                ceramicHight = listElement.get(listElement.indexOf(element) + 1).getText();
+                                break;
+                            case "Место в коллекции:":
+                                ceramicPlace = listElement.get(listElement.indexOf(element) + 1).getText();
+                                break;
+                            case "Категория:":
+                                ceramicCategory = listElement.get(listElement.indexOf(element) + 1).getText();
+                                break;
+                            case "Поверхность:":
+                                ceramicSurface = listElement.get(listElement.indexOf(element) + 1).getText();
+                                break;
+                            case "Цена за:":
+                                ceramicPriceFor = listElement.get(listElement.indexOf(element) + 1).getText();
+                                break;
+                            case "Фактура плитки:":
+                                ceramicTextured = listElement.get(listElement.indexOf(element) + 1).getText();
+                                break;
+                            case "Ректифицированная:":
+                                ceramicRectified = listElement.get(listElement.indexOf(element) + 1).getText();
+                                break;
+
+                        }
+                    }
                 } catch (Exception e) {
-                    firmPhone = "";
+//                    ceramicLabel = "";
                 }
-                try {
-                    firmName = driver_noGUI.findElement(By.cssSelector(cssSelector_Text)).getText();
-                    firmName = new String(firmName.substring(firmName.lastIndexOf("контактное лицо:")+16)).trim();
-                } catch (Exception e) {
-                    firmName = "";
-                }
+
             }
         } catch (Exception e) {
             addToResultString("Element not found: ".concat(e.toString()), addTo.LogFileAndConsole);
         } finally {
 
-            File tmpFile;
-            String imagePath;
-            try {
-                tmpFile = File.createTempFile("image_", ".png");
-                BufferedImage image = null;
-                URL url = new URL(firmPhone);
-                image = ImageIO.read(url);
-                if (image != null) {
-
-                    ImageIO.write(image, "png", tmpFile);
-                }
-                imagePath = tmpFile.getAbsolutePath();
-            } catch (Exception e) {imagePath="";}
-
-            int MAX_COUNT_REREADING_CAPTCHA = 3;
-
-            if (NEED_PHONENUMBER & !imagePath.isEmpty()) {
-                int conutReReadingCaptcha = 0;
-                Boolean readCaptcha = true;
-                while (readCaptcha) {
-                    try {
-                        AntiCaptcha antiCaptcha = new AntiCaptcha(imagePath); // "D:\\Temp\\avito_phonenumber.png"
-                        if (antiCaptcha.getCaptchaStatus()) {
-                            firmPhone = antiCaptcha.getCaptchaText();
-                            if (firmPhone.equals(RuCaptcha.Responses.ERROR_NO_SLOT_AVAILABLE.toString())) {
-                                if (MAX_COUNT_REREADING_CAPTCHA != -1 & ++conutReReadingCaptcha > MAX_COUNT_REREADING_CAPTCHA) readCaptcha = false;
-                            } else
-                                readCaptcha = false;
-                        } else {
-                            addToResultString("Error read captcha.", addTo.LogFileAndConsole);
-                            readCaptcha = false;
-                        }
-                    } catch (Exception e) {
-                        if (MAX_COUNT_REREADING_CAPTCHA != -1 & ++conutReReadingCaptcha > MAX_COUNT_REREADING_CAPTCHA) readCaptcha = false;
-                    }
-                }
-                firmPhone = clearPhoneNumber(firmPhone);
-            }
 
             String[] toList = {"0",
-                    firmName,           // 1
-                    firmPhone,          // 2
-                    givenLink,          // 3
-                    firmQuery};         // 4
-            if (!firmPhone.isEmpty()) dataToBase.add(toList);
+                    ceramicTitle,           // 1
+                    ceramicColection,           // 1
+                    ceramicUsed,          // 2
+                    ceramicStyle,          // 3
+                    ceramicColor,          // 4
+                    ceramicWidth,          // 5
+                    ceramicHight,          // 6
+                    ceramicPlace,          // 7
+                    ceramicCategory,          // 8
+                    ceramicSurface,          // 9
+                    ceramicPriceFor,          // 10
+                    ceramicTextured,          // 11
+                    ceramicRectified,          // 12
+                    firmQuery,          // 13
+                    givenLink};         // 15
+            if (!ceramicTitle.isEmpty()) dataToBase.add(toList);
         }
     }
 
     // Start new WebDriver.
     private static void startingWebDriver(String givenURL) {
 
-        String proxyString = getRandomProxy();
+        String proxyString = "";//getRandomProxy();
 
         FirefoxProfile profile = new FirefoxProfile();
         profile.setPreference("browser.download.manager.alertOnEXEOpen", false);
@@ -413,16 +351,24 @@ public class Read_Cornkz {
         profile.setPreference("services.sync.prefs.sync.browser.download.manager.showWhenStarting", false);
         profile.setPreference("pdfjs.disabled", true);
 
-        //userAgent = "Mozilla/5.0 (Linux; U; Android 2.3.3; en-us; sdk Build/GRI34) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1";
+//        userAgent = "Mozilla/5.0 (Linux; U; Android 2.3.3; en-us; sdk Build/GRI34) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1";
 
         try {
 
-            addToResultString("Trying start new WebDriver(HtmlUnit)", addTo.LogFileAndConsole);
             if (USE_GUI) {
+                if (driver_noGUI!=null) driver_noGUI.quit();
+                addToResultString("Trying start new FireDriver", addTo.LogFileAndConsole);
                 driver = new FirefoxDriver(profile);
+                driver.manage().timeouts().implicitlyWait(60000, TimeUnit.MILLISECONDS);
             } else {
+                if (driver!=null) driver.quit();
+                addToResultString("Trying start new WebDriver(HtmlUnit)", addTo.LogFileAndConsole);
                 driver_noGUI = new HtmlUnitDriver(BrowserVersion.FIREFOX_38);
                 driver_noGUI.getBrowserVersion().setUserAgent(userAgent);
+                driver_noGUI.manage().timeouts().implicitlyWait(60000, TimeUnit.MILLISECONDS);
+//                driver_noGUI.setJavascriptEnabled(true);
+                if (!givenURL.isEmpty()) driver_noGUI.get(givenURL);
+
             }
 
         } catch (Exception e) {
@@ -502,14 +448,12 @@ public class Read_Cornkz {
         int countOfRecords = 0;
         int countOfUpdate = 0;
         int countOfNewRecords = 0;
-//        int MAX_RECORDS_FOR_INSERT = 50;
 
         java.sql.Date dateToQuery;
 
-        String query_writeNewRecords_prefix = "INSERT INTO general.".concat(shopName.name()).concat(" (date, name, phone, link, query)").concat(" VALUES ");
-        String query_writeNewRecords_suffix = " ON DUPLICATE KEY UPDATE date=VALUES(date), name=VALUES(name), link=VALUES(link), query=VALUES(query);";
+        String query_writeNewRecords_prefix = "INSERT INTO general.".concat(shopName.name()).concat(" (date, title, colection, used, style, color, width, hight, place, category, surface, pricefor, textured, rectified, query, link)").concat(" VALUES ");
+        String query_writeNewRecords_suffix = " ON DUPLICATE KEY UPDATE date=VALUES(date), colection=VALUES(colection), used=VALUES(used), style=VALUES(style), color=VALUES(color), width=VALUES(width), hight=VALUES(hight), place=VALUES(place), category=VALUES(category), surface=VALUES(surface), pricefor=VALUES(pricefor), textured=VALUES(textured), rectified=VALUES(rectified), query=VALUES(query), link=VALUES(link);";
         String query_writeNewRecords = query_writeNewRecords_prefix;
-
 
         addToResultString("Start record into base.", addTo.LogFileAndConsole);
 
@@ -528,7 +472,18 @@ public class Read_Cornkz {
                     stringToBase[1] + "', '" +
                     stringToBase[2] + "', '" +
                     stringToBase[3] + "', '" +
-                    stringToBase[4] + "') ");
+                    stringToBase[4] + "', '" +
+                    stringToBase[5] + "', '" +
+                    stringToBase[6] + "', '" +
+                    stringToBase[7] + "', '" +
+                    stringToBase[8] + "', '" +
+                    stringToBase[9] + "', '" +
+                    stringToBase[10] + "', '" +
+                    stringToBase[11] + "', '" +
+                    stringToBase[12] + "', '" +
+                    stringToBase[13] + "', '" +
+                    stringToBase[14] + "', '" +
+                    stringToBase[15] + "') ");
 
             if (countOfRecords % BLOCK_RECORDS_TO_BASE == 0) {
                 query_writeNewRecords = query_writeNewRecords.concat(query_writeNewRecords_suffix);
@@ -565,28 +520,5 @@ public class Read_Cornkz {
         return givenPrice;
     }
 
-    private static String getRandomProxy() {
-
-        String resultString;
-
-        if (PROP_PROXY.equalsIgnoreCase("FOXTOOLS")) {
-            GetPost getHtmlData = new GetPost();
-            try {
-                resultString = getHtmlData.sendGet("http://api.foxtools.ru/v2/Proxy.txt?cp=UTF-8&lang=RU&type=HTTPS&anonymity=All&available=Yes&free=Yes&limit=100&uptime=2&country=ru");
-            } catch (Exception e) {
-                resultString = "";
-//                e.printStackTrace();
-            }
-
-        } else resultString = "";
-
-        if (!resultString.isEmpty()) {
-            String[] proxyList = resultString.split(";");
-            Random r = new Random();
-            resultString = proxyList[r.nextInt(proxyList.length - 2) + 1];
-        }
-
-        return resultString;
-    }
 }
 

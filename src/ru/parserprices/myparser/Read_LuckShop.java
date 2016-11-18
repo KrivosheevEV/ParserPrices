@@ -8,6 +8,8 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.sql.SQLException;
@@ -35,6 +37,7 @@ public class Read_LuckShop {
     private static int START_RECORDS_WITH = PROP_START_RECORD_IN;
     private static int FINISH_RECORDS_IN = PROP_FINISH_RECORD_IN;
     private static File parentDirectory;
+    private static String category;
 
     public static class ReadLuckShop {
 
@@ -42,24 +45,30 @@ public class Read_LuckShop {
 
             dataToPrice = new ArrayList<String[]>();
 
-            parentDirectory = new File("/home/clLuckShop");
+            parentDirectory = new File("/home/clLuckShop/Prices");
             File fileResult = new File(parentDirectory.getAbsolutePath().concat("/ResultPrice.csv"));
             if (!parentDirectory.isDirectory()) return;
-            for (File file : parentDirectory.listFiles()){
-                if (file.isDirectory()) continue;
-                String fileName = file.getName();
-                if (fileName.lastIndexOf(".") == -1 || fileName.lastIndexOf(".") == 0) continue;
-                String fileExtention = fileName.substring(fileName.lastIndexOf(".") + 1);
-                switch (fileExtention){
-                    case "xls": readXLSToArray(file); addDataToResultPrice(fileResult.getAbsolutePath()); break;
-                    //case "xlsx": readXLSToArray(file); break;
+            for (File dir1 : parentDirectory.listFiles()){
+                if (!dir1.isDirectory()) continue;
+                for (File dir2 : dir1.listFiles()) {
+                    if (!dir2.isDirectory()) continue;
+                    for (File file : dir2.listFiles()) {
+                        if (!file.isFile()) continue;
+                        category = dir2.getName();
+                        String fileName = file.getName();
+                        if (fileName.lastIndexOf(".") == -1 || fileName.lastIndexOf(".") == 0) continue;
+                        String fileExtention = fileName.substring(fileName.lastIndexOf(".") + 1);
+                        switch (fileExtention) {
+                            case "xls":
+                                readXLSToArray(file);
+                                addDataToResultPrice(fileResult.getAbsolutePath());
+                                break;
+                            //case "xlsx": readXLSToArray(file); break;
 
+                        }
+                    }
                 }
             }
-
-
-
-
         }
    }
 
@@ -75,7 +84,7 @@ public class Read_LuckShop {
         }
 
         int[] accordCells = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-        //                              0row, 1col, 2uniqe text,       3name,         4row start, 5col image
+        //                              0row, 1col, 2uniqe text,     3name,         4row start, 5col image
         String[][] findParentPrice = {{"0", "3", "patskan-time.ru", "patskantime", "10", "1"}};
         int startRow = 0;
         int pictureColumn = 0;
@@ -136,9 +145,10 @@ public class Read_LuckShop {
                 if (countOfRows++ < startRow) continue;
                 int countCols = 0;
                 lineToPrice = new String[18];
+                lineToPrice[0] = category;
                 for (int col : accordCells
                         ) {
-                    if (col == 0) {
+                    if (col == 0 & countCols != 0) {
                         lineToPrice[countCols] = "";
                         countCols++;
                         continue;
@@ -149,21 +159,21 @@ public class Read_LuckShop {
                     }
                     Cell cell = row.getCell(col);
                     if(cell == null) continue;;
-                    int cellType = cell.getCellType();
-                    switch (cellType) {
-                        case Cell.CELL_TYPE_STRING:
-                            lineToPrice[countCols] = cell.getStringCellValue();
-                            break;
-                        case Cell.CELL_TYPE_NUMERIC:
-                            lineToPrice[countCols] = String.valueOf(cell.getNumericCellValue());
-                            break;
-                        case Cell.CELL_TYPE_FORMULA:
-                            lineToPrice[countCols] = String.valueOf(cell.getNumericCellValue());
-                            break;
-                        default:
-                            lineToPrice[countCols] = "";
-                            break;
-                    }
+//                    int cellType = cell.getCellType();
+//                    switch (cellType) {
+//                        case Cell.CELL_TYPE_STRING:
+//                            lineToPrice[countCols] = cell.getStringCellValue();
+//                            break;
+//                        case Cell.CELL_TYPE_NUMERIC:
+//                            lineToPrice[countCols] = String.valueOf(cell.getNumericCellValue());
+//                            break;
+//                        case Cell.CELL_TYPE_FORMULA:
+//                            lineToPrice[countCols] = String.valueOf(cell.getNumericCellValue());
+//                            break;
+//                        default:
+//                            lineToPrice[countCols] = "";
+//                            break;
+//                    }
                     countCols++;
                 }
                 dataToPrice.add(lineToPrice);
@@ -202,11 +212,13 @@ public class Read_LuckShop {
              ) {
             result = result.concat(element.concat(givenSeparator));
         }
-        byte [] b_strutf;
         String result_c = "";
         try {
-            b_strutf = result.getBytes("cp1251");
-            result_c = new String (b_strutf, "cp1251");
+//            result_c = new String (result.getBytes("UTF-8"), "UTF-8"); //Cp1251 UTF-8
+            Charset cset = Charset.forName("UTF8");
+            ByteBuffer buf = cset.encode(result);
+            byte[] b = buf.array();
+            result_c = new String(b);
         }catch (Exception e){/**/}
         return result_c;
     }

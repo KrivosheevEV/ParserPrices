@@ -2,13 +2,9 @@ package ru.parserprices.myparser;
 
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
-
-import javax.net.ssl.HttpsURLConnection;
 
 public class MainParsingPrices {
 
@@ -92,6 +88,10 @@ public class MainParsingPrices {
             new Read_Cornkz.ReadCornkz(PROP_URL);
         }else if(shopName == shopNames.LUCKSHOP){
             new Read_LuckShop.ReadLuckShop();
+        }else if(shopName == shopNames.YOUTUBE){
+            new Watch_Youtube.WatchMyYoutube();
+        }else if(shopName == shopNames.CERAMTRADE){
+            new Read_CeramTrade.ReadCeramTrade(PROP_URL);
         }else{
             ReadSites readSites = new ReadSites();
             readSites.ReadSite(shopName);
@@ -127,6 +127,8 @@ public class MainParsingPrices {
         /*try(InputStream in = new URL("http://example.com/image.jpg").openStream()){
             Files.copy(in, Paths.get("C:/File/To/Save/To/image.jpg"));
         }*/
+        addToResultString("Finish.",  addTo.logFile);
+
     }
 
     private static void setShop(String argumentValue){
