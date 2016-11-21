@@ -1,7 +1,7 @@
 <component name="libraryTable">
-  <library name="poi-3.13">
+  <library name="RuCaptchaAPI-0.61">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/poi-3.13.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/RuCaptchaAPI-0.6.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

@@ -92,6 +92,8 @@ public class MainParsingPrices {
             new Watch_Youtube.WatchMyYoutube();
         }else if(shopName == shopNames.CERAMTRADE){
             new Read_CeramTrade.ReadCeramTrade(PROP_URL);
+        }else if(shopName == shopNames.FINDEMAILS){
+            new Find_Emails.FindEmails(PROP_URL);
         }else{
             ReadSites readSites = new ReadSites();
             readSites.ReadSite(shopName);

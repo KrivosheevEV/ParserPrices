@@ -1,11 +1,6 @@
 package ru.parserprices.myparser;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
-import net.marketer.RuCaptcha;
-import org.apache.poi.hssf.usermodel.HSSFRow;
-import org.apache.poi.hssf.usermodel.HSSFSheet;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Cell;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -13,19 +8,12 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
-import javax.imageio.ImageIO;
-import javax.lang.model.util.Elements;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileInputStream;
-import java.net.URL;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import static ru.parserprices.myparser.MainParsingPrices.*;
@@ -34,11 +22,11 @@ import static sun.net.www.protocol.http.HttpURLConnection.userAgent;
 /**
  * Created by vnc on 10/22/16.
  */
-public class Read_CeramTrade {
+public class Find_Emails {
 
     private static HtmlUnitDriver driver_noGUI;
     private static WebDriver driver;
-    private static ArrayList<String> listPages;
+    private static ArrayList<String> listPages, listEmails;
     private static ArrayList<String[]> dataToBase;
     private static int MAX_COUNT_PAGES = 5; //309
     private static int MAX_COUNT_ITEMS = -1;
@@ -48,54 +36,85 @@ public class Read_CeramTrade {
     private static int BLOCK_RECORDS_TO_BASE = 15;
     private static int START_RECORDS_WITH = PROP_START_RECORD_IN;
     private static int FINISH_RECORDS_IN = PROP_FINISH_RECORD_IN;
-    private static boolean USE_GUI = true;
+    private static boolean USE_GUI = false;
 //    private static boolean NEED_PHONENUMBER = true;
 
-    public static class ReadCeramTrade {
+    public static class FindEmails {
 
-        public ReadCeramTrade(String givenURL) {
+        public FindEmails(String givenURL) {
 
             int countIteration = 0;
 
             ArrayList<String> listPages = new ArrayList<String>();
+            ArrayList<String> listEmails = new ArrayList<String>();
             ArrayList<String[]> dataToBase = new ArrayList<String[]>();
 
-            if (!PROP_SUBCATEGORIES1.equalsIgnoreCase("NO")) {
-                String[] listSubcategories = PROP_SUBCATEGORIES1.split("|");
-                for (String link : listSubcategories) {
-                    readAllItemLinks(listPages, link);
-                }
-            } else if (!PROP_CATEGORY1.equalsIgnoreCase("NO")) {
-                readAllItemLinks(listPages, givenURL.concat("/").concat(PROP_CATEGORY1));
-            } else readAllItemLinks(listPages, givenURL);
+            List<WebElement> listItems;
+            String cssSelector_Items = "a";
+            String sourceHTML = "";
 
-            if (listPages.size() != 0) {
-                for (String linkOfItem : listPages) {
 
-                    if (listPages.indexOf(linkOfItem) + 1 < START_RECORDS_WITH) continue;
-                    countIteration++;
 
-                    String countToLog = String.valueOf(listPages.indexOf(linkOfItem) + 1).concat("/").concat(String.valueOf(listPages.size()));
-                    USE_GUI = false;
-                    startingWebDriver("");
-                    driver_noGUI.setJavascriptEnabled(false);
-                    readItemDiscription(dataToBase, linkOfItem, countToLog);
+            startingWebDriver("");
 
-                    if (countIteration % BLOCK_RECORDS_TO_BASE == 0) {
-                        addToResultString("Writing data in base..", addTo.LogFileAndConsole);
-                        writeDataIntoBase(dataToBase, countIteration - BLOCK_RECORDS_TO_BASE);
-                        addToResultString("Sum records (".concat(String.valueOf(dataToBase.size())).concat(") added into base."), addTo.LogFileAndConsole);
-                    }
+            if (USE_GUI) driver.get(givenURL);
+            else driver_noGUI.get(givenURL);
 
-                    if (FINISH_RECORDS_IN != -1 & countIteration > FINISH_RECORDS_IN) break;
-//                    if (MAX_COUNT_ITEMS != -1 & countIteration >= MAX_COUNT_ITEMS) break;
-                }
-                if (countIteration % BLOCK_RECORDS_TO_BASE != 0) {
-                    addToResultString("Writing data in base..", addTo.LogFileAndConsole);
-                    writeDataIntoBase(dataToBase, countIteration - BLOCK_RECORDS_TO_BASE);
-                    addToResultString("Sum records (".concat(String.valueOf(dataToBase.size())).concat(") added into base."), addTo.LogFileAndConsole);
+            if (USE_GUI) listItems = driver.findElements(By.cssSelector(cssSelector_Items));
+            else listItems = driver_noGUI.findElements(By.cssSelector(cssSelector_Items));
+
+            for (WebElement elementGood : listItems) {
+                try {
+                    String href = elementGood.getAttribute("href");
+                    if(!href.isEmpty()) listPages.add(href);
+                } catch (Exception e) {
+                    addToResultString("Error reading href : ".concat(e.toString()), addTo.LogFileAndConsole);
                 }
             }
+
+            for(String link : listPages){
+                if (USE_GUI) {
+                    driver.get(link);
+                    sourceHTML = driver.getPageSource();
+                }
+                else {
+                    driver_noGUI.get(link);
+                    sourceHTML = driver_noGUI.getPageSource();
+                }
+
+                int countEmails=sourceHTML.split("@").length-1;
+                if (sourceHTML.isEmpty() || countEmails==0) continue;
+
+                String prefixEmail = "", suffixEmail = "";
+                int firstIndexAT = 0;
+
+                for (int i=1; i<countEmails; i++){
+                    firstIndexAT = sourceHTML.indexOf("@", firstIndexAT);
+//                    for (int leftIndex = firstIndexAT; leftIndex>firstIndexAT-50; leftIndex--){
+//                        char letter = sourceHTML.charAt(leftIndex);
+//                        int code = letter;
+//                        if ((code>48 & code<57) || (code>65 & code<90) || (code>97 & code<121)){
+//                            prefixEmail = letter + prefixEmail;
+//                        }else leftIndex = firstIndexAT-50;
+//                    }
+//                    for (int rightIndex = firstIndexAT; rightIndex<firstIndexAT+50; rightIndex++){
+//                        char letter = sourceHTML.charAt(rightIndex);
+//                        int code = letter;
+//                        if ((code>48 & code<57) || (code>65 & code<90) || (code>97 & code<121)){
+//                            suffixEmail = suffixEmail + letter;
+//                        }else rightIndex = firstIndexAT+50;
+//                    }
+//                    if (!prefixEmail.isEmpty() & !suffixEmail.isEmpty())
+//                        System.out.println(prefixEmail.concat("@").concat(suffixEmail));
+                    System.out.println(new String(sourceHTML.substring(firstIndexAT-15, firstIndexAT+15)));
+                }
+
+            }
+
+
+
+
+
 
             dataToBase = new ArrayList<String[]>();
 
@@ -104,7 +123,11 @@ public class Read_CeramTrade {
 //            driver_noGUI.close();
 
         }
+
+
    }
+
+
 
 
     private static void readAllItemLinks(ArrayList<String> listPages, String givenLink) {

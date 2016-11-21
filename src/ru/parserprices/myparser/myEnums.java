@@ -19,7 +19,8 @@ enum shopNames{
     CORNKZ,
     LUCKSHOP,
     YOUTUBE,
-    CERAMTRADE
+    CERAMTRADE,
+    FINDEMAILS
 }
 
 enum shopCities{
