@@ -86,14 +86,14 @@ public class MainParsingPrices {
             new Read_2Gis.Read2Gis(PROP_URL);
         }else if(shopName == shopNames.CORNKZ){
             new Read_Cornkz.ReadCornkz(PROP_URL);
-        }else if(shopName == shopNames.LUCKSHOP){
-            new Read_LuckShop.ReadLuckShop();
         }else if(shopName == shopNames.YOUTUBE){
             new Watch_Youtube.WatchMyYoutube();
         }else if(shopName == shopNames.CERAMTRADE){
             new Read_CeramTrade.ReadCeramTrade(PROP_URL);
         }else if(shopName == shopNames.FINDEMAILS){
             new Find_Emails.FindEmails(PROP_URL);
+        }else if(shopName == shopNames.GLOBUSTUTBY){
+            new Read_GlobusTutBy.ReadGlobusTutBy(PROP_URL);
         }else{
             ReadSites readSites = new ReadSites();
             readSites.ReadSite(shopName);

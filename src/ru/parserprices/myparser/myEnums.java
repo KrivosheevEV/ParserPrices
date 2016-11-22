@@ -17,10 +17,10 @@ enum shopNames{
     AVITO,
     GIS,
     CORNKZ,
-    LUCKSHOP,
     YOUTUBE,
     CERAMTRADE,
-    FINDEMAILS
+    FINDEMAILS,
+    GLOBUSTUTBY
 }
 
 enum shopCities{
