@@ -41,7 +41,7 @@ public class Find_Emails {
 
     public static class FindEmails {
 
-        public FindEmails(String givenURL) {
+        public ArrayList<String> FindEmails(String givenURLs) {
 
             int countIteration = 0;
 
@@ -53,80 +53,104 @@ public class Find_Emails {
             String cssSelector_Items = "a";
             String sourceHTML = "";
 
-
+            if (givenURLs.isEmpty()) return listEmails;
 
             startingWebDriver("");
 
-            if (USE_GUI) driver.get(givenURL);
-            else driver_noGUI.get(givenURL);
+            for (String givenURL:givenURLs.split(",")
+                 ) {
 
-            if (USE_GUI) listItems = driver.findElements(By.cssSelector(cssSelector_Items));
-            else listItems = driver_noGUI.findElements(By.cssSelector(cssSelector_Items));
+                if (USE_GUI) driver.get(givenURL);
+                else driver_noGUI.get(givenURL);
 
-            for (WebElement elementGood : listItems) {
-                try {
-                    String href = elementGood.getAttribute("href");
-                    if(!href.isEmpty()) listPages.add(href);
-                } catch (Exception e) {
-                    addToResultString("Error reading href : ".concat(e.toString()), addTo.LogFileAndConsole);
+                if (USE_GUI) listItems = driver.findElements(By.cssSelector(cssSelector_Items));
+                else listItems = driver_noGUI.findElements(By.cssSelector(cssSelector_Items));
+
+                for (WebElement elementGood : listItems) {
+                    try {
+                        String href = elementGood.getAttribute("href");
+                        if(!href.isEmpty() & !listPages.contains(href)) listPages.add(href);
+                    } catch (Exception e) {
+//                        addToResultString("Error reading href : ".concat(e.toString()), addTo.LogFileAndConsole);
+                    }
+                }
+
+                for(String link : listPages){
+                    try {
+                        if (USE_GUI) {
+                            driver.get(link);
+                            sourceHTML = driver.getPageSource();
+                        }
+                        else {
+                            driver_noGUI.get(link);
+                            sourceHTML = driver_noGUI.getPageSource();
+                        }
+                    }catch (Exception e){
+                        continue;
+                    }
+
+                    int countEmails=sourceHTML.split("@").length-1;
+                    if (sourceHTML.isEmpty() || countEmails==0) continue;
+
+                    String prefixEmail = "", suffixEmail = "";
+                    int firstIndexAT = 0;
+
+                    for (int i=1; i<countEmails; i++){
+                        firstIndexAT = sourceHTML.indexOf("@", firstIndexAT);
+
+                        for (int leftIndex = firstIndexAT; leftIndex>(firstIndexAT-25); leftIndex--){
+                            char letter = sourceHTML.charAt(leftIndex-1);
+                            int code = letter;
+                            if (code==95 || code==64 || code==46 || (code>=48 & code<=57) || (code>=65 & code<=90) || (code>=97 & code<=122)){
+                                prefixEmail = letter + prefixEmail;
+                            }else leftIndex = firstIndexAT-25;
+                        }
+                        for (int rightIndex = firstIndexAT; rightIndex<(firstIndexAT+25); rightIndex++){
+                            char letter = sourceHTML.charAt(rightIndex+1);
+                            int code = letter;
+                            if (code==95 || code==64 || code==46 || (code>=48 & code<=57) || (code>=65 & code<=90) || (code>=97 & code<=122)){
+                                suffixEmail = suffixEmail + letter;
+                            }else rightIndex = firstIndexAT+25;
+                        }
+
+                        while (prefixEmail.startsWith(".")) prefixEmail = new String(prefixEmail.substring(1));
+                        while (suffixEmail.endsWith(".")) suffixEmail = new String(suffixEmail.substring(0,suffixEmail.length()-1));
+                        String email = !prefixEmail.isEmpty() & !suffixEmail.isEmpty() ? prefixEmail.concat("@").concat(suffixEmail).trim() : "";
+                        prefixEmail = ""; suffixEmail = "";
+                        if (email.length()>1 & email.contains("."))
+                            if (!listEmails.contains(email) & !itsExclusionEmail(email)) listEmails.add(email);
+
+//                    System.out.println(new String(sourceHTML.substring(firstIndexAT-15, firstIndexAT+15)));
+                    }
+
                 }
             }
 
-            for(String link : listPages){
-                if (USE_GUI) {
-                    driver.get(link);
-                    sourceHTML = driver.getPageSource();
-                }
-                else {
-                    driver_noGUI.get(link);
-                    sourceHTML = driver_noGUI.getPageSource();
-                }
 
-                int countEmails=sourceHTML.split("@").length-1;
-                if (sourceHTML.isEmpty() || countEmails==0) continue;
 
-                String prefixEmail = "", suffixEmail = "";
-                int firstIndexAT = 0;
-
-                for (int i=1; i<countEmails; i++){
-                    firstIndexAT = sourceHTML.indexOf("@", firstIndexAT);
-//                    for (int leftIndex = firstIndexAT; leftIndex>firstIndexAT-50; leftIndex--){
-//                        char letter = sourceHTML.charAt(leftIndex);
-//                        int code = letter;
-//                        if ((code>48 & code<57) || (code>65 & code<90) || (code>97 & code<121)){
-//                            prefixEmail = letter + prefixEmail;
-//                        }else leftIndex = firstIndexAT-50;
-//                    }
-//                    for (int rightIndex = firstIndexAT; rightIndex<firstIndexAT+50; rightIndex++){
-//                        char letter = sourceHTML.charAt(rightIndex);
-//                        int code = letter;
-//                        if ((code>48 & code<57) || (code>65 & code<90) || (code>97 & code<121)){
-//                            suffixEmail = suffixEmail + letter;
-//                        }else rightIndex = firstIndexAT+50;
-//                    }
-//                    if (!prefixEmail.isEmpty() & !suffixEmail.isEmpty())
-//                        System.out.println(prefixEmail.concat("@").concat(suffixEmail));
-                    System.out.println(new String(sourceHTML.substring(firstIndexAT-15, firstIndexAT+15)));
-                }
-
+            for (String email_:listEmails
+                    ) {
+                System.out.println(email_);
             }
 
-
-
-
-
-
-            dataToBase = new ArrayList<String[]>();
 
             if (USE_GUI) driver.close();
             else driver_noGUI.close();
 //            driver_noGUI.close();
 
+            return listEmails;
         }
 
 
    }
 
+    private static Boolean itsExclusionEmail(String givenEmail){
+
+        ArrayList<String> exclusionArray = new ArrayList<String>();
+        exclusionArray.add("Rating@Mail.ru".toUpperCase());
+
+        return exclusionArray.contains(givenEmail.toUpperCase());
+    }
 
 
 

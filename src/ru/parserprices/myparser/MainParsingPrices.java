@@ -91,7 +91,7 @@ public class MainParsingPrices {
         }else if(shopName == shopNames.CERAMTRADE){
             new Read_CeramTrade.ReadCeramTrade(PROP_URL);
         }else if(shopName == shopNames.FINDEMAILS){
-            new Find_Emails.FindEmails(PROP_URL);
+            new Find_Emails.FindEmails().FindEmails(PROP_URL);
         }else if(shopName == shopNames.GLOBUSTUTBY){
             new Read_GlobusTutBy.ReadGlobusTutBy(PROP_URL);
         }else{
