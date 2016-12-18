@@ -556,8 +556,10 @@ public class Read_GlobusTutBy {
 
             channel.appendChild(doc.createElement("generator")).setTextContent("https://wordpress.org/?v=4.6.1");
 
+            int countOfItems=0;
             while (resultSet.next()) {
-//                String imageLink = resultSet.getURL("imageLink").getFile();
+//              String imageLink = resultSet.getURL("imageLink").getFile();
+                countOfItems++;
 
                 Element item = doc.createElement("item");
 
@@ -567,32 +569,74 @@ public class Read_GlobusTutBy {
                 title.setTextContent(titleValue!=null?titleValue:"_noTitleValue_".concat("; ").concat(placeValue!=null?placeValue:"_noPlaceValue_"));
                 item.appendChild(title);
 
-                Element dcCreator = doc.createElement("dc:creator");
-                dcCreator.appendChild(doc.createCDATASection("alexey"));
-                item.appendChild(dcCreator);
+                item.appendChild(doc.createElement("link")).setTextContent("http://way.by");
+                item.appendChild(doc.createElement("pubDate")).setTextContent("Wed, 02 Nov 2016 11:25:25 +0000");
+                item.appendChild(doc.createElement("dc:creator")).appendChild(doc.createCDATASection("alexey"));
+                Element guid = doc.createElement("guid");
+                guid.setAttribute("isPermaLink", "false");
+                item.appendChild(guid).setTextContent("http://wb.magworks.ru/listing/".concat(String.valueOf(countOfItems)));
+                item.appendChild(doc.createElement("description")). setTextContent(" ");
 
                 String descriptionValue = resultSet.getString("description");
                 Element contentEncoded = doc.createElement("content:encoded");
                 contentEncoded.appendChild(doc.createCDATASection(descriptionValue!=null&!descriptionValue.isEmpty()?descriptionValue:" "));
                 item.appendChild(contentEncoded);
 
-                //<category domain="listing_category" nicename="dostoprimechatelnosti"></category>
+                item.appendChild(doc.createElement("excerpt:encoded")).appendChild(doc.createCDATASection(" "));
+                item.appendChild(doc.createElement("wp:post_id")).appendChild(doc.createCDATASection(String.valueOf(6000+countOfItems)));
+                item.appendChild(doc.createElement("wp:post_date")).appendChild(doc.createCDATASection("2015-11-12 07:19:21"));
+                item.appendChild(doc.createElement("wp:post_date_gmt")).appendChild(doc.createCDATASection("2015-11-12 07:19:21"));
+                item.appendChild(doc.createElement("wp:comment_status")).appendChild(doc.createCDATASection("closed"));
+                item.appendChild(doc.createElement("wp:ping_status")).appendChild(doc.createCDATASection("closed"));
+                item.appendChild(doc.createElement("wp:post_name")).appendChild(doc.createCDATASection("item_".concat(String.valueOf(countOfItems))));
+                item.appendChild(doc.createElement("wp:status")).appendChild(doc.createCDATASection("publish"));
+                item.appendChild(doc.createElement("wp:post_parent")).setTextContent("0");
+                item.appendChild(doc.createElement("wp:menu_order")).setTextContent("0");
+                item.appendChild(doc.createElement("wp:post_type")).appendChild(doc.createCDATASection("lv_listing"));
+                item.appendChild(doc.createElement("wp:post_password")).appendChild(doc.createCDATASection(" "));
+                item.appendChild(doc.createElement("wp:is_sticky")).setTextContent("0");
 
-                Element category = doc.createElement("category");
-                category.setAttribute("domain", "listing_category");
-                category.appendChild(doc.createCDATASection("Достопримечательности"));
-                item.appendChild(category);
 
                 String objectValue = resultSet.getString("object");
                 if (objectValue!=null){
                     String[] ar = objectValue.split(",");
-                    for (String obj: ar
-                         ) {
-                        Element categoryLocation = doc.createElement("category");
-                        categoryLocation.setAttribute("domain", "listing_location");
-                        categoryLocation.appendChild(doc.createCDATASection(obj.trim()));
-                        item.appendChild(categoryLocation);
-                    }
+
+                    Element categoryLocation1 = doc.createElement("category");
+                    categoryLocation1.setAttribute("domain", "listing_location");
+                    categoryLocation1.setAttribute("nicename", "location1_".concat(String.valueOf(countOfItems)));
+                    categoryLocation1.appendChild(doc.createCDATASection(ar[1].trim()));
+                    item.appendChild(categoryLocation1);
+
+                    Element category1 = doc.createElement("category");
+                    category1.setAttribute("domain", "listing_category");
+                    category1.setAttribute("nicename", "dostoprimechatelnosti");
+                    category1.appendChild(doc.createCDATASection("Достопримечательности"));
+                    item.appendChild(category1);
+
+                    Element category2 = doc.createElement("category");
+                    category2.setAttribute("domain", "listing_category");
+                    category2.setAttribute("nicename", "zamki-i-dvortsy");
+                    category2.appendChild(doc.createCDATASection("Замки и дворцы"));
+                    item.appendChild(category2);
+
+                    Element categoryKeyword = doc.createElement("category");
+                    categoryKeyword.setAttribute("domain", "listing_keyword");
+                    categoryKeyword.setAttribute("nicename", "zamok");
+                    categoryKeyword.appendChild(doc.createCDATASection("замок"));
+                    item.appendChild(categoryKeyword);
+
+                    Element categoryLocation2 = doc.createElement("category");
+                    categoryLocation2.setAttribute("domain", "listing_location");
+                    categoryLocation2.setAttribute("nicename", "location2_".concat(String.valueOf(countOfItems)));
+                    categoryLocation2.appendChild(doc.createCDATASection(ar[0].trim()));
+                    item.appendChild(categoryLocation2);
+
+                    Element categoryAmnities = doc.createElement("category");
+                    categoryAmnities.setAttribute("domain", "listing_amenities");
+                    categoryAmnities.setAttribute("nicename", "amenities_".concat(String.valueOf(countOfItems)));
+                    categoryAmnities.appendChild(doc.createCDATASection("Стоянка"));
+                    item.appendChild(categoryAmnities);
+
                 }
 
                 Element wpPostMeta = doc.createElement("wp:postmeta");
@@ -642,9 +686,6 @@ public class Read_GlobusTutBy {
                     item.appendChild(wpPostMeta);
                 }
 
-//                goods.appendChild(channel);
-//                goods.appendChild(rss);
-
                 channel.appendChild(item);
                 System.out.println(countIteration++);
 
@@ -665,7 +706,7 @@ public class Read_GlobusTutBy {
             transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             try {
-                File f = new File("/home/vnc/Public/GlobusTutBy/way.wordpress.2016-12-01.xml");
+                File f = new File("/home/vnc/Public/GlobusTutBy/way.wordpress.2016-12-05.xml");
                 transformer.transform(new DOMSource(doc), new StreamResult(f));
                 StringEscapeUtils.unescapeXml(f.toString());
 //                for (String s:f.list()
