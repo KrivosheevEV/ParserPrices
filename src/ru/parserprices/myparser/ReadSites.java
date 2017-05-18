@@ -15,17 +15,18 @@ import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.w3c.dom.Element;
 
-import java.io.IOException;
+import java.io.*;
 import java.security.Key;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static ru.parserprices.myparser.MainParsingPrices.addToResultString;
-import static ru.parserprices.myparser.MainParsingPrices.shopName;
+import static ru.parserprices.myparser.MainParsingPrices.*;
 import static sun.net.www.protocol.http.HttpURLConnection.userAgent;
 
 public class ReadSites {
@@ -37,6 +38,9 @@ public class ReadSites {
     private static int MAX_COUNT_ELEMENTS = -1;
     private HtmlUnitDriver driver_noGUI;
     private WebDriver driver_GUI;
+    private static ArrayList<String> listProxy;
+    private static int countForListProxy = 0;
+
 
     public void ReadSite(shopNames shopName) throws InterruptedException {
 
@@ -73,8 +77,8 @@ public class ReadSites {
 //        MainParsingPrices.cityShop = MainParsingPrices.cityShops.chapaevsk.name();
 
         setGeneralUrl(shopName);
+        fillProxyListFromBase(1);
         startingWebDriver();
-        setCookie(shopName);
 
         // Start reading.
         switch (shopName){
@@ -99,8 +103,8 @@ public class ReadSites {
 //        readGoodDescription(driver, listLinkGoods, cssSelector_GoodTitle, cssSelector_GoodCode, cssSelector_GoodPricePrevious, cssSelector_GoodPrice);
 
         // Close browser.
-        if (driver_GUI != null) driver_GUI.quit();
-        if (driver_noGUI != null) driver_noGUI.quit();
+        if (driver_GUI != null) closeDriver(driver_GUI);
+        if (driver_noGUI != null) closeDriver(driver_GUI);
 
 //        System.out.println(listPages.size());
         addToResultString("Finish parsing: ".concat(new Date().toString()), addTo.LogFileAndConsole);
@@ -147,20 +151,22 @@ public class ReadSites {
 
         for (String listLinkPage : listLinkPages) {
 
-            // Open page for parsing Goods.
-            try {
-                addToResultString("Trying open page[".concat(String.valueOf(++countOfCategories)).concat("/").concat(listLinkPagesSize).concat("]: ").concat(listLinkPage), addTo.LogFileAndConsole);
-                if (driver_GUI == null) startingWebDriver();
-                driver_GUI.navigate().to(listLinkPage);
-            } catch (Exception e) {
-//                e.printStackTrace();
-                addToResultString("Can't open new page: ".concat(listLinkPage), addTo.LogFileAndConsole);
-                addToResultString(e.toString(), addTo.LogFileAndConsole);
+            driver_GUI.navigate().to(listLinkPage);
+
+            while (!driver_GUI.getTitle().contains("DNS")){
+
+                // Open page for parsing Goods.
                 try {
-                    driver_GUI.quit();
-                } catch (Exception e1) {/**/}
-                ;
-                return;
+                    startingWebDriver();
+                    driver_GUI.navigate().to(listLinkPage);
+                    addToResultString("Open page[".concat(String.valueOf(++countOfCategories)).concat("/").concat(listLinkPagesSize).concat("]: ").concat(listLinkPage), addTo.LogFileAndConsole);
+                } catch (Exception e) {
+                    addToResultString("Can't open new page: ".concat(listLinkPage), addTo.LogFileAndConsole);
+                    addToResultString(e.toString(), addTo.LogFileAndConsole);
+                    try {
+                        closeDriver(driver_GUI);
+                    } catch (Exception e1) {/**/}
+                }
             }
 
             // Expand and read all pages with Goods.
@@ -639,7 +645,7 @@ public class ReadSites {
                                                  ArrayList<String[]> listLinkGoods2,
                                                  String cssSelector_NextPage,
                                                  String cssSelector_NextPageDivider,
-                                             String cssSelector_GoodCategory,
+                                                 String cssSelector_GoodCategory,
                                                  String cssSelector_GoodItems,
                                                  String cssSelector_GoodTitle,
                                                  String cssSelector_GoodPrice,
@@ -898,7 +904,7 @@ public class ReadSites {
 
             //driver.setJavascriptEnabled(true);
         }
-        setCookie(shopName);
+        //setCookie(shopName);
 
         if (shopName == shopNames.DOMO || shopName == shopNames.CORPCENTRE){
             drivernoGUI.navigate().to(GENERAL_URL + "/catalog");
@@ -908,7 +914,7 @@ public class ReadSites {
 
         drivernoGUI.manage()
                 .timeouts()
-                .implicitlyWait(10, TimeUnit.SECONDS);
+                .implicitlyWait(15, TimeUnit.SECONDS);
 
         try {
 
@@ -1137,6 +1143,22 @@ public class ReadSites {
         profile.setPreference("browser.download.manager.showWhenStarting", false);
         profile.setPreference("services.sync.prefs.sync.browser.download.manager.showWhenStarting", false);
         profile.setPreference("pdfjs.disabled", true);
+        if (USE_PROXY) {
+//            String proxyString = "";
+            if (countForListProxy >= listProxy.size()) fillProxyListFromBase(1);
+            for (String proxyString : listProxy.get(countForListProxy++).split(",")
+                    ) {
+                if (!proxyString.isEmpty() | proxyString.split(":").length > 2
+                        ) {
+                    String[] proxy = proxyString.split(":");
+                    profile.setPreference("network.proxy.type", 1);
+                    profile.setPreference("network.proxy.http", proxy[0]);
+                    profile.setPreference("network.proxy.http_port", Integer.valueOf(proxy[1]));
+                    profile.setPreference("network.proxy.ssl", proxy[0]);
+                    profile.setPreference("network.proxy.ssl_port", Integer.valueOf(proxy[1]));
+                }
+            }
+        }
 
         try {
             switch (shopName){
@@ -1178,176 +1200,363 @@ public class ReadSites {
                     driver_noGUI = new HtmlUnitDriver();
                     break;
             }
+
+            if (driver_GUI != null && (!proxyIsAvailable(driver_GUI) || !setCookie(shopName))) {
+                closeDriver(driver_GUI);
+                startingWebDriver();
+            }
+
+//            setCookie(shopName);
+
         } catch (Exception e) {
             e.printStackTrace();
             addToResultString(e.toString(), addTo.LogFileAndConsole);
 //            return;
+        }finally{
+
         }
+    }
+
+    // Get random proxy.
+    private static String getRandomProxy(int countOfProxy) {
+
+        String resultString = "", stringOfProxies;
+        String pathOfProxyFile = currentOS == OS.Linux ? "/usr/develop/parserpro/proxyLists/proxyList_ParserPro.txt" : "C:/Temp/ProxyList_ParserPro.txt";
+        listProxy = readFromProxyFile(pathOfProxyFile);
+
+//            if (!PROP_PROXY.equalsIgnoreCase("FOXTOOLS")) return "";
+        if (listProxy.isEmpty()) {
+            GetPost getHtmlData = new GetPost();
+            try {
+//                stringOfProxies = getHtmlData.sendGet("http://api.foxtools.ru/v2/Proxy.txt?cp=UTF-8&lang=&anonymity=All&type=None&available=Yes&free=Yes&limit=100&uptime=15&country=RU");
+                stringOfProxies = getHtmlData.sendGet("http://proxymir.com/get2.txt?key=g8tYxbG5A702Pcv51bmlIEg58FMuS5a&type=http&level=elite,anonymous&country=RU&servis=yandex&count=0");
+            } catch (Exception e) {
+                return "";
+            }
+            if (!stringOfProxies.isEmpty()) {
+                for (String proxyAddress : stringOfProxies.split(";")
+                        ) {
+                    if (!proxyAddress.trim().isEmpty())listProxy.add(proxyAddress);
+                }
+                listProxy.remove(0);
+            }
+        }
+        Random r = new Random();
+        for (int i = 0; i < countOfProxy & i<listProxy.size(); i++) {
+            if (i > listProxy.size()-1 | listProxy.size()==0) break;
+            int rand = r.nextInt(listProxy.size()) - 1;
+            if (rand<0) rand=0;
+            resultString = resultString.concat(listProxy.get(rand)).concat(",");
+            listProxy.remove(rand);
+        }
+
+        writeToProxyFile(listProxy, pathOfProxyFile);
+
+        return resultString;
+    }
+
+    private static void fillProxyListFromBase(int countOfProxy){
+
+        String resultString = "";
+        listProxy = new ArrayList<String>();
+
+        ReadWriteBase writeDataToBase;
+        Statement statement;
+
+        writeDataToBase = new ReadWriteBase();
+        statement = writeDataToBase.getStatement();
+
+        for (int counterDays = 0; counterDays < 10; counterDays++) {
+
+            String dateOfProxyToQuery = new SimpleDateFormat("yyyy-MM-dd").format(new Date().getTime() - (1000*60*60*24*counterDays));
+
+            String queryText = "SELECT * FROM general.proxylist t WHERE t.dateofproxy >= '".concat(dateOfProxyToQuery).concat("' ORDER BY t.id DESC LIMIT 200;");
+
+            ResultSet resultSet = writeDataToBase.readData(statement, queryText);
+
+            try {
+                while (resultSet.next()){
+                    listProxy.add(resultSet.getString("address"));
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            if (listProxy.size() > 0) counterDays = 10;
+        }
+
+    }
+
+
+
+    private static void writeToProxyFile(ArrayList<String> givenProxyList, String givenProxyFileName) {
+
+        try {
+            OutputStream f_ = new FileOutputStream(givenProxyFileName, false);
+            OutputStreamWriter writer_ = new OutputStreamWriter(f_);
+            BufferedWriter out_ = new BufferedWriter(writer_);
+            out_.write(""); out_.flush(); out_.close();
+
+            OutputStream f = new FileOutputStream(givenProxyFileName, true);
+            OutputStreamWriter writer = new OutputStreamWriter(f);
+            BufferedWriter out = new BufferedWriter(writer);
+            if (givenProxyList.size()==0) {
+                out.write(""); out.flush();
+            }else {
+                for (String proxyAddress : givenProxyList) {
+                    out.write(proxyAddress.concat("\n"));
+                    out.flush();
+                }
+            }
+        } catch (IOException ex) {
+            addToResultString(ex.getMessage(), addTo.LogFileAndConsole);
+            System.err.println(ex);
+        }
+    }
+
+    private static ArrayList<String> readFromProxyFile(String givenProxyFileName) {
+
+        ArrayList<String> listOfProxy = new ArrayList<String>();
+
+        File f = new File(givenProxyFileName);
+        if(!f.exists()) return listOfProxy;
+
+        FileInputStream fstream = null;
+
+        try
+        {
+            fstream = new FileInputStream(givenProxyFileName);
+            BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
+            String strLine = "";
+            while ((strLine = br.readLine()) != null)   {
+                listOfProxy.add(strLine);
+            }
+        }
+        catch (IOException e) {
+            addToResultString(e.getMessage(), addTo.LogFileAndConsole);
+            e.printStackTrace();
+        }
+        finally {
+            try { fstream.close(); } catch ( Exception ignore ) {}
+        }
+        return listOfProxy;
+    }
+
+    private boolean proxyIsAvailable(WebDriver driver) {
+
+        String urlForTest = "http://www.dns-shop.ru/";
+        driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
+        driver.manage().timeouts().pageLoadTimeout(60, TimeUnit.SECONDS);
+        driver.manage().timeouts().setScriptTimeout(60, TimeUnit.SECONDS);
+        try {
+            if (!urlForTest.isEmpty()) driver.get(urlForTest);
+        } catch(org.openqa.selenium.TimeoutException te){
+            //addToResultString("!! Timeout 30 sec.", addTo.LogFileAndConsole);
+            closeDriver(driver_GUI);
+            return false;
+        }
+
+        return driver.getTitle().contains("DNS") & !driver.getTitle().contains("error");
+
     }
 
     // Set coockie.
-    private void setCookie(shopNames shopName){
+    private boolean  setCookie(shopNames shopName) {
 
-        switch (shopName){
+        Boolean result = true;
 
-            case DNS:
+        try {
 
-                String cookieCityPath;
-                String cookieCityGuid1C;
-                driver_GUI.get(GENERAL_URL);
-                driver_GUI.manage().deleteCookieNamed("city_path");
-                driver_GUI.manage().deleteCookieNamed("city_guid_1c");
+            switch (shopName) {
 
-                if (MainParsingPrices.shopCity == shopCities.aznakaevo && false){
-                    cookieCityPath = "";
-                    cookieCityGuid1C = "";
-                }else if (MainParsingPrices.shopCity == shopCities.bugulma){
-                    cookieCityPath = "bugulma";
-                    cookieCityGuid1C = "da27fa97-5b7d-11e2-aee1-00155d030b1f";
-                }else if (MainParsingPrices.shopCity == shopCities.buzuluk){
-                    cookieCityPath = "buzuluk";
-                    cookieCityGuid1C = "aaee8b82-4fcc-11e2-aee1-00155d030b1f";
-                }else if (MainParsingPrices.shopCity == shopCities.volsk){
-                    cookieCityPath = "volsk";
-                    cookieCityGuid1C = "3cb9a040-ad7c-11e3-80bd-00155d031202";
-                }else if (MainParsingPrices.shopCity == shopCities.dimitrovgrad){
-                    cookieCityPath = "dimitrovgrad";
-                    cookieCityGuid1C = "51643c3d-8e76-11e1-979d-001517c526f0";
-                }else if (MainParsingPrices.shopCity == shopCities.zainsk){
-                    cookieCityPath = "zainsk";
-                    cookieCityGuid1C = "8f454fe2-b4b4-11e3-abb8-00155d031202";
-                }else if (MainParsingPrices.shopCity == shopCities.leninogorsk){
-                    cookieCityPath = "leninogorsk";
-                    cookieCityGuid1C = "da27fa99-5b7d-11e2-aee1-00155d030b1f";
-                }else if (MainParsingPrices.shopCity == shopCities.novokuybishevsk){
-                    cookieCityPath = "novokuybishevsk";
-                    cookieCityGuid1C = "5acb57ac-40a6-11e1-8064-001517c526f0";
-                }else if (MainParsingPrices.shopCity == shopCities.samara){
-                    cookieCityPath = "samara";
-                    cookieCityGuid1C = "55506b53-0565-11df-9cf0-00151716f9f5";
-                }else if (MainParsingPrices.shopCity == shopCities.syzran){
-                    cookieCityPath = "syzran";
-                    cookieCityGuid1C = "5acb57ad-40a6-11e1-8064-001517c526f0";
-                }else if (MainParsingPrices.shopCity == shopCities.chapaevsk){
-                    cookieCityPath = "chapaevsk";
-                    cookieCityGuid1C = "eaa9918b-bc8d-11e4-bd90-00155d03361b";
-                }else if (MainParsingPrices.shopCity == shopCities.chistopol){
-                    cookieCityPath = "chistopol";
-                    cookieCityGuid1C = "673efaf9-aca3-11e2-a322-00155d030b1f";
-                }else {
-                    cookieCityPath = "samara";
-                    cookieCityGuid1C = "55506b53-0565-11df-9cf0-00151716f9f5";
-                }
+                case DNS:
 
-                driver_GUI.manage().addCookie(new Cookie("city_path", cookieCityPath));
-                driver_GUI.manage().addCookie(new Cookie("city_guid_1c", cookieCityGuid1C));
+                    String cityID = "";
+                    //driver_GUI.get(GENERAL_URL);
 
-                break;
-
-            case CITILINK:
-
-                String cookie_space;
-                driver_noGUI.get(GENERAL_URL);
-                driver_noGUI.manage().deleteCookieNamed("_space");
-
-                if (MainParsingPrices.shopCity == shopCities.samara){
-                    cookie_space = "smr_cl%3A";
-                }else if (MainParsingPrices.shopCity == shopCities.bugulma){
-                    cookie_space = "kzn_cl%3Akzmbugul";
-                }else if (MainParsingPrices.shopCity == shopCities.buzuluk){
-                    cookie_space = "smr_cl%3Asmmbuzul";
-                }else if (MainParsingPrices.shopCity == shopCities.volsk){
-                    cookie_space = "srt_cl%3Asrtvolsk";
-                }else if (MainParsingPrices.shopCity == shopCities.dimitrovgrad){
-                    cookie_space = "smr_cl%3Asmmdimit";
-                }else if (MainParsingPrices.shopCity == shopCities.leninogorsk){
-                    cookie_space = "kzn_cl%3Akzmleninog";
-                }else if (MainParsingPrices.shopCity == shopCities.novokuybishevsk){
-                    cookie_space = "smr_cl%3Asmmnovok";
-                }else if (MainParsingPrices.shopCity == shopCities.chapaevsk){
-                    cookie_space = "smr_cl%3Asmmchap";
-                }else if (MainParsingPrices.shopCity == shopCities.chistopol){
-                    cookie_space = "kzn_cl%3Akzmgchist";
-                }else {
-                    cookie_space = "smr_cl%3A";
-                }
-
-                driver_noGUI.manage().addCookie(new Cookie("_space", cookie_space));
-
-                break;
-
-            case DOMO:
-
-                String cookie_CUSTOMER_ESITE;
-                driver_noGUI.get(GENERAL_URL);
-                driver_noGUI.manage().deleteCookieNamed("CUSTOMER_ESITE");
-
-                if (MainParsingPrices.shopCity == shopCities.syzran){
-                    cookie_CUSTOMER_ESITE = "syzran";
-                }else if (MainParsingPrices.shopCity == shopCities.tolyatti){
-                    cookie_CUSTOMER_ESITE = "tolyatti";
-                }else if (MainParsingPrices.shopCity == shopCities.chapaevsk){
-                    cookie_CUSTOMER_ESITE = "chapaevsk";
-                }else {
-                    cookie_CUSTOMER_ESITE = "syzran";
-                }
-
-                driver_noGUI.manage().addCookie(new Cookie("CUSTOMER_ESITE", cookie_CUSTOMER_ESITE));
+                    try {
+                        driver_GUI.manage().timeouts().implicitlyWait(60, TimeUnit.SECONDS);
+                        driver_GUI.manage().timeouts().pageLoadTimeout(60, TimeUnit.SECONDS);
+                        driver_GUI.manage().timeouts().setScriptTimeout(20, TimeUnit.SECONDS);
 
 
-                break;
+//                    while ((new WebDriverWait(driver_GUI, WAITING_FOR_EXPAND)).until(
+//                            ExpectedConditions.invisibilityOfElementLocated(By.cssSelector("a.city-select.w-choose-city-widget")))) {
+                        Thread.sleep(5000);
+//                    }
+                        WebElement we = driver_GUI.findElement(By.cssSelector("a.city-select.w-choose-city-widget"));
+//                        we.click();
+                        we.sendKeys(Keys.ENTER);
 
-            case CORPCENTRE:
 
-                String cookie_store_city;
-                driver_noGUI.get(GENERAL_URL);
-                driver_noGUI.manage().deleteCookieNamed("store[city]");
+//                } catch (TimeoutException to){
+//                    System.out.printf("TimeOut exception: ".concat(to.getMessage()));
+                    } catch (InterruptedException e) {
+                        result = false;
+                        e.printStackTrace();
+                    }
 
-                if (MainParsingPrices.shopCity == shopCities.samara){
-                    cookie_store_city = "%D0%A1%D0%B0%D0%BC%D0%B0%D1%80%D0%B0";
-                }else if (MainParsingPrices.shopCity == shopCities.tolyatti){
-                    cookie_store_city = "%D0%A2%D0%BE%D0%BB%D1%8C%D1%8F%D1%82%D1%82%D0%B8";
-                }else if (MainParsingPrices.shopCity == shopCities.novokuybishevsk){
-                    cookie_store_city = "%D0%9D%D0%BE%D0%B2%D0%BE%D0%BA%D1%83%D0%B9%D0%B1%D1%8B%D1%88%D0%B5%D0%B2%D1%81%D0%BA";
-                }else {
-                    cookie_store_city = "%D0%A1%D0%B0%D0%BC%D0%B0%D1%80%D0%B0";
-                }
+                    if (MainParsingPrices.shopCity == shopCities.aznakaevo) {
+                        cityID = "8f454fd9-b4b4-11e3-abb8-00155d031202";
+                    } else if (MainParsingPrices.shopCity == shopCities.bugulma) {
+                        cityID = "da27fa97-5b7d-11e2-aee1-00155d030b1f";
+                    } else if (MainParsingPrices.shopCity == shopCities.buzuluk) {
+                        cityID = "aaee8b82-4fcc-11e2-aee1-00155d030b1f";
+                    } else if (MainParsingPrices.shopCity == shopCities.volsk) {
+                        cityID = "3cb9a040-ad7c-11e3-80bd-00155d031202";
+                    } else if (MainParsingPrices.shopCity == shopCities.dimitrovgrad) {
+                        cityID = "51643c3d-8e76-11e1-979d-001517c526f0";
+                    } else if (MainParsingPrices.shopCity == shopCities.zainsk) {
+                        cityID = "8f454fe2-b4b4-11e3-abb8-00155d031202";
+                    } else if (MainParsingPrices.shopCity == shopCities.leninogorsk) {
+                        cityID = "da27fa99-5b7d-11e2-aee1-00155d030b1f";
+                    } else if (MainParsingPrices.shopCity == shopCities.novokuybishevsk) {
+                        cityID = "5acb57ac-40a6-11e1-8064-001517c526f0";
+                    } else if (MainParsingPrices.shopCity == shopCities.samara) {
+                        cityID = "55506b53-0565-11df-9cf0-00151716f9f5";
+                    } else if (MainParsingPrices.shopCity == shopCities.syzran) {
+                        cityID = "5acb57ad-40a6-11e1-8064-001517c526f0";
+                    } else if (MainParsingPrices.shopCity == shopCities.chapaevsk) {
+                        cityID = "eaa9918b-bc8d-11e4-bd90-00155d03361b";
+                    } else if (MainParsingPrices.shopCity == shopCities.chistopol) {
+                        cityID = "673efaf9-aca3-11e2-a322-00155d030b1f";
+                    } else {
+                        cityID = "55506b53-0565-11df-9cf0-00151716f9f5";
+                    }
 
-                driver_noGUI.manage().addCookie(new Cookie("store[city]", cookie_store_city));
+                    if (driver_GUI instanceof JavascriptExecutor) {
+                        ((JavascriptExecutor) driver_GUI).executeScript("changeCity('".concat(cityID).concat("')"));
+                    } else {
+                        result = false;
+                        throw new IllegalStateException("This driver not support JavaScript!");
+                    }
 
-                break;
+                    break;
 
-            case FENIXCOMP:
+                case CITILINK:
 
-                String cookie_city;
-                driver_noGUI.get(GENERAL_URL);
-                driver_noGUI.manage().deleteCookieNamed("city");
+                    String cookie_space;
+                    driver_noGUI.get(GENERAL_URL);
+                    driver_noGUI.manage().deleteCookieNamed("_space");
 
-                if (MainParsingPrices.shopCity == shopCities.samara){
-                    cookie_city = "101";
-                }else if (MainParsingPrices.shopCity == shopCities.chapaevsk){
-                    cookie_city = "141";
-                }else {
-                    cookie_city = "101";
-                }
+                    if (MainParsingPrices.shopCity == shopCities.samara) {
+                        cookie_space = "smr_cl%3A";
+                    } else if (MainParsingPrices.shopCity == shopCities.bugulma) {
+                        cookie_space = "kzn_cl%3Akzmbugul";
+                    } else if (MainParsingPrices.shopCity == shopCities.buzuluk) {
+                        cookie_space = "smr_cl%3Asmmbuzul";
+                    } else if (MainParsingPrices.shopCity == shopCities.volsk) {
+                        cookie_space = "srt_cl%3Asrtvolsk";
+                    } else if (MainParsingPrices.shopCity == shopCities.dimitrovgrad) {
+                        cookie_space = "smr_cl%3Asmmdimit";
+                    } else if (MainParsingPrices.shopCity == shopCities.leninogorsk) {
+                        cookie_space = "kzn_cl%3Akzmleninog";
+                    } else if (MainParsingPrices.shopCity == shopCities.novokuybishevsk) {
+                        cookie_space = "smr_cl%3Asmmnovok";
+                    } else if (MainParsingPrices.shopCity == shopCities.chapaevsk) {
+                        cookie_space = "smr_cl%3Asmmchap";
+                    } else if (MainParsingPrices.shopCity == shopCities.chistopol) {
+                        cookie_space = "kzn_cl%3Akzmgchist";
+                    } else {
+                        cookie_space = "smr_cl%3A";
+                    }
 
-                driver_noGUI.manage().addCookie(new Cookie("city", cookie_city));
+                    driver_noGUI.manage().addCookie(new Cookie("_space", cookie_space));
 
-                break;
+                    break;
 
-            case AVITO:
+                case DOMO:
 
-                if (MainParsingPrices.shopCity == shopCities.nikolsk){
-                    GENERAL_URL = "https://www.avito.ru/penzenskaya_oblast_nikolsk";
-                }else {
-                    GENERAL_URL = "https://www.avito.ru/penzenskaya_oblast_nikolsk";
-                }
+                    String cookie_CUSTOMER_ESITE;
+                    driver_noGUI.get(GENERAL_URL);
+                    driver_noGUI.manage().deleteCookieNamed("CUSTOMER_ESITE");
 
-                break;
+                    if (MainParsingPrices.shopCity == shopCities.syzran) {
+                        cookie_CUSTOMER_ESITE = "syzran";
+                    } else if (MainParsingPrices.shopCity == shopCities.tolyatti) {
+                        cookie_CUSTOMER_ESITE = "tolyatti";
+                    } else if (MainParsingPrices.shopCity == shopCities.chapaevsk) {
+                        cookie_CUSTOMER_ESITE = "chapaevsk";
+                    } else {
+                        cookie_CUSTOMER_ESITE = "syzran";
+                    }
 
-            default:
-                break;
+                    driver_noGUI.manage().addCookie(new Cookie("CUSTOMER_ESITE", cookie_CUSTOMER_ESITE));
+
+
+                    break;
+
+                case CORPCENTRE:
+
+                    String cookie_store_city;
+                    driver_noGUI.get(GENERAL_URL);
+                    driver_noGUI.manage().deleteCookieNamed("store[city]");
+
+                    if (MainParsingPrices.shopCity == shopCities.samara) {
+                        cookie_store_city = "%D0%A1%D0%B0%D0%BC%D0%B0%D1%80%D0%B0";
+                    } else if (MainParsingPrices.shopCity == shopCities.tolyatti) {
+                        cookie_store_city = "%D0%A2%D0%BE%D0%BB%D1%8C%D1%8F%D1%82%D1%82%D0%B8";
+                    } else if (MainParsingPrices.shopCity == shopCities.novokuybishevsk) {
+                        cookie_store_city = "%D0%9D%D0%BE%D0%B2%D0%BE%D0%BA%D1%83%D0%B9%D0%B1%D1%8B%D1%88%D0%B5%D0%B2%D1%81%D0%BA";
+                    } else {
+                        cookie_store_city = "%D0%A1%D0%B0%D0%BC%D0%B0%D1%80%D0%B0";
+                    }
+
+                    driver_noGUI.manage().addCookie(new Cookie("store[city]", cookie_store_city));
+
+                    break;
+
+                case FENIXCOMP:
+
+                    String cookie_city;
+                    driver_noGUI.get(GENERAL_URL);
+                    driver_noGUI.manage().deleteCookieNamed("city");
+
+                    if (MainParsingPrices.shopCity == shopCities.samara) {
+                        cookie_city = "101";
+                    } else if (MainParsingPrices.shopCity == shopCities.chapaevsk) {
+                        cookie_city = "141";
+                    } else {
+                        cookie_city = "101";
+                    }
+
+                    driver_noGUI.manage().addCookie(new Cookie("city", cookie_city));
+
+                    break;
+
+                case AVITO:
+
+                    if (MainParsingPrices.shopCity == shopCities.nikolsk) {
+                        GENERAL_URL = "https://www.avito.ru/penzenskaya_oblast_nikolsk";
+                    } else {
+                        GENERAL_URL = "https://www.avito.ru/penzenskaya_oblast_nikolsk";
+                    }
+
+                    break;
+
+                default:
+                    break;
+            }
+        } catch (Exception e) {
+            result = false;
+            e.getMessage();
         }
+
+        return result;
+
     }
 
+    // Close webdriver.
+    private void closeDriver(WebDriver givenDriver){
+
+        try {
+            givenDriver.quit();
+            ((JavascriptExecutor) givenDriver).executeScript("window.stop();");
+        } catch (Exception e) {
+            //Main.addToResultString("Error runnig closing script.");
+        } finally {
+            givenDriver = null;
+        }
+
+    }
 }

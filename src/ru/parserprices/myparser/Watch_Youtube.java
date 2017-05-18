@@ -3,10 +3,13 @@ package ru.parserprices.myparser;
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import net.marketer.RuCaptcha;
 import org.openqa.selenium.*;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 import org.openqa.selenium.net.UrlChecker;
+import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -30,8 +33,7 @@ public class Watch_Youtube {
 
     private static HtmlUnitDriver driver_noGUI;
     private static WebDriver driver;
-    private static ArrayList<String> listProxy;
-    private static int MAX_COUNT_PAGES = 1;
+    private static int MAX_COUNT_WIEVER = 1000;
     private static int MAX_COUNT_ITEMS = -1;
 //    private static int MAX_COUNT_TOBASE = 10;
     private static int MAX_COUNT_EXPAND = 5;
@@ -42,39 +44,64 @@ public class Watch_Youtube {
     private static int MAX_COUNT_REREADING_CAPTCHA = 3;
     private static boolean USE_GUI = true;
 
+    private static WebDriver driver_GUI;
+    private static usableWebDriver currentWebDriver;
+    private static ArrayList<String> listProxy;
+    private static int countForListProxy = 0;
+
     public static class WatchMyYoutube{
 
         public WatchMyYoutube(){
 
-            int countPages = 1;
-            String givenURL = "http://www.youtube.ru";
+            currentWebDriver = usableWebDriver.Chromium;
+//            USE_PROXY = false; //!!!
 
+            String givenURL1 = "https://www.youtube.com/watch?v=yKFyoJqHoaI";
+            String givenURL2 = "https://www.youtube.com/watch?v=N7pPf9kCJU8";
+            String givenURL3 = "https://www.youtube.com/watch?v=Y39KgGQTNM4";
+//            String givenURL = "https://www.iplocation.net";
+//            String queryForSearchVideo = "A terrible accident, 2013 June (part 1).";
+            String queryForSearchVideo = "Страшные аварии, 2013 июнь (часть 1).";
             listProxy = new ArrayList<String>();
-            startingWebDriver(givenURL);
-            driver.navigate().to(givenURL);
-            try{
-                while ((new WebDriverWait(driver, WAITING_FOR_EXPAND, 1000)).until(
-                        ExpectedConditions.invisibilityOfElementLocated(By.cssSelector("input.style-scope.ytd-searchbox")))) {
+            int delay = 0;
+            Random r = new Random();
 
-                    System.out.println(countPages);
-                    if (MAX_COUNT_EXPAND != -1 & countPages++ >= MAX_COUNT_EXPAND) break;
+            for (int i = 0; i < MAX_COUNT_WIEVER; i++) {
+                long startWatch;
+                try {
+                    startingWebDriver();
+                    if (!findAndPlayVideo(queryForSearchVideo, givenURL1)) continue;
+//                    driver_GUI.navigate().to(givenURL);
+//                    delay = 300000;
+//                    while (delay < 30000) delay = r.nextInt(60000);
+                    try {
+                        startWatch = System.currentTimeMillis();
+                        int maxIteration = 900;
+
+                        while (driver_GUI.getCurrentUrl().equals(givenURL1)
+                                |driver_GUI.getCurrentUrl().equals(givenURL2)
+                                |driver_GUI.getCurrentUrl().equals(givenURL3)){
+                            Thread.sleep(1000);
+                            if (--maxIteration<=0) break;
+                        }
+//                        TimeUnit.MILLISECONDS.sleep(delay);
+                        delay = (int)(System.currentTimeMillis() - startWatch);
+
+                    } catch (Exception e){
+//                        addToResultString(e.getMessage(), addTo.LogFileAndConsole);
+                    }
+                } catch (Exception e){
+                    addToResultString("Error watching video.", addTo.LogFileAndConsole);
+                } finally {
+                    addToResultString("Iteration:".concat(String.valueOf(i+1)).concat(", WhatchTime:").concat(String.valueOf(delay/1000)).concat(" sec."), addTo.LogFileAndConsole);
+                    closeDriver(driver_GUI);
                 }
-            }catch (Exception e){
-                System.out.println(e.getMessage());
             }
-
-            if (USE_GUI) driver.close();
-            else driver_noGUI.close();
         }
     }
-
-
-
 
     // Start new WebDriver.
-    private static void startingWebDriver(String givenURL) {
-
-        String proxyAddress = getRandomProxy();
+    private static void startingWebDriver() {
 
         FirefoxProfile profile = new FirefoxProfile();
         profile.setPreference("browser.download.manager.alertOnEXEOpen", false);
@@ -88,68 +115,163 @@ public class Watch_Youtube {
         profile.setPreference("browser.download.manager.showAlertOnComplete", false);
         profile.setPreference("browser.download.manager.useWindow", false);
         profile.setPreference("browser.download.manager.showWhenStarting", false);
-        if (!proxyAddress.isEmpty()) {
-            String[] proxy = proxyAddress.split(":");
-            profile.setPreference("network.proxy.type", 1);
-            profile.setPreference("network.proxy.http", proxy[0]);
-            profile.setPreference("network.proxy.http_port", Integer.valueOf(proxy[1]));
-            profile.setPreference("network.proxy.ssl", proxy[0]);
-            profile.setPreference("network.proxy.ssl_port", Integer.valueOf(proxy[1]));
-        }
         profile.setPreference("services.sync.prefs.sync.browser.download.manager.showWhenStarting", false);
         profile.setPreference("pdfjs.disabled", true);
 
-        //userAgent = "Mozilla/5.0 (Linux; U; Android 2.3.3; en-us; sdk Build/GRI34) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1";
+        String[] proxy = {"127.0.0.1:0"};
+        String proxyIp = "127.0.0.1";
+        String proxyPort = "0";
+        if (USE_PROXY) {
+//            String proxyString = "";
+            if (countForListProxy >= listProxy.size()) fillProxyListFromBase(1);
+            for (String proxyString : listProxy.get(countForListProxy++).split(",")
+                    ) {
+                if (!proxyString.isEmpty() | proxyString.split(":").length > 2
+                        ) {
+                    proxyIp = proxyString.split(":")[0];
+                    proxyPort = proxyString.split(":")[1];
+                    profile.setPreference("network.proxy.type", 1);
+                    profile.setPreference("network.proxy.http", proxyIp);
+                    profile.setPreference("network.proxy.http_port", Integer.valueOf(proxyPort));
+                    profile.setPreference("network.proxy.ssl", proxyIp);
+                    profile.setPreference("network.proxy.ssl_port", Integer.valueOf(proxyPort));
+                }
+            }
+        }
 
         try {
-            addToResultString("Trying start new WebDriver(HtmlUnit)", addTo.LogFileAndConsole);
-            if (USE_GUI) {
-                driver = new FirefoxDriver(profile);
-            } else {
-                driver_noGUI = new HtmlUnitDriver(BrowserVersion.FIREFOX_38, true);
-                driver_noGUI.getBrowserVersion().setUserAgent(userAgent);
+            Random r = new Random(1000);
+            int dimW = r.nextInt(1000);
+            int dimH = r.nextInt(1000);
+            while (dimH<200) dimH = r.nextInt(500);
+            while (dimW<500) dimW = r.nextInt(1000);
+
+            if (currentWebDriver == usableWebDriver.FireFox){
+                addToResultString("Trying start new WebDriver(Firefox) - ".concat(proxyIp).concat(":").concat(proxyPort), addTo.LogFileAndConsole);
+                driver_GUI = new FirefoxDriver(profile);
+                driver_GUI.manage().window().setSize(new Dimension(dimH, dimW));
+                driver_GUI.manage().window().setPosition(new Point(100, 100));
+                driver_GUI.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
+                driver_GUI.manage().timeouts().pageLoadTimeout(40, TimeUnit.SECONDS);
+                driver_GUI.manage().timeouts().setScriptTimeout(10, TimeUnit.SECONDS);
+            }else {
+                addToResultString("Trying start new WebDriver(Chromium) - ".concat(proxyIp).concat(":").concat(proxyPort), addTo.LogFileAndConsole);
+
+                System.setProperty("webdriver.chrome.driver", "/usr/develop/parserpro/chromedriver");
+                System.setProperty("webdriver.chrome.silentOutput", "true");
+
+                ChromeOptions options = new ChromeOptions();
+                options.addArguments("--window-size=".concat(String.valueOf(dimH)).concat(",").concat(String.valueOf(dimW)));
+                options.addArguments("--window-position=100,100");
+//                options.addArguments("--proxy-server=http://".concat(proxy[0]).concat(":").concat(proxy[1]));
+                options.addArguments("--metrics-recording-only");
+                options.addArguments("--ash-hide-notifications-for-factory");
+//                options.addArguments("--ignore-certificate-errors");
+                options.addArguments("--test-type");
+//                options.addArguments("--ash-host-window-dounds=100+200-1024x768");
+
+                DesiredCapabilities capabilities = DesiredCapabilities.chrome();
+                capabilities.setCapability(ChromeOptions.CAPABILITY, options);
+
+                if (USE_PROXY){
+                    Proxy proxySettings = new Proxy();
+                    proxySettings.setHttpProxy(proxyIp.concat(":").concat(proxyPort));
+                    proxySettings.setSslProxy(proxyIp.concat(":").concat(proxyPort));
+                    capabilities.setCapability("proxy", proxySettings);
+                }
+
+                driver_GUI = new ChromeDriver(capabilities);
+                driver_GUI.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
+                driver_GUI.manage().timeouts().pageLoadTimeout(40, TimeUnit.SECONDS);
+                driver_GUI.manage().timeouts().setScriptTimeout(10, TimeUnit.SECONDS);
+//                driver_GUI.manage().window().setSize(new Dimension(dimH, dimW));
+//                driver_GUI.manage().window().setPosition(new Point(100, 100));
 
             }
+//
 
+            if (!proxyIsAvailable(driver_GUI)) {
+                closeDriver(driver_GUI);
+                startingWebDriver();
+            }
 
+//            setCookie(shopName);
+        } catch( TimeoutException te){
+            addToResultString("TimeOut exception start FirefoxWebDriver.", addTo.LogFileAndConsole);
+            closeDriver(driver_GUI);
+            startingWebDriver();
         } catch (Exception e) {
-            e.printStackTrace();
-            addToResultString(e.toString(), addTo.LogFileAndConsole);
+            addToResultString("Error start WebDriver.", addTo.LogFileAndConsole);
+//            e.printStackTrace();
+//            addToResultString(e.toString(), addTo.LogFileAndConsole);
+            closeDriver(driver_GUI);
+            startingWebDriver();
 //            return;
+        }finally{
+
         }
     }
 
-    private static void setCookie(String givenURL){
+    private static void fillProxyListFromBase(int countOfProxy){
 
-        FirefoxProfile profile = new FirefoxProfile();
-        profile.setPreference("browser.download.manager.alertOnEXEOpen", false);
-        profile.setPreference("browser.helperApps.neverAsk.saveToDisk", "application/msword,application/csv,text/csv,image/png ,image/jpeg");
-        profile.setPreference("browser.download.manager.showWhenStarting", false);
-        profile.setPreference("browser.download.manager.focusWhenStarting", false);
-        //profile.setPreference("browser.download.useDownloadDir",true);
-        profile.setPreference("browser.helperApps.alwaysAsk.force", false);
-        profile.setPreference("browser.download.manager.alertOnEXEOpen", false);
-        profile.setPreference("browser.download.manager.closeWhenDone", false);
-        profile.setPreference("browser.download.manager.showAlertOnComplete", false);
-        profile.setPreference("browser.download.manager.useWindow", false);
-        profile.setPreference("browser.download.manager.showWhenStarting", false);
-        profile.setPreference("services.sync.prefs.sync.browser.download.manager.showWhenStarting", false);
-        profile.setPreference("pdfjs.disabled", true);
-        WebDriver driver_GUI = new FirefoxDriver(profile);
-        driver_GUI.navigate().to(givenURL);
-//        Set<Cookie> cookieAvito = driver_GUI.manage().getCookies();
-//        driver_GUI.close();
+        String resultString = "";
+        listProxy = new ArrayList<String>();
 
-//        driver_noGUI.manage().deleteAllCookies();
-//        for (Cookie cookie:cookieAvito
-//             ) {
-//            driver_noGUI.manage().addCookie(cookie);
-//        }
-//        driver_noGUI.getCurrentUrl();
+        countForListProxy = 0;
 
-//        div.form-fieldset__context.js-captcha
-//        img.form-captcha-image
-//        button.button.button-origin // submit
+        ReadWriteBase writeDataToBase;
+        Statement statement;
+
+        writeDataToBase = new ReadWriteBase();
+        statement = writeDataToBase.getStatement();
+
+        for (int counterDays = 0; counterDays < 10; counterDays++) {
+
+            String dateOfProxyToQuery = new SimpleDateFormat("yyyy-MM-dd").format(new Date().getTime() - (1000*60*60*24*counterDays));
+
+            String queryText = "SELECT * FROM general.proxylist t WHERE t.dateofproxy >= '".concat(dateOfProxyToQuery).concat("' ORDER BY t.id DESC LIMIT 200;");
+
+            ResultSet resultSet = writeDataToBase.readData(statement, queryText);
+
+            try {
+                while (resultSet.next()){
+                    listProxy.add(resultSet.getString("address"));
+                }
+            } catch (SQLException e) {
+                addToResultString("Error add proxy into proxylist.", addTo.LogFileAndConsole);
+//                e.printStackTrace();
+            }
+
+            if (listProxy.size() > 0) {
+                counterDays = 10;
+                randomizeArrayList(listProxy);
+            }
+        }
+
+    }
+
+    private static boolean proxyIsAvailable(WebDriver driver) {
+
+        String urlForTest = "http://www.youtube.com/";
+//        String urlForTest = "https://www.iplocation.net";
+//        driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
+//        driver.manage().timeouts().pageLoadTimeout(60, TimeUnit.SECONDS);
+//        driver.manage().timeouts().setScriptTimeout(60, TimeUnit.SECONDS);
+        try {
+            if (!urlForTest.isEmpty()) driver.get(urlForTest);
+        } catch(TimeoutException te){
+            //addToResultString("!! Timeout 30 sec.", addTo.LogFileAndConsole);
+            closeDriver(driver_GUI);
+            return false;
+        } catch(Exception e) {
+            addToResultString("!! Error check proxy.", addTo.LogFileAndConsole);
+//            e.printStackTrace();
+            closeDriver(driver_GUI);
+            return false;
+        }
+
+        return driver.getTitle().contains("YouTube") & (!driver.getTitle().contains("error") | !driver.getTitle().contains("not"));
+
     }
 
     // Write data into base.
@@ -276,5 +398,86 @@ public class Watch_Youtube {
         listProxy.remove(i);
 
         return resultString;
+    }
+
+    private static Boolean findAndPlayVideo(String givenQuery, String givenURLVideo){
+
+        Boolean videoFounded = false;
+        try {
+            driver_GUI.get("https://www.youtube.com");
+            WebElement weSearch = driver_GUI.findElement(By.cssSelector("input#masthead-search-term"));
+            for (int j = 0; j < givenQuery.length(); j++) {
+                weSearch.sendKeys(String.valueOf(givenQuery.charAt(j)));
+            }
+            weSearch.sendKeys(Keys.ENTER);
+            Thread.sleep(new Random().nextInt(6000));
+
+        } catch (Exception e){
+            return videoFounded;
+        }
+
+        try {
+            List<WebElement> listHrefs;
+            for (int i = 0; i < 100; i++) {
+                listHrefs = driver_GUI.findElements(By.cssSelector("div.yt-lockup-content a"));
+                for (WebElement el: listHrefs
+                     ) {
+                    try {
+                        ((JavascriptExecutor) driver_GUI).executeScript("arguments[0].scrollIntoView();", el);
+                        Thread.sleep(new Random().nextInt(3000));
+                        if (el.getAttribute("href").equals(givenURLVideo)){
+                            addToResultString("Page: ".concat(String.valueOf(i)), addTo.LogFileAndConsole);
+                            el.sendKeys(Keys.ENTER);
+                            Thread.sleep(new Random().nextInt(10000));
+                            videoFounded = true;
+                            break;
+                        }
+                    } catch (Exception e){
+                        videoFounded = false;
+                    }
+                }
+
+                if (!videoFounded){
+                    List<WebElement>  butsNext = driver_GUI.findElements(By.cssSelector("div.branded-page-box.search-pager.spf-link a"));
+                    for (WebElement we: butsNext
+                         ) {
+                        try {
+                            if (we.getText().contains("Next")) {
+                                we.click();
+                                Thread.sleep(new Random().nextInt(6000));
+                            }
+                        } catch (Exception e) {
+                            videoFounded = false;
+                        }
+
+                    }
+                }else {break;}
+            }
+            return videoFounded;
+
+        } catch (Exception e) {
+            return videoFounded;
+        }
+
+    }
+
+    // Close webdriver.
+    private static void closeDriver(WebDriver givenDriver){
+
+        try {
+            givenDriver.quit();
+            ((JavascriptExecutor) givenDriver).executeScript("window.stop();");
+        } catch (Exception e) {
+            //Main.addToResultString("Error runnig closing script.");
+        } finally {
+            givenDriver = null;
+        }
+
+    }
+
+
+    private static void randomizeArrayList(ArrayList givenArrayList){
+
+        Collections.shuffle(givenArrayList, new Random(System.nanoTime()));
     }
 }

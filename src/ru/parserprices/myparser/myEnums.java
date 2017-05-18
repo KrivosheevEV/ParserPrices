@@ -7,6 +7,10 @@ enum OS{
     Windows, Linux;
 }
 
+enum usableWebDriver{
+    FireFox, Chromium;
+}
+
 enum shopNames{
     empty,
     DNS,
@@ -20,7 +24,8 @@ enum shopNames{
     YOUTUBE,
     CERAMTRADE,
     FINDEMAILS,
-    GLOBUSTUTBY
+    GLOBUSTUTBY,
+    SHUTTERSTOCK
 }
 
 enum shopCities{

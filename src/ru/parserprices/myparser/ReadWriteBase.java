@@ -66,8 +66,7 @@ public class ReadWriteBase {
 
         try {
             rs = statement.executeQuery(queryText);
-            if (rs.next()) return true;
-            else return false;
+            return rs.next();
         } catch (SQLException sqlEx) {
             addToResultString("Wrong query: ".concat(queryText), addTo.LogFileAndConsole);
             addToResultString(sqlEx.getMessage(), addTo.LogFileAndConsole);

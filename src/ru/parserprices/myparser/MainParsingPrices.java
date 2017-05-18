@@ -3,6 +3,7 @@ package ru.parserprices.myparser;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 
@@ -22,6 +23,7 @@ public class MainParsingPrices {
     static int PROP_START_RECORD_IN;
     static int PROP_FINISH_RECORD_IN;
     static boolean haveProperty;
+    public static boolean USE_PROXY = true;
 
     private static String resultOfPasring = "";
     private static long startTime;
@@ -94,6 +96,8 @@ public class MainParsingPrices {
             new Find_Emails.FindEmails().FindEmails(PROP_URL);
         }else if(shopName == shopNames.GLOBUSTUTBY){
             new Read_GlobusTutBy.ReadGlobusTutBy(PROP_URL);
+        }else if(shopName == shopNames.SHUTTERSTOCK){
+            new Read_Shutterstock.ReadShutterstock(PROP_URL);
         }else{
             ReadSites readSites = new ReadSites();
             readSites.ReadSite(shopName);
@@ -299,7 +303,8 @@ public class MainParsingPrices {
         String minutsElapse = String.format("%02d", elapsedTime / 60 % 60);
         String hoursElapse = String.format("%02d", elapsedTime / 3600 % 24);
         String daysElapse = String.format("%02d", elapsedTime / (3600 * 24));
-        String timeForResult = daysElapse.concat(",").concat(hoursElapse).concat(":").concat(minutsElapse).concat(":").concat(secondsElapse);
+        String currentTime = new SimpleDateFormat("HH:mm").format(currentMilliseconds);
+        String timeForResult = daysElapse.concat(",").concat(hoursElapse).concat(":").concat(minutsElapse).concat(":").concat(secondsElapse).concat("(").concat(currentTime).concat(")");;
         String stringToLog = timeForResult + " -> " + addedString + System.getProperty("line.separator");
         resultOfPasring = resultOfPasring.concat(stringToLog);
 
@@ -312,7 +317,7 @@ public class MainParsingPrices {
         }
 
         if (writeIntoLogFile == addTo.LogFileAndConsole || writeIntoLogFile == addTo.Console)
-            System.out.println(addedString);
+            System.out.println(timeForResult.concat(" -> ").concat(addedString));
     }
 
     public static String getArgumentValue(String[] args, String argument){
