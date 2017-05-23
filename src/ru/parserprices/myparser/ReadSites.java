@@ -146,28 +146,48 @@ public class ReadSites {
         if (listLinkPages.size() == 0) addToResultString("Category links not found!", addTo.LogFileAndConsole);
         addToResultString("Finish getting category links", addTo.LogFileAndConsole);
 
+        try { addToResultString(driver_GUI.findElement(By.cssSelector("a.city-select.w-choose-city-widget")).getText(), addTo.LogFileAndConsole);
+        } catch (Exception e) { addToResultString("Not set city!", addTo.LogFileAndConsole);}
+
         int countOfCategories = 0;
         String listLinkPagesSize = String.valueOf(listLinkPages.size());
 
         for (String listLinkPage : listLinkPages) {
 
-            driver_GUI.navigate().to(listLinkPage);
+            try {
+                driver_GUI.navigate().to(listLinkPage);
 
-            while (!driver_GUI.getTitle().contains("DNS")){
+                while (!driver_GUI.getTitle().contains("DNS")) {
 
-                // Open page for parsing Goods.
-                try {
-                    startingWebDriver();
-                    driver_GUI.navigate().to(listLinkPage);
-                    addToResultString("Open page[".concat(String.valueOf(++countOfCategories)).concat("/").concat(listLinkPagesSize).concat("]: ").concat(listLinkPage), addTo.LogFileAndConsole);
-                } catch (Exception e) {
-                    addToResultString("Can't open new page: ".concat(listLinkPage), addTo.LogFileAndConsole);
-                    addToResultString(e.toString(), addTo.LogFileAndConsole);
+                    // Open page for parsing Goods.
                     try {
-                        closeDriver(driver_GUI);
-                    } catch (Exception e1) {/**/}
+
+                        startingWebDriver();
+                        driver_GUI.navigate().to(listLinkPage);
+
+                        try {
+                            addToResultString(driver_GUI.findElement(By.cssSelector("a.city-select.w-choose-city-widget")).getText(), addTo.LogFileAndConsole);
+                        } catch (Exception e) {
+                            addToResultString("Not set city!", addTo.LogFileAndConsole);
+                        }
+
+                        addToResultString("Open page[".concat(String.valueOf(++countOfCategories)).concat("/").concat(listLinkPagesSize).concat("]: ").concat(listLinkPage), addTo.LogFileAndConsole);
+
+                    } catch (Exception e) {
+
+                        addToResultString("Can't open new page: ".concat(listLinkPage), addTo.LogFileAndConsole);
+                        addToResultString(e.toString(), addTo.LogFileAndConsole);
+
+                        try {
+                            closeDriver(driver_GUI);
+                        } catch (Exception e1) {/**/}
+
+                    }
                 }
-            }
+
+            } catch (Exception e) {
+                /**/
+            } //catch (Exception e) {/**/}
 
             // Expand and read all pages with Goods.
             //expandAndReadLinkGoods(driver, listLinkGoods, cssSelector_ExpandPage_Block, cssSelector_ExpandPage_Button, cssSelector_GoodLink);
@@ -201,8 +221,8 @@ public class ReadSites {
         String cssSelector_CategoriesLink = "SPAN > a[class='subcategory-list-item__link']";
         String cssSelector_NextPage = "link[rel='next']";
         String cssSelector_GoodCategory = "div.cleared h1";
-        String cssSelector_GoodItems = "tbody[class='product_data__gtm-js']";
-        String cssSelector_GoodLink = "span[class*='h3'] > a[class='link_gtm-js']";
+        String cssSelector_GoodItems = "div.subcategory-product-item.product_data__gtm-js.product_data__pageevents-js.ddl_product";
+        String cssSelector_GoodLink = "a.link_gtm-js.link_pageevents-js.ddl_product_link";
 
         addToResultString("Start getting category links", addTo.LogFileAndConsole);
         fillListPagesFromSite(driver_GUI, driver_noGUI, cssSelector_CategoriesLink, listLinkPages);
@@ -616,7 +636,7 @@ public class ReadSites {
                         if (MAX_COUNT_ELEMENTS != -1 && countIteration >= MAX_COUNT_ELEMENTS) break;
                         countIteration++;
                     } catch (Exception e) {
-                        addToResultString("Element not found: ".concat(elementGood.getText()), addTo.logFile);
+                        addToResultString("Element not found: ".concat(elementGood.getText()), addTo.LogFileAndConsole);
                     }
                 }
 
@@ -902,6 +922,22 @@ public class ReadSites {
         if (shopName == shopNames.DNS) {
             drivernoGUI = new HtmlUnitDriver();
 
+            if (USE_PROXY) {
+                try {
+                    Proxy proxy = new Proxy();
+                    if (countForListProxy >= listProxy.size()) fillProxyListFromBase(1);
+                    for (String proxyString : listProxy.get(countForListProxy++).split(",")
+                            ) {
+                        if (!proxyString.isEmpty() & proxyString.split(":").length >= 2
+                                ) {
+                            proxy.setHttpProxy(proxyString);
+                            proxy.setSslProxy(proxyString);
+                        }
+                    }
+                    drivernoGUI.setProxySettings(proxy);
+                } catch (Exception e) {/**/}
+            }
+
             //driver.setJavascriptEnabled(true);
         }
         //setCookie(shopName);
@@ -1165,7 +1201,7 @@ public class ReadSites {
 
                 case DNS:
 
-                    addToResultString("Trying start new WebDriver(Firefox)", addTo.LogFileAndConsole);
+                    addToResultString("Trying start new WebDriver(Firefox) (".concat(profile.getStringPreference("network.proxy.http", "0.0.0.0").concat(")")) , addTo.LogFileAndConsole);
                     driver_GUI = new FirefoxDriver(profile);
                     break;
 
@@ -1205,6 +1241,8 @@ public class ReadSites {
                 closeDriver(driver_GUI);
                 startingWebDriver();
             }
+
+
 
 //            setCookie(shopName);
 
@@ -1361,7 +1399,7 @@ public class ReadSites {
     }
 
     // Set coockie.
-    private boolean  setCookie(shopNames shopName) {
+    private boolean setCookie(shopNames shopName) {
 
         Boolean result = true;
 
@@ -1425,8 +1463,10 @@ public class ReadSites {
                     }
 
                     if (driver_GUI instanceof JavascriptExecutor) {
+//                        Thread.sleep(5000);
                         ((JavascriptExecutor) driver_GUI).executeScript("changeCity('".concat(cityID).concat("')"));
                     } else {
+                        addToResultString("Error set city (".concat(MainParsingPrices.shopCity.name()).concat(")") , addTo.LogFileAndConsole);
                         result = false;
                         throw new IllegalStateException("This driver not support JavaScript!");
                     }
