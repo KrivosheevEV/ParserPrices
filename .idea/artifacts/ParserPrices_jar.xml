@@ -12,6 +12,7 @@
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/commons-codec-1.10.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/commons-collections4-4.1.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/javax.mail-1.4.4.jar" path-in-jar="/" />
+      <element id="library" level="project" name="mysql:mysql-connector-java:5.1.39" />
     </root>
   </artifact>
 </component>
